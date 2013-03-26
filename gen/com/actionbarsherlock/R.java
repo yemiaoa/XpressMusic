@@ -48,7 +48,7 @@ public final class R {
 		public static final int abs__title = 0x7f040020;
 		public static final int abs__progress_circular = 0x7f04000e;
 		public static final int useLogo = 0x7f040004;
-		public static final int action_settings = 0x7f04004e;
+		public static final int action_settings = 0x7f04004f;
 		public static final int tabMode = 0x7f040003;
 		public static final int abs__search_edit_frame = 0x7f040030;
 		public static final int abs__radio = 0x7f040025;
@@ -159,17 +159,17 @@ public final class R {
 	}
 	public static final class color {
 		public static final int abs__bright_foreground_inverse_holo_light = 0x7f060007;
-		public static final int abs__primary_text_disable_only_holo_light = 0x7f060014;
+		public static final int abs__primary_text_disable_only_holo_light = 0x7f060017;
 		public static final int abs__holo_blue_light = 0x7f060008;
 		public static final int abs__bright_foreground_holo_dark = 0x7f060002;
 		public static final int abs__bright_foreground_holo_light = 0x7f060003;
-		public static final int abs__primary_text_holo_dark = 0x7f060015;
-		public static final int abs__primary_text_disable_only_holo_dark = 0x7f060013;
+		public static final int abs__primary_text_holo_dark = 0x7f060018;
+		public static final int abs__primary_text_disable_only_holo_dark = 0x7f060016;
 		public static final int abs__bright_foreground_disabled_holo_dark = 0x7f060004;
 		public static final int abs__background_holo_light = 0x7f060001;
 		public static final int abs__bright_foreground_disabled_holo_light = 0x7f060005;
 		public static final int abs__bright_foreground_inverse_holo_dark = 0x7f060006;
-		public static final int abs__primary_text_holo_light = 0x7f060016;
+		public static final int abs__primary_text_holo_light = 0x7f060019;
 		public static final int abs__background_holo_dark = 0x7f060000;
 	}
 	public static final class string {
@@ -413,7 +413,7 @@ public final class R {
 		public static final int abs__ab_stacked_transparent_dark_holo = 0x7f02000c;
 		public static final int abs__dialog_full_holo_dark = 0x7f02001e;
 		public static final int abs__progress_bg_holo_light = 0x7f020048;
-		public static final int ic_launcher = 0x7f02007a;
+		public static final int ic_launcher = 0x7f02007d;
 		public static final int abs__ic_clear_search_api_holo_light = 0x7f020029;
 		public static final int abs__menu_dropdown_panel_holo_dark = 0x7f020045;
 		public static final int abs__activated_background_holo_light = 0x7f020011;

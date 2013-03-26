@@ -59,7 +59,7 @@ public class MainContentActivity extends FragmentActivity {
 				.beginTransaction();
 		fragmentTransaction.replace(R.id.frame_menu, new MenuFragment());
 		fragmentTransaction.replace(R.id.frame_content, new ColorFragment(
-				R.color.holo_orange_dark));
+				android.R.color.background_light));
 		fragmentTransaction.commit();
 
 	}

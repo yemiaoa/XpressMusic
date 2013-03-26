@@ -79,29 +79,21 @@
 
         <ImageButton
             android:id="@+id/button_next_song"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
-            android:layout_marginBottom="5dp"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="15dp"
-            android:layout_marginTop="5dp"
-            android:background="#00000000"
+            android:background="@drawable/button_backround_deep"
             android:contentDescription="@string/app_name"
             android:src="@drawable/button_next" />
 
         <ImageButton
             android:id="@+id/button_play"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
             android:layout_centerVertical="true"
-            android:layout_marginBottom="5dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="15dp"
-            android:layout_marginTop="5dp"
             android:layout_toLeftOf="@id/button_next_song"
-            android:background="#00000000"
+            android:background="@drawable/button_backround_deep"
             android:contentDescription="@string/app_name"
             android:src="@drawable/button_play" />
     </RelativeLayout>

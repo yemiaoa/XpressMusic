@@ -799,10 +799,11 @@ containing a value of this type.
         public static final int abs__bright_foreground_inverse_holo_dark=0x7f060006;
         public static final int abs__bright_foreground_inverse_holo_light=0x7f060007;
         public static final int abs__holo_blue_light=0x7f060008;
-        public static final int abs__primary_text_disable_only_holo_dark=0x7f060013;
-        public static final int abs__primary_text_disable_only_holo_light=0x7f060014;
-        public static final int abs__primary_text_holo_dark=0x7f060015;
-        public static final int abs__primary_text_holo_light=0x7f060016;
+        public static final int abs__primary_text_disable_only_holo_dark=0x7f060016;
+        public static final int abs__primary_text_disable_only_holo_light=0x7f060017;
+        public static final int abs__primary_text_holo_dark=0x7f060018;
+        public static final int abs__primary_text_holo_light=0x7f060019;
+        public static final int black=0x7f060014;
         /**  A really bright Holo shade of blue 
          */
         public static final int holo_blue_bright=0x7f060012;
@@ -833,6 +834,8 @@ containing a value of this type.
         /**  A light Holo shade of red 
          */
         public static final int holo_red_light=0x7f06000b;
+        public static final int transparent=0x7f060015;
+        public static final int white=0x7f060013;
     }
     public static final class dimen {
         /**  Default height of an action bar. 
@@ -1077,20 +1080,28 @@ containing a value of this type.
         public static final int abs__textfield_searchview_holo_light=0x7f02006c;
         public static final int abs__textfield_searchview_right_holo_dark=0x7f02006d;
         public static final int abs__textfield_searchview_right_holo_light=0x7f02006e;
-        public static final int button_back=0x7f02006f;
-        public static final int button_favorite=0x7f020070;
-        public static final int button_favorite_on=0x7f020071;
-        public static final int button_next=0x7f020072;
-        public static final int button_pause=0x7f020073;
-        public static final int button_play=0x7f020074;
-        public static final int button_playmode_repeat=0x7f020075;
-        public static final int button_playmode_shuffle=0x7f020076;
-        public static final int button_previous=0x7f020077;
-        public static final int button_setting=0x7f020078;
-        public static final int default_album=0x7f020079;
-        public static final int ic_launcher=0x7f02007a;
-        public static final int overflow=0x7f02007b;
-        public static final int shadow=0x7f02007c;
+        public static final int bottom_play_panel=0x7f02006f;
+        public static final int button_back=0x7f020070;
+        public static final int button_backround_deep=0x7f020071;
+        public static final int button_backround_light=0x7f020072;
+        public static final int button_favorite=0x7f020073;
+        public static final int button_favorite_on=0x7f020074;
+        public static final int button_next=0x7f020075;
+        public static final int button_pause=0x7f020076;
+        public static final int button_play=0x7f020077;
+        public static final int button_playmode_repeat=0x7f020078;
+        public static final int button_playmode_shuffle=0x7f020079;
+        public static final int button_previous=0x7f02007a;
+        public static final int button_setting=0x7f02007b;
+        public static final int default_album=0x7f02007c;
+        public static final int ic_launcher=0x7f02007d;
+        public static final int overflow=0x7f02007e;
+        public static final int playback_playingbar_seekbar_style=0x7f02007f;
+        public static final int playback_playingbar_seekbar_thumb=0x7f020080;
+        public static final int playback_playingbar_seekbar_thumb_default=0x7f020081;
+        public static final int playback_playingbar_seekbar_thumb_pressed=0x7f020082;
+        public static final int player_bg=0x7f020083;
+        public static final int shadow=0x7f020084;
     }
     public static final class id {
         public static final int abs__action_bar=0x7f040027;
@@ -1133,7 +1144,7 @@ containing a value of this type.
         public static final int abs__title=0x7f040020;
         public static final int abs__titleDivider=0x7f040021;
         public static final int abs__up=0x7f04000b;
-        public static final int action_settings=0x7f04004e;
+        public static final int action_settings=0x7f04004f;
         public static final int album_picture=0x7f04003c;
         public static final int bottom_info_frame=0x7f04003b;
         public static final int bottom_play_frame=0x7f04003a;
@@ -1145,29 +1156,30 @@ containing a value of this type.
         public static final int edit_query=0x7f04002c;
         public static final int frame_content=0x7f040039;
         public static final int frame_menu=0x7f040042;
-        public static final int frame_play_content=0x7f040046;
+        public static final int frame_play_content=0x7f040047;
         public static final int fullscreen=0x7f040013;
         public static final int homeAsUp=0x7f040006;
         public static final int left=0x7f040010;
         public static final int listMode=0x7f040002;
         public static final int margin=0x7f040012;
         public static final int normal=0x7f040001;
-        public static final int play_button_back=0x7f040043;
-        public static final int play_button_setting=0x7f04004c;
-        public static final int play_favorite=0x7f040045;
-        public static final int play_mode=0x7f040048;
-        public static final int play_playbutton=0x7f04004a;
-        public static final int play_playnext=0x7f04004b;
-        public static final int play_playprevious=0x7f040049;
-        public static final int play_progress=0x7f040047;
-        public static final int play_song_title=0x7f040044;
+        public static final int play_button_back=0x7f040044;
+        public static final int play_button_setting=0x7f04004d;
+        public static final int play_favorite=0x7f040046;
+        public static final int play_mode=0x7f040049;
+        public static final int play_playbutton=0x7f04004b;
+        public static final int play_playnext=0x7f04004c;
+        public static final int play_playprevious=0x7f04004a;
+        public static final int play_progress=0x7f040048;
+        public static final int play_song_title=0x7f040045;
+        public static final int player_container=0x7f040043;
         public static final int right=0x7f040011;
         public static final int selected_view=0x7f040014;
         public static final int showCustom=0x7f040008;
         public static final int showHome=0x7f040005;
         public static final int showTitle=0x7f040007;
         public static final int singer=0x7f04003f;
-        public static final int slidingmenumain=0x7f04004d;
+        public static final int slidingmenumain=0x7f04004e;
         public static final int song_name=0x7f04003d;
         public static final int tabMode=0x7f040003;
         public static final int useLogo=0x7f040004;
