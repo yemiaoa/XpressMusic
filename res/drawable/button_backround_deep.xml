@@ -8,5 +8,4 @@
 		android:state_pressed="true"
 		android:drawable="@color/holo_blue_dark">
 	</item>
-    <item ></item>
 </selector>

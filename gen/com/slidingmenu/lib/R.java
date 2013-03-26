@@ -32,7 +32,7 @@ public final class R {
 		public static final int abs__progress_horizontal = 0x7f04000f;
 		public static final int showHome = 0x7f040005;
 		public static final int fullscreen = 0x7f040013;
-		public static final int slidingmenumain = 0x7f04004e;
+		public static final int slidingmenumain = 0x7f040050;
 		public static final int abs__home = 0x7f04000a;
 		public static final int abs__search_src_text = 0x7f040033;
 		public static final int abs__search_mag_icon = 0x7f040031;
@@ -54,7 +54,7 @@ public final class R {
 		public static final int abs__title = 0x7f040020;
 		public static final int abs__progress_circular = 0x7f04000e;
 		public static final int useLogo = 0x7f040004;
-		public static final int action_settings = 0x7f04004f;
+		public static final int action_settings = 0x7f040051;
 		public static final int tabMode = 0x7f040003;
 		public static final int abs__search_edit_frame = 0x7f040030;
 		public static final int abs__radio = 0x7f040025;
