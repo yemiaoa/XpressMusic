@@ -34,13 +34,13 @@ public class MenuFragment extends ListFragment {
 		Fragment newContent = null;
 		switch (position) {
 		case 0:// TODO 本地音乐
-			newContent=new ColorFragment(R.color.holo_blue_dark);
+			newContent=new ColorFragment(R.color.holo_orange_dark);
 			break;
 		case 1:// TODO 喜爱
 			newContent=new ColorFragment(R.color.holo_green_dark);
 			break;
 		case 2:// TODO 播放列表
-			newContent=new ColorFragment(R.color.holo_orange_dark);
+			newContent=new ColorFragment(R.color.holo_blue_dark);
 			break;
 		case 3:// TODO 最近播放
 			newContent=new ColorFragment(R.color.holo_purple);

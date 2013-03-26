@@ -1,10 +1,12 @@
 package com.lq.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.lq.fragment.ColorFragment;
 import com.lq.fragment.MenuFragment;
@@ -22,6 +24,15 @@ public class MainContentActivity extends FragmentActivity {
 		initPopulateFragment();
 
 		getActionBar().setDisplayHomeAsUpEnabled(true);
+		View info_frame = findViewById(R.id.bottom_info_frame);
+		info_frame.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				startActivity(new Intent(MainContentActivity.this,
+						MusicPlayerActivity.class));
+			}
+		});
 	}
 
 	private void initSlidingMenu() {
@@ -29,9 +40,9 @@ public class MainContentActivity extends FragmentActivity {
 		mSlidingMenu = new SlidingMenu(this);
 		// 1.设置SlidingMenu的宿主Activity
 		mSlidingMenu.attachToActivity(this, SlidingMenu.SLIDING_WINDOW);
-		// 2.设置SlidingMenu的布局
+		// 2.设置SlidingMenu的布局(指定一个FragmentLayout，稍后再将其替换为Fragment)
 		mSlidingMenu.setMenu(R.layout.layout_menu);
-		// 3.设置SlidingMenu以何种手势弹出
+		// 3.设置SlidingMenu以何种方式拖出(全屏可拖动、边缘可拖动、不可拖动)
 		mSlidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
 		// 4.设置SlidingMenu从屏幕的哪边弹出
 		mSlidingMenu.setMode(SlidingMenu.LEFT);
@@ -48,7 +59,7 @@ public class MainContentActivity extends FragmentActivity {
 				.beginTransaction();
 		fragmentTransaction.replace(R.id.frame_menu, new MenuFragment());
 		fragmentTransaction.replace(R.id.frame_content, new ColorFragment(
-				R.color.holo_blue_dark));
+				R.color.holo_orange_dark));
 		fragmentTransaction.commit();
 
 	}
@@ -69,8 +80,16 @@ public class MainContentActivity extends FragmentActivity {
 
 	public void switchContent(Fragment fragment) {
 		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_content, fragment).commit();
+				.replace(R.id.frame_content, fragment).addToBackStack(null)
+				.commit();
 		getSlidingMenu().showContent();
 	}
 
+	@Override
+	public void onBackPressed() {
+		super.onBackPressed();
+		if (mSlidingMenu.isShown()) {
+			mSlidingMenu.showContent();
+		}
+	}
 }
