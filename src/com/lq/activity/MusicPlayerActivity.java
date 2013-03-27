@@ -17,9 +17,22 @@ public class MusicPlayerActivity extends FragmentActivity {
 			@Override
 			public void onClick(View v) {
 				// TODO 返回主页
-				startActivity(new Intent(MusicPlayerActivity.this,
-						MainContentActivity.class));
+				backToMain();
 			}
 		});
+	}
+
+	@Override
+	public void onBackPressed() {
+		// TODO 返回主页
+		super.onBackPressed();
+		backToMain();
+	}
+
+	private void backToMain() {
+		startActivity(new Intent(MusicPlayerActivity.this,
+				MainContentActivity.class));
+		MusicPlayerActivity.this.finish();
+		overridePendingTransition(R.anim.push_right_in, R.anim.push_right_out);
 	}
 }

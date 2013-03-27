@@ -1,5 +1,7 @@
 package com.lq.activity;
 
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -31,6 +33,8 @@ public class MainContentActivity extends FragmentActivity {
 			public void onClick(View v) {
 				startActivity(new Intent(MainContentActivity.this,
 						MusicPlayerActivity.class));
+				overridePendingTransition(R.anim.push_left_in,
+						R.anim.push_left_out);
 			}
 		});
 	}
@@ -83,6 +87,13 @@ public class MainContentActivity extends FragmentActivity {
 				.replace(R.id.frame_content, fragment).addToBackStack(null)
 				.commit();
 		getSlidingMenu().showContent();
+	}
+
+	public void exit() {
+		// TODO 关闭本Activity和应用的所有Service
+		MainContentActivity.this.finish();
+		ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+		am.killBackgroundProcesses(getPackageName());
 	}
 
 	@Override

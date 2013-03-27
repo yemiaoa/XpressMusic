@@ -25,7 +25,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:launchMode="singleInstance"
             android:name="com.lq.activity.MusicPlayerActivity"
             android:theme="@style/Theme.Sherlock.NoActionBar" >
         </activity>

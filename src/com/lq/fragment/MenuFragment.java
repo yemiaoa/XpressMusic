@@ -49,7 +49,7 @@ public class MenuFragment extends ListFragment {
 			newContent=new ColorFragment(R.color.holo_red_dark);
 			break;
 		case 5:// TODO ÍË³ö
-			getActivity().finish();
+			((MainContentActivity)getActivity()).exit();
 			break;
 		}
 		if (newContent != null)
