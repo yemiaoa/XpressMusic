@@ -1,21 +1,22 @@
 package com.lq.activity;
 
-import android.app.ActivityManager;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
-import android.view.MenuItem;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
+import android.view.MotionEvent;
 import android.view.View;
-
+import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.MenuItem;
 import com.lq.fragment.ColorFragment;
 import com.lq.fragment.MenuFragment;
 import com.slidingmenu.lib.SlidingMenu;
 
-public class MainContentActivity extends FragmentActivity {
-	SlidingMenu mSlidingMenu = null;
+public class MainContentActivity extends SherlockFragmentActivity {
+	private SlidingMenu mSlidingMenu = null;
+	private GestureDetector mDetector = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +26,7 @@ public class MainContentActivity extends FragmentActivity {
 		initSlidingMenu();
 		initPopulateFragment();
 
-		getActionBar().setDisplayHomeAsUpEnabled(true);
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		View info_frame = findViewById(R.id.bottom_info_frame);
 		info_frame.setOnClickListener(new View.OnClickListener() {
 
@@ -37,20 +38,21 @@ public class MainContentActivity extends FragmentActivity {
 						R.anim.push_left_out);
 			}
 		});
+		mDetector = new GestureDetector(new RightGestureListener());
 	}
 
 	private void initSlidingMenu() {
-		// TODO ³õÊ¼»¯SlidingMenu
+		// TODO è®¾ç½®SlidingMenu
 		mSlidingMenu = new SlidingMenu(this);
-		// 1.ÉèÖÃSlidingMenuµÄËÞÖ÷Activity
+		// 1.ä¸ºSlidingMenuå®¿ä¸»ä¸€ä¸ªActivity
 		mSlidingMenu.attachToActivity(this, SlidingMenu.SLIDING_WINDOW);
-		// 2.ÉèÖÃSlidingMenuµÄ²¼¾Ö(Ö¸¶¨Ò»¸öFragmentLayout£¬ÉÔºóÔÙ½«ÆäÌæ»»ÎªFragment)
+		// 2.ä¸ºSlidingMenuæŒ‡å®šå¸ƒå±€
 		mSlidingMenu.setMenu(R.layout.layout_menu);
-		// 3.ÉèÖÃSlidingMenuÒÔºÎÖÖ·½Ê½ÍÏ³ö(È«ÆÁ¿ÉÍÏ¶¯¡¢±ßÔµ¿ÉÍÏ¶¯¡¢²»¿ÉÍÏ¶¯)
-		mSlidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
-		// 4.ÉèÖÃSlidingMenu´ÓÆÁÄ»µÄÄÄ±ßµ¯³ö
+		// 3.è®¾ç½®SlidingMenuä»Žä½•å¤„å¯ä»¥æ»‘å‡º
+		mSlidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_MARGIN);
+		// 4.è®¾ç½®SlidingMenuçš„æ»‘å‡ºæ–¹å‘
 		mSlidingMenu.setMode(SlidingMenu.LEFT);
-		// 5.ÉèÖÃÆäËûSlidingMenu²ÎÊý
+		// 5.è®¾ç½®SlidingMenuçš„å…¶ä»–å‚æ•°
 		mSlidingMenu.setShadowWidthRes(R.dimen.shadow_width);
 		mSlidingMenu.setShadowDrawable(R.drawable.shadow);
 		mSlidingMenu.setBehindOffsetRes(R.dimen.slidingmenu_offset);
@@ -58,7 +60,7 @@ public class MainContentActivity extends FragmentActivity {
 	}
 
 	private void initPopulateFragment() {
-		// TODO ÎªMenuºÍContentÖ¸¶¨Fragment
+		// TODO ä¸ºSlidingMenuå’ŒContentå¡«å……Fragment
 		FragmentTransaction fragmentTransaction = getSupportFragmentManager()
 				.beginTransaction();
 		fragmentTransaction.replace(R.id.frame_menu, new MenuFragment());
@@ -90,17 +92,47 @@ public class MainContentActivity extends FragmentActivity {
 	}
 
 	public void exit() {
-		// TODO ¹Ø±Õ±¾ActivityºÍÓ¦ÓÃµÄËùÓÐService
+		// TODO ç»“æŸæ‰€æœ‰Activityå’ŒService
+		// ActivityManager am = (ActivityManager)
+		// getSystemService(Context.ACTIVITY_SERVICE);
+		// am.killBackgroundProcesses(getPackageName());
 		MainContentActivity.this.finish();
-		ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-		am.killBackgroundProcesses(getPackageName());
 	}
 
 	@Override
 	public void onBackPressed() {
-		super.onBackPressed();
-		if (mSlidingMenu.isShown()) {
-			mSlidingMenu.showContent();
+		//è§„å®šåœ¨æ˜¾ç¤ºèœå•æ—¶æ‰å¯é€€å‡ºç¨‹åºï¼ŒæŒ‰è¿”å›žé”®å¼¹å‡ºä¾§æ»‘èœå•
+		if (mSlidingMenu.isMenuShowing()) {
+			//æ˜¾ç¤ºèœå•æ—¶ï¼ŒæŒ‰è¿”å›žé”®é€€å‡ºç¨‹åº
+			this.finish();
+		} else if (this.getSupportFragmentManager().getBackStackEntryCount() > 0) {
+			//å¦‚æžœå·²ç»æ‰“å¼€å¤šä¸ªFragmentï¼Œå…è®¸è¿”å›žé”®å°†Fragmentå›žé€€
+			super.onBackPressed();
+		} else {
+			//Fragmentå·²ç»å›žé€€å®Œï¼Œæ­¤æ—¶èœå•æ²¡æœ‰æ˜¾ç¤ºï¼Œå°±å¼¹å‡ºèœå•
+			mSlidingMenu.showMenu();
 		}
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		return MainContentActivity.this.mDetector.onTouchEvent(event);
+	}
+
+	protected class RightGestureListener extends SimpleOnGestureListener {
+		@Override
+		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+				float velocityY) {
+			// ä»Žå·¦å‘å³æ»‘åŠ¨
+			if (e1.getX() - e2.getX() > 50) {
+				startActivity(new Intent(MainContentActivity.this,
+						MusicPlayerActivity.class));
+				overridePendingTransition(R.anim.push_left_in,
+						R.anim.push_left_out);
+				return true;
+			}
+			return false;
+		}
+
 	}
 }

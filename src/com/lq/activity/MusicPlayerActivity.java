@@ -3,10 +3,15 @@ package com.lq.activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
 
 public class MusicPlayerActivity extends FragmentActivity {
+	private GestureDetector mDetector = null;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -16,23 +21,44 @@ public class MusicPlayerActivity extends FragmentActivity {
 
 			@Override
 			public void onClick(View v) {
-				// TODO ·µ»ØÖ÷Ò³
 				backToMain();
 			}
 		});
+		// å·¦æ»‘åˆ‡æ¢è‡³ä¸»é¡µ
+		mDetector = new GestureDetector(new LeftGestureListener());
 	}
 
 	@Override
 	public void onBackPressed() {
-		// TODO ·µ»ØÖ÷Ò³
 		super.onBackPressed();
 		backToMain();
 	}
 
 	private void backToMain() {
+		// TODO è¿”å›ä¸»é¡µé¢
 		startActivity(new Intent(MusicPlayerActivity.this,
 				MainContentActivity.class));
 		MusicPlayerActivity.this.finish();
 		overridePendingTransition(R.anim.push_right_in, R.anim.push_right_out);
 	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		return this.mDetector.onTouchEvent(event);
+	}
+
+	private class LeftGestureListener extends SimpleOnGestureListener {
+		@Override
+		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+				float velocityY) {
+			// ä»å³å‘å·¦æ»‘åŠ¨
+			if (e1.getX() - e2.getX() < -50) {
+				backToMain();
+				return true;
+			}
+			return false;
+		}
+
+	}
+
 }
