@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string-array name="menu_settings">
+    <string-array name="menu_mymusic">
         <item>本地音乐</item>
         <item>喜爱</item>
         <item>收藏列表</item>
         <item>最近播放</item>
-        <item>系统设置</item>
+    </string-array>
+    <string-array name="menu_othersettings">
+        <item>选项</item>
+        <item>意见反馈</item>
         <item>退出</item>
     </string-array>
-    
+
 </resources>

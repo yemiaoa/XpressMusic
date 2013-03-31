@@ -15,7 +15,8 @@ public final class R {
         public static final int push_right_out=0x7f040003;
     }
     public static final class array {
-        public static final int menu_settings=0x7f0c0000;
+        public static final int menu_mymusic=0x7f0c0000;
+        public static final int menu_othersettings=0x7f0c0001;
     }
     public static final class attr {
         /**  Custom divider drawable to use for elements in the action bar. 
@@ -1150,45 +1151,49 @@ containing a value of this type.
         public static final int abs__title=0x7f050020;
         public static final int abs__titleDivider=0x7f050021;
         public static final int abs__up=0x7f05000b;
-        public static final int action_settings=0x7f050051;
-        public static final int album_picture=0x7f05003c;
-        public static final int bottom_info_frame=0x7f05003b;
-        public static final int bottom_play_frame=0x7f05003a;
-        public static final int button_next_song=0x7f050040;
-        public static final int button_play=0x7f050041;
-        public static final int content_container=0x7f050038;
-        public static final int current_time=0x7f05003e;
+        public static final int action_settings=0x7f050055;
+        public static final int album_picture=0x7f05003d;
+        public static final int amazinglistview_menu=0x7f050038;
+        public static final int bottom_info_frame=0x7f05003c;
+        public static final int bottom_play_frame=0x7f05003b;
+        public static final int button_next_song=0x7f050041;
+        public static final int button_play=0x7f050042;
+        public static final int content_container=0x7f050039;
+        public static final int current_time=0x7f05003f;
         public static final int disableHome=0x7f050009;
         public static final int edit_query=0x7f05002c;
-        public static final int frame_content=0x7f050039;
-        public static final int frame_menu=0x7f050042;
-        public static final int frame_play_content=0x7f050047;
+        public static final int frame_content=0x7f05003a;
+        public static final int frame_menu=0x7f050043;
+        public static final int frame_play_content=0x7f050048;
         public static final int fullscreen=0x7f050013;
         public static final int homeAsUp=0x7f050006;
         public static final int left=0x7f050010;
         public static final int listMode=0x7f050002;
+        public static final int list_item_section=0x7f050052;
+        public static final int list_item_section_text=0x7f050053;
         public static final int margin=0x7f050012;
+        public static final int menu_title=0x7f050051;
         public static final int normal=0x7f050001;
-        public static final int play_button_back=0x7f050044;
-        public static final int play_button_setting=0x7f05004f;
-        public static final int play_current_time=0x7f050048;
-        public static final int play_favorite=0x7f050046;
-        public static final int play_mode=0x7f05004b;
-        public static final int play_playbutton=0x7f05004d;
-        public static final int play_playnext=0x7f05004e;
-        public static final int play_playprevious=0x7f05004c;
-        public static final int play_progress=0x7f05004a;
-        public static final int play_song_time=0x7f050049;
-        public static final int play_song_title=0x7f050045;
-        public static final int player_container=0x7f050043;
+        public static final int play_button_back=0x7f050045;
+        public static final int play_button_setting=0x7f050050;
+        public static final int play_current_time=0x7f050049;
+        public static final int play_favorite=0x7f050047;
+        public static final int play_mode=0x7f05004c;
+        public static final int play_playbutton=0x7f05004e;
+        public static final int play_playnext=0x7f05004f;
+        public static final int play_playprevious=0x7f05004d;
+        public static final int play_progress=0x7f05004b;
+        public static final int play_song_time=0x7f05004a;
+        public static final int play_song_title=0x7f050046;
+        public static final int player_container=0x7f050044;
         public static final int right=0x7f050011;
         public static final int selected_view=0x7f050014;
         public static final int showCustom=0x7f050008;
         public static final int showHome=0x7f050005;
         public static final int showTitle=0x7f050007;
-        public static final int singer=0x7f05003f;
-        public static final int slidingmenumain=0x7f050050;
-        public static final int song_name=0x7f05003d;
+        public static final int singer=0x7f050040;
+        public static final int slidingmenumain=0x7f050054;
+        public static final int song_name=0x7f05003e;
         public static final int tabMode=0x7f050003;
         public static final int useLogo=0x7f050004;
         public static final int wrap_content=0x7f050000;
@@ -1221,13 +1226,15 @@ containing a value of this type.
         public static final int abs__search_view=0x7f030015;
         public static final int abs__simple_dropdown_hint=0x7f030016;
         public static final int activity_main=0x7f030017;
-        public static final int layout_content=0x7f030018;
-        public static final int layout_menu=0x7f030019;
-        public static final int layout_musicplay=0x7f03001a;
-        public static final int list=0x7f03001b;
-        public static final int sherlock_spinner_dropdown_item=0x7f03001c;
-        public static final int sherlock_spinner_item=0x7f03001d;
-        public static final int slidingmenumain=0x7f03001e;
+        public static final int amazinglistview_menu=0x7f030018;
+        public static final int layout_content=0x7f030019;
+        public static final int layout_menu=0x7f03001a;
+        public static final int layout_musicplay=0x7f03001b;
+        public static final int list_item_menu=0x7f03001c;
+        public static final int list_item_section=0x7f03001d;
+        public static final int sherlock_spinner_dropdown_item=0x7f03001e;
+        public static final int sherlock_spinner_item=0x7f03001f;
+        public static final int slidingmenumain=0x7f030020;
     }
     public static final class menu {
         public static final int main=0x7f0d0000;
@@ -1283,6 +1290,8 @@ containing a value of this type.
         public static final int albumpicture=0x7f0a0012;
         public static final int app_name=0x7f0a000f;
         public static final int hello_world=0x7f0a0011;
+        public static final int my_music=0x7f0a0013;
+        public static final int other_settings=0x7f0a0014;
     }
     public static final class style {
         /** 
