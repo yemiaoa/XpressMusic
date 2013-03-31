@@ -8,6 +8,7 @@ import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
+
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
 import com.lq.fragment.ColorFragment;
@@ -23,10 +24,14 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_content);
 
+		// 初始化SlidingMenu，并为其填充Fragment
 		initSlidingMenu();
 		initPopulateFragment();
 
+		// 设置ActionBar
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+		// 设置主页底部的播放控制，处理响应事件
 		View info_frame = findViewById(R.id.bottom_info_frame);
 		info_frame.setOnClickListener(new View.OnClickListener() {
 
@@ -38,6 +43,8 @@ public class MainContentActivity extends SherlockFragmentActivity {
 						R.anim.push_left_out);
 			}
 		});
+
+		// 设置滑动手势
 		mDetector = new GestureDetector(new RightGestureListener());
 	}
 
@@ -57,6 +64,7 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		mSlidingMenu.setShadowDrawable(R.drawable.shadow);
 		mSlidingMenu.setBehindOffsetRes(R.dimen.slidingmenu_offset);
 		mSlidingMenu.setFadeDegree(0.35f);
+		mSlidingMenu.setBehindScrollScale(0.0f);// 滑动时侧滑菜单的内容静止不动
 	}
 
 	private void initPopulateFragment() {
@@ -101,15 +109,15 @@ public class MainContentActivity extends SherlockFragmentActivity {
 
 	@Override
 	public void onBackPressed() {
-		//规定在显示菜单时才可退出程序，按返回键弹出侧滑菜单
+		// 规定在显示菜单时才可退出程序，按返回键弹出侧滑菜单
 		if (mSlidingMenu.isMenuShowing()) {
-			//显示菜单时，按返回键退出程序
+			// 显示菜单时，按返回键退出程序
 			this.finish();
 		} else if (this.getSupportFragmentManager().getBackStackEntryCount() > 0) {
-			//如果已经打开多个Fragment，允许返回键将Fragment回退
+			// 如果已经打开多个Fragment，允许返回键将Fragment回退
 			super.onBackPressed();
 		} else {
-			//Fragment已经回退完，此时菜单没有显示，就弹出菜单
+			// Fragment已经回退完，此时菜单没有显示，就弹出菜单
 			mSlidingMenu.showMenu();
 		}
 	}

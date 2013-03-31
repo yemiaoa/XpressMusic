@@ -150,7 +150,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/button_backround_deep"
                 android:contentDescription="@string/app_name"
-                android:src="@drawable/button_setting" />
+                android:src="@drawable/button_items" />
         </LinearLayout>
     </LinearLayout>
 

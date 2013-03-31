@@ -806,11 +806,12 @@ containing a value of this type.
         public static final int abs__bright_foreground_inverse_holo_dark=0x7f070006;
         public static final int abs__bright_foreground_inverse_holo_light=0x7f070007;
         public static final int abs__holo_blue_light=0x7f070008;
-        public static final int abs__primary_text_disable_only_holo_dark=0x7f070016;
-        public static final int abs__primary_text_disable_only_holo_light=0x7f070017;
-        public static final int abs__primary_text_holo_dark=0x7f070018;
-        public static final int abs__primary_text_holo_light=0x7f070019;
+        public static final int abs__primary_text_disable_only_holo_dark=0x7f070017;
+        public static final int abs__primary_text_disable_only_holo_light=0x7f070018;
+        public static final int abs__primary_text_holo_dark=0x7f070019;
+        public static final int abs__primary_text_holo_light=0x7f07001a;
         public static final int black=0x7f070014;
+        public static final int grey_dark=0x7f070015;
         /**  A really bright Holo shade of blue 
          */
         public static final int holo_blue_bright=0x7f070012;
@@ -841,7 +842,7 @@ containing a value of this type.
         /**  A light Holo shade of red 
          */
         public static final int holo_red_light=0x7f07000b;
-        public static final int transparent=0x7f070015;
+        public static final int transparent=0x7f070016;
         public static final int white=0x7f070013;
     }
     public static final class dimen {
@@ -1093,13 +1094,13 @@ containing a value of this type.
         public static final int button_backround_light=0x7f020072;
         public static final int button_favorite=0x7f020073;
         public static final int button_favorite_on=0x7f020074;
-        public static final int button_next=0x7f020075;
-        public static final int button_pause=0x7f020076;
-        public static final int button_play=0x7f020077;
-        public static final int button_playmode_repeat=0x7f020078;
-        public static final int button_playmode_shuffle=0x7f020079;
-        public static final int button_previous=0x7f02007a;
-        public static final int button_setting=0x7f02007b;
+        public static final int button_items=0x7f020075;
+        public static final int button_next=0x7f020076;
+        public static final int button_pause=0x7f020077;
+        public static final int button_play=0x7f020078;
+        public static final int button_playmode_repeat=0x7f020079;
+        public static final int button_playmode_shuffle=0x7f02007a;
+        public static final int button_previous=0x7f02007b;
         public static final int default_album=0x7f02007c;
         public static final int ic_launcher=0x7f02007d;
         public static final int overflow=0x7f02007e;

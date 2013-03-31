@@ -7,66 +7,60 @@ import java.util.List;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.ListFragment;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
+import android.widget.BaseAdapter;
+import android.widget.ListView;
+import android.widget.SectionIndexer;
 import android.widget.TextView;
 
-import com.foound.widget.AmazingAdapter;
-import com.foound.widget.AmazingListView;
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
 
-public class MenuFragment extends Fragment {
-	AmazingListView mListView = null;
+public class MenuFragment extends ListFragment {
+	ListView mListView = null;
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
-		View v = inflater.inflate(R.layout.amazinglistview_menu, null);
-		mListView = (AmazingListView) v.findViewById(R.id.amazinglistview_menu);
-		mListView.setPinnedHeaderView(LayoutInflater.from(getActivity())
-				.inflate(R.layout.list_item_section, mListView, false));
-		mListView.setAdapter(new SectionAdapter());
-		mListView.setOnItemClickListener(new MenuItemClickListener());
-		return v;
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		mListView = (ListView) getListView();
+		mListView
+				.setBackgroundColor(getResources().getColor(R.color.grey_dark));
+		setListAdapter(new SectionAdapter());
 	}
 
-	private class MenuItemClickListener implements OnItemClickListener {
-		@Override
-		public void onItemClick(AdapterView<?> parent, View view, int position,
-				long id) {
-			Fragment newContent = null;
-			switch (position) {
-			// 对应res/array.xml中选项的顺序
-			case 0:// TODO 本地音乐
-				newContent = new ColorFragment(R.color.holo_orange_dark);
-				break;
-			case 1:// TODO 喜爱
-				newContent = new ColorFragment(R.color.holo_green_dark);
-				break;
-			case 2:// TODO 收藏列表
-				newContent = new ColorFragment(R.color.holo_blue_dark);
-				break;
-			case 3:// TODO 最近播放
-				newContent = new ColorFragment(R.color.holo_purple);
-				break;
-			case 4:// TODO 选项
-				newContent = new ColorFragment(R.color.holo_red_dark);
-				break;
-			case 5:// TODO 意见反馈
-				newContent = new ColorFragment(R.color.holo_red_light);
-				break;
-			case 6:// TODO 退出
-				((MainContentActivity) getActivity()).exit();
-				break;
-			}
-			if (newContent != null)
-				switchFragment(newContent);
+	@Override
+	public void onListItemClick(ListView l, View v, int position, long id) {
+		Fragment newContent = null;
+		switch (position) {
+		// 对应res/array.xml中选项的顺序
+		case 0:// TODO 本地音乐
+			newContent = new ColorFragment(R.color.holo_orange_dark);
+			break;
+		case 1:// TODO 喜爱
+			newContent = new ColorFragment(R.color.holo_green_dark);
+			break;
+		case 2:// TODO 收藏列表
+			newContent = new ColorFragment(R.color.holo_blue_dark);
+			break;
+		case 3:// TODO 最近播放
+			newContent = new ColorFragment(R.color.holo_purple);
+			break;
+		case 4:// TODO 选项
+			newContent = new ColorFragment(R.color.holo_red_dark);
+			break;
+		case 5:// TODO 意见反馈
+			newContent = new ColorFragment(R.color.holo_red_light);
+			break;
+		case 6:// TODO 退出
+			((MainContentActivity) getActivity()).exit();
+			break;
 		}
+		if (newContent != null)
+			switchFragment(newContent);
 	}
 
 	// the meat of switching the above fragment
@@ -93,7 +87,7 @@ public class MenuFragment extends Fragment {
 		return mDataList;
 	}
 
-	private class SectionAdapter extends AmazingAdapter {
+	private class SectionAdapter extends BaseAdapter implements SectionIndexer {
 		List<Pair<String, List<String>>> dataList = getData();
 
 		@Override
@@ -124,8 +118,7 @@ public class MenuFragment extends Fragment {
 		}
 
 		@Override
-		public View getAmazingView(int position, View convertView,
-				ViewGroup parent) {
+		public View getView(int position, View convertView, ViewGroup parent) {
 			ViewHolder holder = null;
 			if (convertView == null) {
 				convertView = LayoutInflater.from(getActivity()).inflate(
@@ -138,6 +131,11 @@ public class MenuFragment extends Fragment {
 				holder = (ViewHolder) convertView.getTag();
 			}
 			holder.menu_title.setText(getItem(position));
+
+			final int section = getSectionForPosition(position);
+			boolean displaySectionHeaders = (getPositionForSection(section) == position);
+
+			bindSectionHeader(convertView, position, displaySectionHeaders);
 			return convertView;
 		}
 
@@ -153,16 +151,6 @@ public class MenuFragment extends Fragment {
 			} else {
 				section_item.setVisibility(View.GONE);
 			}
-		}
-
-		@Override
-		public void configurePinnedHeader(View header, int position, int alpha) {
-			TextView lSectionHeader = (TextView) header
-					.findViewById(R.id.list_item_section_text);
-			lSectionHeader
-					.setText(getSections()[getSectionForPosition(position)]);
-			// lSectionHeader.setBackgroundColor(alpha << 24 | (0xbbffbb));
-			// lSectionHeader.setTextColor(alpha << 24 | (0x000000));
 		}
 
 		@Override
@@ -201,12 +189,6 @@ public class MenuFragment extends Fragment {
 				res[i] = dataList.get(i).first;
 			}
 			return res;
-		}
-
-		@Override
-		protected void onNextPageRequested(int page) {
-			// TODO Auto-generated method stub
-
 		}
 
 	}
