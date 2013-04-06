@@ -64,7 +64,6 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		mSlidingMenu.setFadeDegree(0.35f);
 		mSlidingMenu.setBehindScrollScale(0.0f);// 滑动时侧滑菜单的内容静止不动
 
-		mSlidingMenu.showMenu();
 	}
 
 	private void initPopulateFragment() {

@@ -11,7 +11,9 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
@@ -21,11 +23,19 @@ import com.actionbarsherlock.widget.SearchView;
 import com.actionbarsherlock.widget.SearchView.OnQueryTextListener;
 import com.lq.activity.R;
 
+/**
+ * 读取并显示设备外存上的音乐文件
+ * 
+ * @author lq
+ * */
 public class LocalMusicFragment extends SherlockFragment implements
 		OnQueryTextListener, LoaderManager.LoaderCallbacks<Cursor> {
 
 	/** 显示本地音乐的列表 */
 	private ListView mListView = null;
+
+	/** 数据加载完成前显示的进度条 */
+	private ProgressBar mProgressBar = null;
 
 	/** 用来绑定数据至ListView的适配器 */
 	private SimpleCursorAdapter mAdapter;
@@ -45,6 +55,8 @@ public class LocalMusicFragment extends SherlockFragment implements
 		View rootView = inflater.inflate(R.layout.layout_local_music_list,
 				container, false);
 		mListView = (ListView) rootView.findViewById(R.id.listview_local_music);
+		mProgressBar = (ProgressBar) rootView
+				.findViewById(R.id.progressbar_loading_local_music);
 		return rootView;
 	}
 
@@ -69,11 +81,48 @@ public class LocalMusicFragment extends SherlockFragment implements
 		// 为ListView绑定数据适配器
 		mListView.setAdapter(mAdapter);
 
-		// Start out with a progress indicator.
-		// setListShown(false);
+		// 数据加载完成之前，显示一个进度条，隐藏列表，完成加载后显示列表隐藏进度条
+		setListShown(false, true);
 
 		// 初始化一个装载器，根据第一个参数，要么连接一个已存在的装载器，要么以此ID创建一个新的装载器
 		getLoaderManager().initLoader(0, null, this);
+	}
+
+	/**
+	 * 控制是否要显示列表。不显示列表时，可以显示一个进度条以表明正在加载数据
+	 * 
+	 * @see {@link ListFragment#setListShown()}
+	 * @param shown
+	 *            是否显示ListView
+	 * @param animate
+	 *            进度条和列表切换时是否带动画
+	 * */
+	private void setListShown(boolean shown, boolean animate) {
+		if (shown) {
+			if (animate) {
+				mProgressBar.startAnimation(AnimationUtils.loadAnimation(
+						getActivity(), android.R.anim.fade_out));
+				mListView.startAnimation(AnimationUtils.loadAnimation(
+						getActivity(), android.R.anim.fade_in));
+			} else {
+				mProgressBar.clearAnimation();
+				mListView.clearAnimation();
+			}
+			mProgressBar.setVisibility(View.GONE);
+			mListView.setVisibility(View.VISIBLE);
+		} else {
+			if (animate) {
+				mProgressBar.startAnimation(AnimationUtils.loadAnimation(
+						getActivity(), android.R.anim.fade_in));
+				mListView.startAnimation(AnimationUtils.loadAnimation(
+						getActivity(), android.R.anim.fade_out));
+			} else {
+				mProgressBar.clearAnimation();
+				mListView.clearAnimation();
+			}
+			mProgressBar.setVisibility(View.VISIBLE);
+			mListView.setVisibility(View.GONE);
+		}
 	}
 
 	/** 创建ActionBar上的选项菜单，在这里我们添加一个SearchView提供搜索过滤 */
@@ -132,12 +181,14 @@ public class LocalMusicFragment extends SherlockFragment implements
 		// 所以无需手动关闭旧游标
 		mAdapter.swapCursor(data);
 
-		// The list should now be shown.
-		// if (isResumed()) {
-		// setListShown(true);
-		// } else {
-		// setListShownNoAnimation(true);
-		// }
+		// 数据加载完成，显示列表
+		if (isResumed()) {
+			// Fragment页面处于前端（Resumed状态）则显示页面变化的动画
+			setListShown(true, true);
+		} else {
+			// Fragment页面不处于前端则不显示页面变化的动画
+			setListShown(true, false);
+		}
 	}
 
 	/** 此方法在提供给onLoadFinished()最后的一个游标准备关闭时调用，我们要确保不再使用它 */
