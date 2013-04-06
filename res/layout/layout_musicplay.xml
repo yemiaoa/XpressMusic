@@ -27,11 +27,11 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
-            android:layout_margin="5dp"
             android:singleLine="true"
             android:text="第一时间"
-            android:textIsSelectable="false"
-            android:textSize="20sp" />
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="@color/white_translucence"
+            android:textIsSelectable="false" />
 
         <ImageButton
             android:id="@+id/play_favorite"

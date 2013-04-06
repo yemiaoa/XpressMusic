@@ -6,12 +6,13 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
-import com.lq.fragment.ColorFragment;
+import com.lq.fragment.LocalMusicFragment;
 import com.lq.fragment.MenuFragment;
 import com.slidingmenu.lib.SlidingMenu;
 
@@ -37,10 +38,7 @@ public class MainContentActivity extends SherlockFragmentActivity {
 
 			@Override
 			public void onClick(View v) {
-				startActivity(new Intent(MainContentActivity.this,
-						MusicPlayerActivity.class));
-				overridePendingTransition(R.anim.push_left_in,
-						R.anim.push_left_out);
+				switchToMusicPlayer();
 			}
 		});
 
@@ -65,6 +63,8 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		mSlidingMenu.setBehindOffsetRes(R.dimen.slidingmenu_offset);
 		mSlidingMenu.setFadeDegree(0.35f);
 		mSlidingMenu.setBehindScrollScale(0.0f);// 滑动时侧滑菜单的内容静止不动
+
+		mSlidingMenu.showMenu();
 	}
 
 	private void initPopulateFragment() {
@@ -72,8 +72,8 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		FragmentTransaction fragmentTransaction = getSupportFragmentManager()
 				.beginTransaction();
 		fragmentTransaction.replace(R.id.frame_menu, new MenuFragment());
-		fragmentTransaction.replace(R.id.frame_content, new ColorFragment(
-				android.R.color.background_light));
+		fragmentTransaction.replace(R.id.frame_content,
+				new LocalMusicFragment());
 		fragmentTransaction.commit();
 
 	}
@@ -127,20 +127,37 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		return MainContentActivity.this.mDetector.onTouchEvent(event);
 	}
 
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		switch (keyCode) {
+		case KeyEvent.KEYCODE_MENU:
+			mSlidingMenu.showMenu();
+			break;
+
+		default:
+			break;
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+
+	private void switchToMusicPlayer() {
+		startActivity(new Intent(MainContentActivity.this,
+				MusicPlayerActivity.class));
+		overridePendingTransition(R.anim.push_left_in, R.anim.push_left_out);
+	}
+
 	protected class RightGestureListener extends SimpleOnGestureListener {
 		@Override
 		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
 				float velocityY) {
 			// 从左向右滑动
-			if (e1.getX() - e2.getX() > 50) {
-				startActivity(new Intent(MainContentActivity.this,
-						MusicPlayerActivity.class));
-				overridePendingTransition(R.anim.push_left_in,
-						R.anim.push_left_out);
-				return true;
+			if (e1 != null && e2 != null) {
+				if (e1.getX() - e2.getX() > 120) {
+					switchToMusicPlayer();
+					return true;
+				}
 			}
 			return false;
 		}
-
 	}
 }

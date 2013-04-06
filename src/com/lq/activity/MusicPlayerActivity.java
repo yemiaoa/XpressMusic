@@ -52,7 +52,7 @@ public class MusicPlayerActivity extends FragmentActivity {
 		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
 				float velocityY) {
 			// 从右向左滑动
-			if (e1.getX() - e2.getX() < -50) {
+			if (e1.getX() - e2.getX() < -120) {
 				backToMain();
 				return true;
 			}

@@ -38,7 +38,7 @@ public class MenuFragment extends ListFragment {
 		switch (position) {
 		// 对应res/array.xml中选项的顺序
 		case 0:// TODO 本地音乐
-			newContent = new ColorFragment(R.color.holo_orange_dark);
+			newContent = new LocalMusicFragment();
 			break;
 		case 1:// TODO 喜爱
 			newContent = new ColorFragment(R.color.holo_green_dark);
