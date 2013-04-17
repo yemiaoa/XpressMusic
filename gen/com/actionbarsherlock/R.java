@@ -48,7 +48,7 @@ public final class R {
 		public static final int abs__title = 0x7f050020;
 		public static final int abs__progress_circular = 0x7f05000e;
 		public static final int useLogo = 0x7f050004;
-		public static final int action_settings = 0x7f050059;
+		public static final int action_settings = 0x7f050051;
 		public static final int tabMode = 0x7f050003;
 		public static final int abs__search_edit_frame = 0x7f050030;
 		public static final int abs__radio = 0x7f050025;
@@ -413,7 +413,7 @@ public final class R {
 		public static final int abs__ab_stacked_transparent_dark_holo = 0x7f02000c;
 		public static final int abs__dialog_full_holo_dark = 0x7f02001e;
 		public static final int abs__progress_bg_holo_light = 0x7f020048;
-		public static final int ic_launcher = 0x7f02007d;
+		public static final int ic_launcher = 0x7f02007e;
 		public static final int abs__ic_clear_search_api_holo_light = 0x7f020029;
 		public static final int abs__menu_dropdown_panel_holo_dark = 0x7f020045;
 		public static final int abs__activated_background_holo_light = 0x7f020011;

@@ -8,16 +8,24 @@ import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.View;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.ImageButton;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.lq.fragment.LocalMusicFragment;
 import com.lq.fragment.MenuFragment;
 import com.slidingmenu.lib.SlidingMenu;
 
 public class MainContentActivity extends SherlockFragmentActivity {
+	public static final int MESSAGE_SWITCH_TO_PLAY_IMAGE = 0;
+	public static final int MESSAGE_SWITCH_TO_PAUSE_IMAGE = 1;
+
+	/** 侧滑菜单控件 */
 	private SlidingMenu mSlidingMenu = null;
+
+	/** 手势检测 */
 	private GestureDetector mDetector = null;
 
 	@Override
@@ -32,22 +40,12 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		// 设置ActionBar
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-		// 设置主页底部的播放控制，处理响应事件
-		View info_frame = findViewById(R.id.bottom_info_frame);
-		info_frame.setOnClickListener(new View.OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				switchToMusicPlayer();
-			}
-		});
-
 		// 设置滑动手势
 		mDetector = new GestureDetector(new RightGestureListener());
 	}
 
+	/** 设置SlidingMenu */
 	private void initSlidingMenu() {
-		// TODO 设置SlidingMenu
 		mSlidingMenu = new SlidingMenu(this);
 		// 1.为SlidingMenu宿主一个Activity
 		mSlidingMenu.attachToActivity(this, SlidingMenu.SLIDING_WINDOW);
@@ -66,8 +64,9 @@ public class MainContentActivity extends SherlockFragmentActivity {
 
 	}
 
+	/** 为SlidingMenu和Content填充Fragment */
 	private void initPopulateFragment() {
-		// TODO 为SlidingMenu和Content填充Fragment
+
 		FragmentTransaction fragmentTransaction = getSupportFragmentManager()
 				.beginTransaction();
 		fragmentTransaction.replace(R.id.frame_menu, new MenuFragment());
@@ -82,13 +81,22 @@ public class MainContentActivity extends SherlockFragmentActivity {
 	}
 
 	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getSupportMenuInflater().inflate(R.menu.main_content, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case android.R.id.home:
 			mSlidingMenu.toggle();
 			return true;
+		case R.id.go_to_play:
+			switchToMusicPlayer();
+			return true;
 		}
-		return super.onOptionsItemSelected(item);
+		return false;
 	}
 
 	public void switchContent(Fragment fragment) {
@@ -99,11 +107,12 @@ public class MainContentActivity extends SherlockFragmentActivity {
 	}
 
 	public void exit() {
-		// TODO 结束所有Activity和Service
+		// 结束所有Activity和Service
 		// ActivityManager am = (ActivityManager)
 		// getSystemService(Context.ACTIVITY_SERVICE);
 		// am.killBackgroundProcesses(getPackageName());
 		MainContentActivity.this.finish();
+		// Process.killProcess(Process.myPid());
 	}
 
 	@Override
@@ -139,7 +148,7 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		return super.onKeyDown(keyCode, event);
 	}
 
-	private void switchToMusicPlayer() {
+	public void switchToMusicPlayer() {
 		startActivity(new Intent(MainContentActivity.this,
 				MusicPlayerActivity.class));
 		overridePendingTransition(R.anim.push_left_in, R.anim.push_left_out);
@@ -159,4 +168,5 @@ public class MainContentActivity extends SherlockFragmentActivity {
 			return false;
 		}
 	}
+
 }

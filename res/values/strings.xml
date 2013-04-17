@@ -8,5 +8,6 @@
     <string name="my_music">我的音乐</string>
     <string name="other_settings">其他功能</string>
     <string name="there_is_no_song_yet">没有歌曲</string>
+    <string name="go_to_play">进入播放界面</string>
 
 </resources>

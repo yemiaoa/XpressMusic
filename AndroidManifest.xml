@@ -8,6 +8,8 @@
         android:minSdkVersion="8"
         android:targetSdkVersion="14" />
 
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -29,6 +31,18 @@
             android:name="com.lq.activity.MusicPlayerActivity"
             android:theme="@style/Theme.Sherlock.NoActionBar" >
         </activity>
+
+        <service
+            android:name="com.lq.service.MusicService"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="com.lq.musicplayer.action.PLAY" />
+                <action android:name="com.lq.musicplayer.action.PAUSE" />
+                <action android:name="com.lq.musicplayer.action.SKIP" />
+                <action android:name="com.lq.musicplayer.action.REWIND" />
+                <action android:name="com.lq.musicplayer.action.STOP" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
