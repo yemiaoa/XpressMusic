@@ -23,6 +23,11 @@ public class MusicItem {
 	/** 时长 */
 	private long duration;
 
+	@Override
+	public String toString() {
+		return "song_id:" + id + ",song_title:" + title;
+	}
+
 	public long getDuration() {
 		return duration;
 	}

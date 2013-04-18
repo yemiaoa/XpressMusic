@@ -39,6 +39,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.PowerManager;
+import android.os.RemoteException;
 import android.provider.MediaStore.Audio.Media;
 import android.util.Log;
 import android.widget.Toast;
@@ -46,6 +47,7 @@ import android.widget.Toast;
 import com.lq.activity.MusicPlayerActivity;
 import com.lq.activity.R;
 import com.lq.entity.MusicItem;
+import com.lq.fragment.LocalMusicFragment;
 
 /**
  * 这是处理音乐回放的服务，在应用中对媒体的所有处理都交给这个服务。初始化时，
@@ -73,7 +75,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	public static final int MESSAGE_REGISTER_CLIENT_MESSENGER = 2;
 	public static final int MESSAGE_UNREGISTER_CLIENT_MESSENGER = 3;
 	public static final int MESSAGE_DELIVER_CURRENT_MUSIC_LIST = 4;
-	// public static final int MESSAGE_GET_MEDIAPLAYER_STATE = 4;
+	public static final int MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE = 5;
 
 	// 当前播放列表
 	List<MusicItem> mCurrentPlayList = null;
@@ -116,8 +118,10 @@ public class MusicService extends Service implements OnCompletionListener,
 	// 当前播放的歌曲在数据库中的id
 	long mCurrentSongId = -1;
 
-	long mSongIdToBePlay = mCurrentSongId;
-	String mSongTitleToBePlay = mSongTitle;
+	boolean mHasPlayList = false;
+
+	long mSongIdToBePlayed = mCurrentSongId;
+	String mSongTitleToBePlayed = mSongTitle;
 
 	// 我们要播放的音乐是否是来自网络的媒体流
 	boolean mIsStreaming = false;
@@ -134,7 +138,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	Notification mNotification = null;
 
 	/** 客户端的信使，通过它发送消息来与客户端交互 */
-	ArrayList<Messenger> mClientMessengers = new ArrayList<Messenger>();
+	Messenger mClientMessenger = null;
 
 	/** 服务端的信使，通过绑定将其引用传递给客户端，客户端通过它发送消息给ServiceIncomingHandler处理 */
 	private final Messenger mServiceMessenger = new Messenger(
@@ -156,14 +160,34 @@ public class MusicService extends Service implements OnCompletionListener,
 			switch (msg.what) {
 			case MESSAGE_REGISTER_CLIENT_MESSENGER:
 				// 在客户端一旦服务与客户端连接成功，立即会收到此消息，保持客户端的信使的引用
-				mService.mClientMessengers.add(msg.replyTo);
+				mService.mClientMessenger = msg.replyTo;
 				break;
 			case MESSAGE_UNREGISTER_CLIENT_MESSENGER:
 				// 客户端不再与服务端连接时，释放信使资源
-				mService.mClientMessengers.remove(msg.replyTo);
+				mService.mClientMessenger = null;
 				break;
 			case MESSAGE_DELIVER_CURRENT_MUSIC_LIST:
 				mService.mCurrentPlayList = (List<MusicItem>) msg.obj;
+				mService.mHasPlayList = true;
+				mService.mSongIdToBePlayed = mService.mCurrentPlayList.get(0)
+						.getId();
+				mService.mSongTitleToBePlayed = mService.mCurrentPlayList
+						.get(0).getTitle();
+				break;
+			case MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE:
+				try {
+					if (mService.mState == State.Playing) {
+						mService.mClientMessenger.send(Message.obtain(null,
+								MusicPlayerActivity.SET_PAUSE_BUTTON_IMAGE));
+					} else if (mService.mState == State.Paused) {
+						mService.mClientMessenger.send(Message.obtain(null,
+								MusicPlayerActivity.SET_PLAY_BUTTON_IMAGE));
+					}
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
 				break;
 			default:
 				super.handleMessage(msg);
@@ -200,8 +224,13 @@ public class MusicService extends Service implements OnCompletionListener,
 		String action = intent.getAction();
 
 		if (action.equals(ACTION_PLAY)) {
-			mSongIdToBePlay = intent.getLongExtra(Media._ID, -1);
-			mSongTitleToBePlay = intent.getStringExtra(Media.TITLE);
+			int flag = intent.getIntExtra(LocalMusicFragment.FLAG_PLAY_ITEM, 0);
+			if (flag == 1) {// 如果是列表中点击的
+				mSongIdToBePlayed = intent.getLongExtra(Media._ID, 0);
+				mSongTitleToBePlayed = intent.getStringExtra(Media.TITLE);
+			}
+			// Toast.makeText(getApplicationContext(), mCurrentSongId + "",
+			// Toast.LENGTH_SHORT).show();
 			processPlayRequest();
 		} else if (action.equals(ACTION_PAUSE)) {
 			processPauseRequest();
@@ -246,17 +275,25 @@ public class MusicService extends Service implements OnCompletionListener,
 		// 如果处于“停止”状态，直接播放下一首歌曲
 		// 如果处于“播放”或者“暂停”状态，并且请求播放的歌曲与当前播放的歌曲不同，则播放请求的歌曲
 		if (mState == State.Stopped
-				|| (mState == State.Paused && mCurrentSongId != mSongIdToBePlay)
-				|| (mState == State.Playing && mCurrentSongId != mSongIdToBePlay)) {
-			mCurrentSongId = mSongIdToBePlay;
-			mSongTitle = mSongTitleToBePlay;
+				|| (mState == State.Paused && mCurrentSongId != mSongIdToBePlayed)
+				|| (mState == State.Playing && mCurrentSongId != mSongIdToBePlayed)) {
+			mCurrentSongId = mSongIdToBePlayed;
+			mSongTitle = mSongTitleToBePlayed;
 			playNextSong();
-		} else if (mState == State.Paused && mCurrentSongId == mSongIdToBePlay) {
+		} else if (mState == State.Paused
+				&& mCurrentSongId == mSongIdToBePlayed) {
 			// 如果处于“暂停”状态，则继续播放，并且恢复“前台服务”的状态
 			mState = State.Playing;
 			setUpAsForeground(mSongTitle + " (playing)");
 			configAndStartMediaPlayer();
+		}
 
+		// 通知播放界面设置播放按钮为播放状态的图片
+		try {
+			mClientMessenger.send(Message.obtain(null,
+					MusicPlayerActivity.SET_PAUSE_BUTTON_IMAGE));
+		} catch (RemoteException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -266,6 +303,14 @@ public class MusicService extends Service implements OnCompletionListener,
 			mPlayer.pause();
 			relaxResources(false); // 暂停时，取消“前台服务”的状态，但依然保持MediaPlayer的资源
 			// 仍然保持着音频焦点
+		}
+
+		// 通知播放界面设置播放按钮为暂停状态的图片
+		try {
+			mClientMessenger.send(Message.obtain(null,
+					MusicPlayerActivity.SET_PLAY_BUTTON_IMAGE));
+		} catch (RemoteException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -364,7 +409,7 @@ public class MusicService extends Service implements OnCompletionListener,
 		relaxResources(false); // 除了MediaPlayer，释放所有资源
 
 		try {
-			if (mCurrentSongId != -1) {
+			if (mHasPlayList) {
 				createMediaPlayerIfNeeded();
 				mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 				mPlayer.setDataSource(getApplicationContext(), ContentUris

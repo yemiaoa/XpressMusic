@@ -76,7 +76,7 @@
                 android:textSize="15sp" />
 
             <TextView
-                android:id="@+id/play_song_time"
+                android:id="@+id/play_song_total_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
@@ -91,7 +91,7 @@
                 android:id="@+id/play_progress"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_toLeftOf="@id/play_song_time"
+                android:layout_toLeftOf="@id/play_song_total_time"
                 android:layout_toRightOf="@id/play_current_time"
                 android:max="100"
                 android:maxHeight="3dp"
@@ -144,7 +144,7 @@
                 android:src="@drawable/button_next" />
 
             <ImageButton
-                android:id="@+id/play_button_setting"
+                android:id="@+id/play_list"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"

@@ -19,6 +19,7 @@ import android.provider.MediaStore.Audio.Media;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,7 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
@@ -53,6 +55,8 @@ public class LocalMusicFragment extends SherlockFragment implements
 	// 调试用的标记
 	private static final String TAG = LocalMusicFragment.class.getSimpleName();
 
+	public static final String FLAG_PLAY_ITEM = "flag_play_item";
+
 	private MainContentActivity mActivity = null;
 
 	/** 显示本地音乐的列表 */
@@ -63,6 +67,9 @@ public class LocalMusicFragment extends SherlockFragment implements
 
 	/** 用来绑定数据至ListView的适配器 */
 	private MusicListAdapter mAdapter = null;
+
+	/** 正在播放的条目编号 */
+	private int mActivateItemPosition = -1;
 
 	/** SearchView输入栏的过滤 */
 	private String mCurFilter = null;
@@ -205,6 +212,12 @@ public class LocalMusicFragment extends SherlockFragment implements
 	}
 
 	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		Log.i(TAG, "onSaveInstanceState");
+		super.onSaveInstanceState(outState);
+	}
+
+	@Override
 	public void onStop() {
 		Log.i(TAG, "onStop");
 		super.onStop();
@@ -263,6 +276,9 @@ public class LocalMusicFragment extends SherlockFragment implements
 		Intent intent = new Intent(MusicService.ACTION_PLAY);
 		intent.putExtra(Media.TITLE, mAdapter.getItem(position).getTitle());
 		intent.putExtra(Media._ID, mAdapter.getItem(position).getId());
+		intent.putExtra(FLAG_PLAY_ITEM, 1);
+		mActivateItemPosition = position;
+		mAdapter.setSpecifiedIndicator(position);
 		mActivity.startService(intent);
 		mActivity.switchToMusicPlayer();
 	}
@@ -302,6 +318,7 @@ public class LocalMusicFragment extends SherlockFragment implements
 	/** 在装载器需要被创建时执行此方法，这里只有一个装载器，所以我们不必关心装载器的ID */
 	@Override
 	public Loader<List<MusicItem>> onCreateLoader(int id, Bundle args) {
+		Log.i(TAG, "onCreateLoader");
 
 		// 查询语句：检索出.mp3为后缀名，时长大于两分钟，文件大小大于1MB的媒体文件
 		String select = Media.DATA + " like'%.mp3' and " + Media.DURATION
@@ -320,8 +337,14 @@ public class LocalMusicFragment extends SherlockFragment implements
 	@Override
 	public void onLoadFinished(Loader<List<MusicItem>> loader,
 			List<MusicItem> data) {
-		//TODO SD卡拔出时，没有处理
+		Log.i(TAG, "onLoadFinished");
+
+		// TODO SD卡拔出时，没有处理
 		mAdapter.setData(data);
+		if (mActivateItemPosition != -1) {
+			mAdapter.setSpecifiedIndicator(mActivateItemPosition);
+			mListView.setSelection(mActivateItemPosition);
+		}
 		try {
 			// 将新的载入数据传递给Service
 			Message msg = Message.obtain(null,
@@ -346,26 +369,45 @@ public class LocalMusicFragment extends SherlockFragment implements
 	/** 此方法在提供给onLoadFinished()最后的一个游标准备关闭时调用，我们要确保不再使用它 */
 	@Override
 	public void onLoaderReset(Loader<List<MusicItem>> loader) {
+		Log.i(TAG, "onLoaderReset");
 		mAdapter.setData(null);
 	}
 
 	private class MusicListAdapter extends BaseAdapter {
+		/** 数据源 */
 		private List<MusicItem> mData = null;
+
+		/** 播放时为相应播放条目显示一个播放标记 */
+		private SparseBooleanArray mItemActivateIndicator = null;
 
 		public MusicListAdapter() {
 			mData = new ArrayList<MusicItem>();
+			mItemActivateIndicator = new SparseBooleanArray();
 		}
 
 		public void setData(List<MusicItem> data) {
 			if (mData != null) {
 				mData.clear();
 			}
-			if (data != null)
+			if (mItemActivateIndicator != null) {
+				mItemActivateIndicator.clear();
+			}
+			if (data != null) {
 				mData.addAll(data);
+				for (int i = 0; i < mData.size(); i++) {
+					mItemActivateIndicator.put(i, false);
+				}
+			}
 		}
 
 		public List<MusicItem> getData() {
 			return mData;
+		}
+
+		/** 让指定位置的条目显示一个正在播放标记（活动状态标记） */
+		public void setSpecifiedIndicator(int position) {
+			mItemActivateIndicator.put(position, true);
+			notifyDataSetChanged();
 		}
 
 		@Override
@@ -390,6 +432,8 @@ public class LocalMusicFragment extends SherlockFragment implements
 				convertView = LayoutInflater.from(getActivity()).inflate(
 						R.layout.list_item_local_music, null);
 				holder = new ViewHolder();
+				holder.indicator = convertView
+						.findViewById(R.id.play_indicator);
 				holder.title = (TextView) convertView
 						.findViewById(R.id.textview_music_title);
 				holder.artist = (TextView) convertView
@@ -398,6 +442,9 @@ public class LocalMusicFragment extends SherlockFragment implements
 			} else {
 				holder = (ViewHolder) convertView.getTag();
 			}
+			holder.indicator
+					.setVisibility(mItemActivateIndicator.get(position) ? View.VISIBLE
+							: View.INVISIBLE);
 			holder.title.setText(getItem(position).getTitle());
 			holder.artist.setText(getItem(position).getArtist());
 
@@ -408,6 +455,7 @@ public class LocalMusicFragment extends SherlockFragment implements
 	public static class ViewHolder {
 		TextView title;
 		TextView artist;
+		View indicator;
 	}
 
 }
