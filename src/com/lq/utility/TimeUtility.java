@@ -1,6 +1,11 @@
 package com.lq.utility;
 
+import java.util.Locale;
+
+import android.util.Log;
+
 public class TimeUtility {
+	private static final String TAG = TimeUtility.class.getSimpleName();
 
 	/**
 	 * 将给定的毫秒数转换成00:00:00样式的字符串
@@ -8,29 +13,22 @@ public class TimeUtility {
 	 * @param milliseconds
 	 *            待转换的毫秒数
 	 * */
-	public static String milliSecondsToTimer(long milliseconds) {
+	public static String milliSecondsToFormatTimeString(long milliseconds) {
 		String finalTimerString = "";
-		String secondsString = "";
+		int hours, minutes, seconds;
 
-		// Convert total duration into time
-		int hours = (int) (milliseconds / (1000 * 60 * 60));
-		int minutes = (int) (milliseconds % (1000 * 60 * 60)) / (1000 * 60);
-		int seconds = (int) ((milliseconds % (1000 * 60 * 60)) % (1000 * 60) / 1000);
-		// Add hours if there
+		hours = (int) (milliseconds / (1000 * 60 * 60));
+		minutes = (int) (milliseconds % (1000 * 60 * 60)) / (1000 * 60);
+		seconds = (int) ((milliseconds % (1000 * 60 * 60)) % (1000 * 60) / 1000);
+
 		if (hours > 0) {
-			finalTimerString = hours + ":";
-		}
-
-		// Prepending 0 to seconds if it is one digit
-		if (seconds < 10) {
-			secondsString = "0" + seconds;
+			finalTimerString = String.format(Locale.getDefault(),
+					"%02d%02d:%02d", hours, minutes, seconds);
 		} else {
-			secondsString = "" + seconds;
+			finalTimerString = String.format(Locale.getDefault(), "%02d:%02d",
+					minutes, seconds);
 		}
-
-		finalTimerString = finalTimerString + minutes + ":" + secondsString;
-
-		// return timer string
+		Log.d(TAG, "milliseconds=" + milliseconds + "\t finalTimerString=" + finalTimerString);
 		return finalTimerString;
 	}
 }

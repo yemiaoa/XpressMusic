@@ -13,6 +13,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
@@ -20,12 +21,20 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.lq.entity.MusicItem;
+import com.lq.fragment.LocalMusicFragment;
 import com.lq.service.MusicService;
+import com.lq.utility.TimeUtility;
 
 public class MusicPlayerActivity extends FragmentActivity {
+	public final String TAG = MusicPlayerActivity.class.getSimpleName();
+
 	public static final int SET_PLAY_BUTTON_IMAGE = 1;
 	public static final int SET_PAUSE_BUTTON_IMAGE = 2;
+	public static final int UPDATE_PLAYING_SONG_PROGRESS = 3;
+	public static final int SET_PLAYING_SONG_INFO = 4;
 
 	private ImageButton mView_ib_back = null;
 	private ImageButton mView_ib_favorite = null;
@@ -40,6 +49,7 @@ public class MusicPlayerActivity extends FragmentActivity {
 	private ImageButton mView_ib_list = null;
 
 	private boolean mIsPlay = false;
+	private MusicItem mPlaySong = null;
 
 	private GestureDetector mDetector = null;
 
@@ -75,6 +85,22 @@ public class MusicPlayerActivity extends FragmentActivity {
 				mActivity.mView_ib_play_or_pause
 						.setImageResource(R.drawable.button_pause);
 				break;
+			case UPDATE_PLAYING_SONG_PROGRESS:
+				// Log.i("test", "UPDATE_PLAYING_SONG_PROGRESS");
+				// msg.arg1是MediaPlayer的getCurrentPosition()得来的
+				mActivity.mView_tv_current_time.setText(TimeUtility
+						.milliSecondsToFormatTimeString(msg.arg1));
+				mActivity.mView_sb_song_progress.setProgress(msg.arg1
+						* mActivity.mView_sb_song_progress.getMax() / msg.arg2);
+				break;
+			case SET_PLAYING_SONG_INFO:
+				mActivity.mPlaySong = (MusicItem) msg.obj;
+				mActivity.mView_tv_total_time.setText(TimeUtility
+						.milliSecondsToFormatTimeString(mActivity.mPlaySong
+								.getDuration()));
+				mActivity.mView_tv_songtitle.setText(mActivity.mPlaySong
+						.getTitle());
+				break;
 			default:
 				super.handleMessage(msg);
 				break;
@@ -85,6 +111,8 @@ public class MusicPlayerActivity extends FragmentActivity {
 	/** 与Service连接时交互的类 */
 	private ServiceConnection mServiceConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
+			Log.i(TAG, "onServiceConnected");
+
 			// 保持一个对服务端信使的引用，以便向服务端发送消息
 			mServiceMessenger = new Messenger(service);
 			try {
@@ -92,24 +120,32 @@ public class MusicPlayerActivity extends FragmentActivity {
 				Message msg = Message.obtain(null,
 						MusicService.MESSAGE_REGISTER_CLIENT_MESSENGER);
 				msg.replyTo = mClientMessenger;
+				msg.obj = MusicPlayerActivity.class.getSimpleName();
 				mServiceMessenger.send(msg);
+
+				// 通知服务端根据当前播放状态更新播放按钮的图片（显示为播放或者暂停）
+				mServiceMessenger
+						.send(Message
+								.obtain(null,
+										MusicService.MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE));
+
+				// 通知服务端开始更新播放进度条
 				mServiceMessenger.send(Message.obtain(null,
-						MusicService.MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE));
+						MusicService.MESSAGE_UPDATE_PLAYING_SONG_PROGRESS));
+
+				// 通知服务端让服务端把把当前播放的歌曲信息传递给本Activity(如果没有，则什么也不发生)
+				mServiceMessenger.send(Message.obtain(null,
+						MusicService.MESSAGE_DELIVER_PLAYING_SONG_INFO));
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
 		}
 
+		// 与服务端连接异常丢失时才调用，调用unBindService不调用此方法哎
 		public void onServiceDisconnected(ComponentName className) {
-			// 客户端与服务端取消连接时，告知服务端停止向本客户端发送消息
-			try {
-				Message msg = Message.obtain(null,
-						MusicService.MESSAGE_UNREGISTER_CLIENT_MESSENGER);
-				mServiceMessenger.send(msg);
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-			mServiceMessenger = null;
+			Log.i(TAG, "onServiceDisconnected");
+
+			stopCommunicateWithService();
 		}
 	};
 
@@ -137,9 +173,11 @@ public class MusicPlayerActivity extends FragmentActivity {
 	@Override
 	protected void onStop() {
 		super.onStop();
+		Log.i(TAG, "onStop");
 
 		// 本Activity界面不可见时取消绑定服务，服务端无需发送消息过来，本Activity不可见时无需更新界面
 		unbindService(mServiceConnection);
+		stopCommunicateWithService();
 	}
 
 	@Override
@@ -162,10 +200,27 @@ public class MusicPlayerActivity extends FragmentActivity {
 		mView_tv_total_time = (TextView) findViewById(R.id.play_song_total_time);
 		mView_tv_songtitle = (TextView) findViewById(R.id.play_song_title);
 
+		mView_tv_current_time.setText(TimeUtility
+				.milliSecondsToFormatTimeString(0));
+		mView_tv_total_time.setText(TimeUtility
+				.milliSecondsToFormatTimeString(0));
+
 		mView_ib_back.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				backToMain();
+			}
+		});
+
+		mView_ib_play_previous.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				try {
+					mServiceMessenger.send(Message.obtain(null,
+							MusicService.MESSAGE_PLAY_PREVIOUS_SONG));
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
 			}
 		});
 
@@ -179,10 +234,74 @@ public class MusicPlayerActivity extends FragmentActivity {
 				}
 			}
 		});
+
+		mView_ib_play_next.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				try {
+					mServiceMessenger.send(Message.obtain(null,
+							MusicService.MESSAGE_PLAY_NEXT_SONG));
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+
+		mView_sb_song_progress
+				.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+					@Override
+					public void onStopTrackingTouch(SeekBar seekBar) {
+						// 拖动播放进度条后发送消息给服务端，指示从指定进度开始播放
+						try {
+							mServiceMessenger.send(Message
+									.obtain(null,
+											MusicService.MESSAGE_SET_PLAYING_SONG_PROGRESS,
+											seekBar.getProgress(),
+											seekBar.getMax()));
+						} catch (RemoteException e) {
+							e.printStackTrace();
+						}
+					}
+
+					@Override
+					public void onStartTrackingTouch(SeekBar seekBar) {
+					}
+
+					@Override
+					public void onProgressChanged(SeekBar seekBar,
+							int progress, boolean fromUser) {
+						if (fromUser && mPlaySong != null) {
+							// 根据滑动的进度计算出对应的播放时刻
+							mView_tv_current_time.setText(TimeUtility
+									.milliSecondsToFormatTimeString(progress
+											* mPlaySong.getDuration()
+											/ seekBar.getMax()));
+						}
+					}
+				});
+	}
+
+	/** 告知服务端停止通信 */
+	private void stopCommunicateWithService() {
+		// 客户端与服务端取消连接时，告知服务端停止向本客户端发送消息
+		try {
+			// 通知服务端停止更新播放进度条
+			mServiceMessenger.send(Message.obtain(null,
+					MusicService.MESSAGE_STOP_UPDATE_PLAYING_SONG_PROGRESS));
+
+			// 通知服务端客户端已经不存在
+			Message msg = Message.obtain(null,
+					MusicService.MESSAGE_UNREGISTER_CLIENT_MESSENGER);
+			msg.obj = MusicPlayerActivity.class.getSimpleName();
+			mServiceMessenger.send(msg);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+		mServiceMessenger = null;
 	}
 
 	private void backToMain() {
-		// TODO 返回主页面
 		startActivity(new Intent(MusicPlayerActivity.this,
 				MainContentActivity.class));
 		MusicPlayerActivity.this.finish();

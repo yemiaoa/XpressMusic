@@ -39,8 +39,8 @@
             <intent-filter>
                 <action android:name="com.lq.musicplayer.action.PLAY" />
                 <action android:name="com.lq.musicplayer.action.PAUSE" />
-                <action android:name="com.lq.musicplayer.action.SKIP" />
-                <action android:name="com.lq.musicplayer.action.REWIND" />
+                <action android:name="com.lq.musicplayer.action.NEXT" />
+                <action android:name="com.lq.musicplayer.action.PREVIOUS" />
                 <action android:name="com.lq.musicplayer.action.STOP" />
             </intent-filter>
         </service>

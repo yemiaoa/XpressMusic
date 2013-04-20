@@ -56,6 +56,9 @@ public class LocalMusicFragment extends SherlockFragment implements
 	private static final String TAG = LocalMusicFragment.class.getSimpleName();
 
 	public static final String FLAG_PLAY_ITEM = "flag_play_item";
+	private static final int MUSIC_RETRIEVE_LOADER = 0;
+
+	private boolean mHasNewData = false;
 
 	private MainContentActivity mActivity = null;
 
@@ -73,8 +76,6 @@ public class LocalMusicFragment extends SherlockFragment implements
 
 	/** SearchView输入栏的过滤 */
 	private String mCurFilter = null;
-
-	private static final int MUSIC_RETRIEVE_LOADER = 0;
 
 	/** 服务端的信使，通过它发送消息来与MusicService交互 */
 	private Messenger mServiceMessenger = null;
@@ -117,22 +118,16 @@ public class LocalMusicFragment extends SherlockFragment implements
 				Message msg = Message.obtain(null,
 						MusicService.MESSAGE_REGISTER_CLIENT_MESSENGER);
 				msg.replyTo = mClientMessenger;
+				msg.obj = LocalMusicFragment.class.getSimpleName();
 				mServiceMessenger.send(msg);
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
 		}
 
+		// 与服务端连接异常丢失时才调用，调用unBindService不调用此方法哎
 		public void onServiceDisconnected(ComponentName className) {
-			// 客户端与服务端取消连接时，告知服务端停止向本客户端发送消息
-			try {
-				Message msg = Message.obtain(null,
-						MusicService.MESSAGE_UNREGISTER_CLIENT_MESSENGER);
-				mServiceMessenger.send(msg);
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-			mServiceMessenger = null;
+			stopCommuncateWithService();
 		}
 	};
 
@@ -224,6 +219,7 @@ public class LocalMusicFragment extends SherlockFragment implements
 
 		// Fragment不可见时，无需更新UI，取消服务绑定
 		mActivity.unbindService(mServiceConnection);
+		stopCommuncateWithService();
 	}
 
 	@Override
@@ -273,9 +269,20 @@ public class LocalMusicFragment extends SherlockFragment implements
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position,
 			long id) {
+		if (mHasNewData) {
+			try {
+				// 将新的载入数据传递给Service
+				Message msg = Message.obtain(null,
+						MusicService.MESSAGE_DELIVER_CURRENT_MUSIC_LIST);
+				msg.obj = mAdapter.getData();
+				mServiceMessenger.send(msg);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
+		mHasNewData = false;
 		Intent intent = new Intent(MusicService.ACTION_PLAY);
-		intent.putExtra(Media.TITLE, mAdapter.getItem(position).getTitle());
-		intent.putExtra(Media._ID, mAdapter.getItem(position).getId());
+		intent.putExtra("playing_position_in_list", position);
 		intent.putExtra(FLAG_PLAY_ITEM, 1);
 		mActivateItemPosition = position;
 		mAdapter.setSpecifiedIndicator(position);
@@ -338,21 +345,14 @@ public class LocalMusicFragment extends SherlockFragment implements
 	public void onLoadFinished(Loader<List<MusicItem>> loader,
 			List<MusicItem> data) {
 		Log.i(TAG, "onLoadFinished");
+		mHasNewData = true;
 
 		// TODO SD卡拔出时，没有处理
 		mAdapter.setData(data);
+
 		if (mActivateItemPosition != -1) {
 			mAdapter.setSpecifiedIndicator(mActivateItemPosition);
 			mListView.setSelection(mActivateItemPosition);
-		}
-		try {
-			// 将新的载入数据传递给Service
-			Message msg = Message.obtain(null,
-					MusicService.MESSAGE_DELIVER_CURRENT_MUSIC_LIST);
-			msg.obj = mAdapter.getData();
-			mServiceMessenger.send(msg);
-		} catch (RemoteException e) {
-			e.printStackTrace();
 		}
 
 		// 数据加载完成，显示列表
@@ -371,6 +371,19 @@ public class LocalMusicFragment extends SherlockFragment implements
 	public void onLoaderReset(Loader<List<MusicItem>> loader) {
 		Log.i(TAG, "onLoaderReset");
 		mAdapter.setData(null);
+	}
+
+	private void stopCommuncateWithService() {
+		// 客户端与服务端取消连接时，告知服务端停止向本客户端发送消息
+		try {
+			Message msg = Message.obtain(null,
+					MusicService.MESSAGE_UNREGISTER_CLIENT_MESSENGER);
+			msg.obj = LocalMusicFragment.class.getSimpleName();
+			mServiceMessenger.send(msg);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+		mServiceMessenger = null;
 	}
 
 	private class MusicListAdapter extends BaseAdapter {

@@ -1102,19 +1102,21 @@ containing a value of this type.
         public static final int button_pause=0x7f020077;
         public static final int button_play=0x7f020078;
         public static final int button_playmode_repeat=0x7f020079;
-        public static final int button_playmode_shuffle=0x7f02007a;
-        public static final int button_previous=0x7f02007b;
-        public static final int default_album=0x7f02007c;
-        public static final int go_to_play=0x7f02007d;
-        public static final int ic_launcher=0x7f02007e;
-        public static final int ic_stat_playing=0x7f02007f;
-        public static final int overflow=0x7f020080;
-        public static final int playback_playingbar_seekbar_style=0x7f020081;
-        public static final int playback_playingbar_seekbar_thumb=0x7f020082;
-        public static final int playback_playingbar_seekbar_thumb_default=0x7f020083;
-        public static final int playback_playingbar_seekbar_thumb_pressed=0x7f020084;
-        public static final int player_bg=0x7f020085;
-        public static final int shadow=0x7f020086;
+        public static final int button_playmode_repeat_single=0x7f02007a;
+        public static final int button_playmode_sequential=0x7f02007b;
+        public static final int button_playmode_shuffle=0x7f02007c;
+        public static final int button_previous=0x7f02007d;
+        public static final int default_album=0x7f02007e;
+        public static final int go_to_play=0x7f02007f;
+        public static final int ic_launcher=0x7f020080;
+        public static final int ic_stat_playing=0x7f020081;
+        public static final int overflow=0x7f020082;
+        public static final int playback_playingbar_seekbar_style=0x7f020083;
+        public static final int playback_playingbar_seekbar_thumb=0x7f020084;
+        public static final int playback_playingbar_seekbar_thumb_default=0x7f020085;
+        public static final int playback_playingbar_seekbar_thumb_pressed=0x7f020086;
+        public static final int player_bg=0x7f020087;
+        public static final int shadow=0x7f020088;
     }
     public static final class id {
         public static final int abs__action_bar=0x7f050027;

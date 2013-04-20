@@ -23,12 +23,13 @@
 
         <TextView
             android:id="@+id/play_song_title"
-            android:layout_width="wrap_content"
+            android:layout_width="220dp"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
+            android:ellipsize="marquee"
+            android:gravity="center"
             android:singleLine="true"
-            android:text="第一时间"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textColor="@color/white_translucence"
             android:textIsSelectable="false" />
@@ -65,25 +66,27 @@
 
             <TextView
                 android:id="@+id/play_current_time"
-                android:layout_width="wrap_content"
+                android:layout_width="40dp"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="2dp"
+                android:layout_marginLeft="5dp"
+                android:ellipsize="marquee"
+                android:gravity="center"
                 android:singleLine="true"
-                android:text="00:00"
                 android:textIsSelectable="false"
                 android:textSize="15sp" />
 
             <TextView
                 android:id="@+id/play_song_total_time"
-                android:layout_width="wrap_content"
+                android:layout_width="40dp"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
-                android:layout_marginRight="2dp"
+                android:layout_marginRight="5dp"
+                android:ellipsize="marquee"
+                android:gravity="center"
                 android:singleLine="true"
-                android:text="04:41"
                 android:textIsSelectable="false"
                 android:textSize="15sp" />
 
@@ -114,7 +117,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/button_backround_deep"
                 android:contentDescription="@string/app_name"
-                android:src="@drawable/button_playmode_shuffle" />
+                android:src="@drawable/button_playmode_repeat_single" />
 
             <ImageButton
                 android:id="@+id/play_playprevious"
