@@ -1302,6 +1302,10 @@ containing a value of this type.
         public static final int hello_world=0x7f0a0011;
         public static final int my_music=0x7f0a0013;
         public static final int other_settings=0x7f0a0014;
+        public static final int playmode_repeat=0x7f0a0017;
+        public static final int playmode_repeat_single=0x7f0a0018;
+        public static final int playmode_sequential=0x7f0a001a;
+        public static final int playmode_shuffle=0x7f0a0019;
         public static final int there_is_no_song_yet=0x7f0a0015;
     }
     public static final class style {

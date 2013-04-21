@@ -1,15 +1,17 @@
 package com.lq.activity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.ViewGroup.LayoutParams;
-import android.widget.ImageButton;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
@@ -21,6 +23,8 @@ import com.slidingmenu.lib.SlidingMenu;
 public class MainContentActivity extends SherlockFragmentActivity {
 	public static final int MESSAGE_SWITCH_TO_PLAY_IMAGE = 0;
 	public static final int MESSAGE_SWITCH_TO_PAUSE_IMAGE = 1;
+
+	private List<String> mFragmentsName = new ArrayList<String>();
 
 	/** 侧滑菜单控件 */
 	private SlidingMenu mSlidingMenu = null;
@@ -69,10 +73,12 @@ public class MainContentActivity extends SherlockFragmentActivity {
 
 		FragmentTransaction fragmentTransaction = getSupportFragmentManager()
 				.beginTransaction();
-		fragmentTransaction.replace(R.id.frame_menu, new MenuFragment());
+		fragmentTransaction.replace(R.id.frame_menu, new MenuFragment(),
+				MenuFragment.class.getName());
 		fragmentTransaction.replace(R.id.frame_content,
-				new LocalMusicFragment());
+				new LocalMusicFragment(), LocalMusicFragment.class.getName());
 		fragmentTransaction.commit();
+		mFragmentsName.add(LocalMusicFragment.class.getName());
 
 	}
 
@@ -99,10 +105,37 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		return false;
 	}
 
-	public void switchContent(Fragment fragment) {
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.frame_content, fragment).addToBackStack(null)
-				.commit();
+	/**
+	 * 切换主页内容。<br>
+	 * 如果要切换的Fragment已经存在，则隐藏其他已经存在的Fragment，显示已开启过的Fragment。<br>
+	 * 按返回键可以在Fragment之间回退。
+	 */
+	public void switchContent(String fragmentName) {
+		FragmentManager fm = getSupportFragmentManager();
+		Fragment fragment = fm.findFragmentByTag(fragmentName);
+		if (null != fragment) {
+			FragmentTransaction ft = fm.beginTransaction();
+			for (int i = 0; i < mFragmentsName.size(); i++) {
+				if (!mFragmentsName.get(i)
+						.equals(fragment.getClass().getName())) {
+					ft.hide(fm.findFragmentByTag(mFragmentsName.get(i)));
+				}
+			}
+			ft.show(fragment);
+			ft.commit();
+		} else {
+			fragment = Fragment.instantiate(getApplicationContext(),
+					fragmentName);
+			FragmentTransaction ft = fm.beginTransaction();
+			for (int i = 0; i < mFragmentsName.size(); i++) {
+				ft.hide(fm.findFragmentByTag(mFragmentsName.get(i)));
+			}
+			ft.add(R.id.frame_content, fragment, fragmentName).addToBackStack(
+					fragmentName);
+			ft.show(fragment);
+			ft.commit();
+			mFragmentsName.add(fragmentName);
+		}
 		getSlidingMenu().showContent();
 	}
 
@@ -117,13 +150,19 @@ public class MainContentActivity extends SherlockFragmentActivity {
 
 	@Override
 	public void onBackPressed() {
+		FragmentManager fm = getSupportFragmentManager();
 		// 规定在显示菜单时才可退出程序，按返回键弹出侧滑菜单
 		if (mSlidingMenu.isMenuShowing()) {
 			// 显示菜单时，按返回键退出程序
 			this.finish();
-		} else if (this.getSupportFragmentManager().getBackStackEntryCount() > 0) {
+		} else if (fm.getBackStackEntryCount() > 0) {
 			// 如果已经打开多个Fragment，允许返回键将Fragment回退
-			super.onBackPressed();
+			String name = fm.getBackStackEntryAt(
+					fm.getBackStackEntryCount() - 1).getName();
+			mFragmentsName.remove(name);
+			if (!fm.popBackStackImmediate()) {
+				finish();
+			}
 		} else {
 			// Fragment已经回退完，此时菜单没有显示，就弹出菜单
 			mSlidingMenu.showMenu();
@@ -139,7 +178,7 @@ public class MainContentActivity extends SherlockFragmentActivity {
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		switch (keyCode) {
 		case KeyEvent.KEYCODE_MENU:
-			mSlidingMenu.showMenu();
+			mSlidingMenu.toggle();
 			break;
 
 		default:

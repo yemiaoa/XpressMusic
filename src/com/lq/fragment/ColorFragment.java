@@ -1,5 +1,7 @@
 package com.lq.fragment;
 
+import java.util.Random;
+
 import com.lq.activity.R;
 
 import android.os.Bundle;
@@ -14,12 +16,27 @@ public class ColorFragment extends Fragment {
 	private int mColorRes = -1;
 
 	public ColorFragment() {
-		mColorRes = R.color.holo_blue_dark;
-	}
+		switch (new Random().nextInt(5)) {
+		case 0:
+			mColorRes = R.color.holo_blue_dark;
+			break;
+		case 1:
+			mColorRes = R.color.holo_green_dark;
+			break;
+		case 2:
+			mColorRes = R.color.holo_orange_dark;
+			break;
+		case 3:
+			mColorRes = R.color.holo_purple;
+			break;
+		case 4:
+			mColorRes = R.color.holo_red_dark;
+			break;
+		default:
+			mColorRes = R.color.holo_red_light;
+			break;
+		}
 
-	public ColorFragment(int colorRes) {
-		mColorRes = colorRes;
-		setRetainInstance(true);
 	}
 
 	@Override

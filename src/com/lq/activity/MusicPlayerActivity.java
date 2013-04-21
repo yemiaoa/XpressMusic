@@ -21,10 +21,8 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.lq.entity.MusicItem;
-import com.lq.fragment.LocalMusicFragment;
 import com.lq.service.MusicService;
 import com.lq.utility.TimeUtility;
 
@@ -35,6 +33,8 @@ public class MusicPlayerActivity extends FragmentActivity {
 	public static final int SET_PAUSE_BUTTON_IMAGE = 2;
 	public static final int UPDATE_PLAYING_SONG_PROGRESS = 3;
 	public static final int SET_PLAYING_SONG_INFO = 4;
+	public static final int SET_PLAYING_INFO = 5;
+	public static final int SET_PLAYING_MODE = 6;
 
 	private ImageButton mView_ib_back = null;
 	private ImageButton mView_ib_favorite = null;
@@ -86,8 +86,6 @@ public class MusicPlayerActivity extends FragmentActivity {
 						.setImageResource(R.drawable.button_pause);
 				break;
 			case UPDATE_PLAYING_SONG_PROGRESS:
-				// Log.i("test", "UPDATE_PLAYING_SONG_PROGRESS");
-				// msg.arg1是MediaPlayer的getCurrentPosition()得来的
 				mActivity.mView_tv_current_time.setText(TimeUtility
 						.milliSecondsToFormatTimeString(msg.arg1));
 				mActivity.mView_sb_song_progress.setProgress(msg.arg1
@@ -100,6 +98,30 @@ public class MusicPlayerActivity extends FragmentActivity {
 								.getDuration()));
 				mActivity.mView_tv_songtitle.setText(mActivity.mPlaySong
 						.getTitle());
+				break;
+			case SET_PLAYING_INFO:
+				Bundle info = (Bundle) msg.obj;
+				mActivity.setPlayModeImage(info.getInt("playmode"));
+				if (info.getInt("duration") != 0) {
+					mActivity.mView_sb_song_progress.setProgress(info
+							.getInt("cur_pos")
+							* mActivity.mView_sb_song_progress.getMax()
+							/ info.getInt("duration"));
+					mActivity.mView_tv_current_time.setText(TimeUtility
+							.milliSecondsToFormatTimeString(info
+									.getInt("cur_pos")));
+				} else {
+					mActivity.mView_sb_song_progress.setProgress(0);
+					mActivity.mView_tv_current_time.setText(TimeUtility
+							.milliSecondsToFormatTimeString(0));
+					mActivity.mView_tv_total_time.setText(TimeUtility
+							.milliSecondsToFormatTimeString(0));
+				}
+				mActivity.mView_tv_songtitle.setText(info
+						.getString("songtitle"));
+				break;
+			case SET_PLAYING_MODE:
+				mActivity.setPlayModeImage(msg.arg1);
 				break;
 			default:
 				super.handleMessage(msg);
@@ -136,6 +158,11 @@ public class MusicPlayerActivity extends FragmentActivity {
 				// 通知服务端让服务端把把当前播放的歌曲信息传递给本Activity(如果没有，则什么也不发生)
 				mServiceMessenger.send(Message.obtain(null,
 						MusicService.MESSAGE_DELIVER_PLAYING_SONG_INFO));
+
+				// 通知服务端发送当前播放的信息(播放模式等)
+				mServiceMessenger.send(Message.obtain(null,
+						MusicService.MESSAGE_DELIVER_PLAYING_INFO));
+
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
@@ -151,6 +178,7 @@ public class MusicPlayerActivity extends FragmentActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		Log.i(TAG, "onCreate");
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_musicplay);
 
@@ -163,6 +191,7 @@ public class MusicPlayerActivity extends FragmentActivity {
 
 	@Override
 	protected void onStart() {
+		Log.i(TAG, "onStart");
 		super.onStart();
 
 		// 本Activity界面显示时绑定服务，服务发送消息给本Activity以更新UI
@@ -172,12 +201,19 @@ public class MusicPlayerActivity extends FragmentActivity {
 
 	@Override
 	protected void onStop() {
-		super.onStop();
 		Log.i(TAG, "onStop");
+		super.onStop();
 
 		// 本Activity界面不可见时取消绑定服务，服务端无需发送消息过来，本Activity不可见时无需更新界面
 		unbindService(mServiceConnection);
 		stopCommunicateWithService();
+		MusicPlayerActivity.this.finish();
+	}
+
+	@Override
+	protected void onDestroy() {
+		Log.i(TAG, "onDestroy");
+		super.onDestroy();
 	}
 
 	@Override
@@ -209,6 +245,18 @@ public class MusicPlayerActivity extends FragmentActivity {
 			@Override
 			public void onClick(View v) {
 				backToMain();
+			}
+		});
+
+		mView_ib_play_mode.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				try {
+					mServiceMessenger.send(Message.obtain(null,
+							MusicService.MESSAGE_CHANGE_PLAY_MODE));
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
 			}
 		});
 
@@ -306,6 +354,41 @@ public class MusicPlayerActivity extends FragmentActivity {
 				MainContentActivity.class));
 		MusicPlayerActivity.this.finish();
 		overridePendingTransition(R.anim.push_right_in, R.anim.push_right_out);
+	}
+
+	private void setPlayModeImage(int mode) {
+		switch (mode) {
+		case MusicService.PLAYMODE_REPEAT_SINGLE:
+			mView_ib_play_mode
+					.setImageResource(R.drawable.button_playmode_repeat_single);
+			// Toast.makeText(getApplicationContext(),
+			// getResources().getString(R.string.playmode_repeat_single),
+			// Toast.LENGTH_SHORT).show();
+			break;
+		case MusicService.PLAYMODE_REPEAT:
+			mView_ib_play_mode
+					.setImageResource(R.drawable.button_playmode_repeat);
+			// Toast.makeText(getApplicationContext(),
+			// getResources().getString(R.string.playmode_repeat),
+			// Toast.LENGTH_SHORT).show();
+			break;
+		case MusicService.PLAYMODE_SEQUENTIAL:
+			mView_ib_play_mode
+					.setImageResource(R.drawable.button_playmode_sequential);
+			// Toast.makeText(getApplicationContext(),
+			// getResources().getString(R.string.playmode_sequential),
+			// Toast.LENGTH_SHORT).show();
+			break;
+		case MusicService.PLAYMODE_SHUFFLE:
+			mView_ib_play_mode
+					.setImageResource(R.drawable.button_playmode_shuffle);
+			// Toast.makeText(getApplicationContext(),
+			// getResources().getString(R.string.playmode_shuffle),
+			// Toast.LENGTH_SHORT).show();
+			break;
+		default:
+			break;
+		}
 	}
 
 	@Override

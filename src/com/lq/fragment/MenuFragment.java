@@ -34,26 +34,26 @@ public class MenuFragment extends ListFragment {
 
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		Fragment newContent = null;
+		String newContent = null;
 		switch (position) {
 		// 对应res/array.xml中选项的顺序
 		case 0:// TODO 本地音乐
-			newContent = new LocalMusicFragment();
+			newContent = LocalMusicFragment.class.getName();
 			break;
 		case 1:// TODO 喜爱
-			newContent = new ColorFragment(R.color.holo_green_dark);
+			newContent = ColorFragment.class.getName();
 			break;
 		case 2:// TODO 收藏列表
-			newContent = new ColorFragment(R.color.holo_blue_dark);
+			newContent = ColorFragment.class.getName();
 			break;
 		case 3:// TODO 最近播放
-			newContent = new ColorFragment(R.color.holo_purple);
+			newContent = ColorFragment.class.getName();
 			break;
 		case 4:// TODO 选项
-			newContent = new ColorFragment(R.color.holo_red_dark);
+			newContent = ColorFragment.class.getName();
 			break;
 		case 5:// TODO 意见反馈
-			newContent = new ColorFragment(R.color.holo_red_light);
+			newContent = ColorFragment.class.getName();
 			break;
 		case 6:// TODO 退出
 			((MainContentActivity) getActivity()).exit();
@@ -64,7 +64,7 @@ public class MenuFragment extends ListFragment {
 	}
 
 	// the meat of switching the above fragment
-	private void switchFragment(Fragment fragment) {
+	private void switchFragment(String fragment) {
 		if (getActivity() == null)
 			return;
 		else if (getActivity() instanceof MainContentActivity) {

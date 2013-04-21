@@ -9,5 +9,9 @@
     <string name="other_settings">其他功能</string>
     <string name="there_is_no_song_yet">没有歌曲</string>
     <string name="go_to_play">进入播放界面</string>
+    <string name="playmode_repeat">循环播放</string>
+    <string name="playmode_repeat_single">单曲循环</string>
+    <string name="playmode_shuffle">随机播放</string>
+    <string name="playmode_sequential">顺序播放</string>
 
 </resources>

@@ -19,7 +19,9 @@ package com.lq.service;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -35,6 +37,7 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -66,12 +69,9 @@ public class MusicService extends Service implements OnCompletionListener,
 	public static final String ACTION_PLAY = "com.lq.musicplayer.action.PLAY";
 	public static final String ACTION_PAUSE = "com.lq.musicplayer.action.PAUSE";
 	public static final String ACTION_STOP = "com.lq.musicplayer.action.STOP";
-	public static final String ACTION_SKIP = "com.lq.musicplayer.action.NEXT";
-	public static final String ACTION_REWIND = "com.lq.musicplayer.action.PREVIOUS";
-	public static final String ACTION_URL = "com.lq.musicplayer.action.URL";
+	// public static final String ACTION_URL = "com.lq.musicplayer.action.URL";
 
 	// 发送给客户端的消息类型
-	public static final int MESSAGE_TOGGLE_PLAY_OR_PAUSE = 0;
 	public static final int MESSAGE_UPDATE_PLAYING_SONG_PROGRESS = 1;
 	public static final int MESSAGE_STOP_UPDATE_PLAYING_SONG_PROGRESS = 7;
 	public static final int MESSAGE_REGISTER_CLIENT_MESSENGER = 2;
@@ -82,6 +82,16 @@ public class MusicService extends Service implements OnCompletionListener,
 	public static final int MESSAGE_DELIVER_PLAYING_SONG_INFO = 8;
 	public static final int MESSAGE_PLAY_PREVIOUS_SONG = 9;
 	public static final int MESSAGE_PLAY_NEXT_SONG = 10;
+	public static final int MESSAGE_CHANGE_PLAY_MODE = 11;
+	public static final int MESSAGE_DELIVER_PLAYING_INFO = 12;
+
+	public static final int PLAYMODE_REPEAT_SINGLE = 0;
+	public static final int PLAYMODE_REPEAT = 1;
+	public static final int PLAYMODE_SEQUENTIAL = 2;
+	public static final int PLAYMODE_SHUFFLE = 3;
+
+	/** 0代表单曲循环，1代表列表循环，2代表顺序播放，3代表随机播放 */
+	int mPlayMode = 0;
 
 	// 当前播放列表
 	List<MusicItem> mPlayList = new ArrayList<MusicItem>();
@@ -118,7 +128,11 @@ public class MusicService extends Service implements OnCompletionListener,
 	// 当前音频焦点状态
 	AudioFocus mAudioFocus = AudioFocus.NoFocusNoDuck;
 
+	/** 当前播放列表的播放队列，记录当前播放列表歌曲播放顺序 */
+	LinkedList<Integer> mPlayQueue = new LinkedList<Integer>();
+
 	boolean mHasPlayList = false;
+
 	int mPlayingSongPos = 0;
 	int mToBePlayedSongPos = 0;
 
@@ -135,6 +149,8 @@ public class MusicService extends Service implements OnCompletionListener,
 	NotificationManager mNotificationManager;
 
 	Notification mNotification = null;
+
+	Random mRandom = new Random();
 
 	/** Service的Handler,可以延迟指定时间发送消息，而messenger不可以延时发送消息 */
 	ServiceIncomingHandler mServiceHandler = new ServiceIncomingHandler(
@@ -178,25 +194,31 @@ public class MusicService extends Service implements OnCompletionListener,
 				break;
 			case MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE:
 				try {
-					if (mService.mState == State.Playing) {
-						mService.mClientMessengers
-								.get(MusicPlayerActivity.class.getSimpleName())
-								.send(Message
-										.obtain(null,
-												MusicPlayerActivity.SET_PAUSE_BUTTON_IMAGE));
-					} else if (mService.mState == State.Paused) {
-						mService.mClientMessengers
-								.get(MusicPlayerActivity.class.getSimpleName())
-								.send(Message
-										.obtain(null,
-												MusicPlayerActivity.SET_PLAY_BUTTON_IMAGE));
+					if (null != mService.mClientMessengers
+							.get(MusicPlayerActivity.class.getSimpleName())) {
+						if (mService.mState == State.Playing
+								|| mService.mState == State.Preparing) {
+							mService.mClientMessengers
+									.get(MusicPlayerActivity.class
+											.getSimpleName())
+									.send(Message
+											.obtain(null,
+													MusicPlayerActivity.SET_PAUSE_BUTTON_IMAGE));
+						} else {
+							mService.mClientMessengers
+									.get(MusicPlayerActivity.class
+											.getSimpleName())
+									.send(Message
+											.obtain(null,
+													MusicPlayerActivity.SET_PLAY_BUTTON_IMAGE));
+						}
 					}
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
 				break;
 			case MESSAGE_UPDATE_PLAYING_SONG_PROGRESS:
-				if (mService.mState != State.Stopped
+				if (mService.mState == State.Playing
 						&& null != mService.mClientMessengers
 								.get(MusicPlayerActivity.class.getSimpleName())) {
 					Message msg_set_progress = Message.obtain(null,
@@ -235,7 +257,7 @@ public class MusicService extends Service implements OnCompletionListener,
 								.send(Message
 										.obtain(null,
 												MusicPlayerActivity.SET_PLAYING_SONG_INFO,
-												0,
+												mService.mPlayMode,
 												0,
 												mService.mPlayList
 														.get(mService.mPlayingSongPos)));
@@ -246,14 +268,72 @@ public class MusicService extends Service implements OnCompletionListener,
 				break;
 			case MESSAGE_PLAY_PREVIOUS_SONG:
 				if (mService.mHasPlayList) {
-					mService.processPreviousRequest();
+					mService.processPreviousRequest(true);
 				}
 				break;
 
 			case MESSAGE_PLAY_NEXT_SONG:
 				if (mService.mHasPlayList) {
-					mService.processNextRequest();
+					mService.processNextRequest(true);
 				}
+				break;
+			case MESSAGE_CHANGE_PLAY_MODE:
+				mService.mPlayMode = (mService.mPlayMode + 1) % 4;
+				if (mService.mPlayer != null) {
+					switch (mService.mPlayMode) {
+					case PLAYMODE_REPEAT_SINGLE:
+						mService.mPlayer.setLooping(true);
+						break;
+					default:
+						mService.mPlayer.setLooping(false);
+						break;
+					}
+				}
+				if (null != mService.mClientMessengers
+						.get(MusicPlayerActivity.class.getSimpleName())) {
+					try {
+						mService.mClientMessengers.get(
+								MusicPlayerActivity.class.getSimpleName())
+								.send(Message.obtain(null,
+										MusicPlayerActivity.SET_PLAYING_MODE,
+										mService.mPlayMode, 0));
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+				}
+				break;
+			case MESSAGE_DELIVER_PLAYING_INFO:
+				// 信息全都存储在一个Bundle里
+				Bundle info = new Bundle();
+				if (mService.mState == State.Paused
+						|| mService.mState == State.Playing) {
+					info.putInt("cur_pos",
+							mService.mPlayer.getCurrentPosition());
+					info.putInt("duration", mService.mPlayer.getDuration());
+				} else {
+					info.putInt("cur_pos", 0);
+					info.putInt("duration", 0);
+				}
+				info.putInt("playmode", mService.mPlayMode);
+				if (mService.mState == State.Stopped) {
+					info.putString("songtitle", "");
+				} else {
+					info.putString("songtitle",
+							mService.mPlayList.get(mService.mPlayingSongPos)
+									.getTitle());
+				}
+
+				// 传递Bundle数据包给客户端
+				try {
+					mService.mClientMessengers.get(
+							MusicPlayerActivity.class.getSimpleName()).send(
+							Message.obtain(null,
+									MusicPlayerActivity.SET_PLAYING_INFO, 0, 0,
+									info));
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+
 				break;
 			default:
 				super.handleMessage(msg);
@@ -298,14 +378,8 @@ public class MusicService extends Service implements OnCompletionListener,
 			processPlayRequest();
 		} else if (action.equals(ACTION_PAUSE)) {
 			processPauseRequest();
-		} else if (action.equals(ACTION_SKIP))
-			processNextRequest();
-		else if (action.equals(ACTION_STOP)) {
+		} else if (action.equals(ACTION_STOP)) {
 			processStopRequest();
-		} else if (action.equals(ACTION_REWIND)) {
-			processPreviousRequest();
-		} else if (action.equals(ACTION_URL)) {
-			// processAddRequest(intent);
 		}
 		return START_NOT_STICKY; // 当本服务被系统关闭后，不必再重启启动
 	}
@@ -343,7 +417,7 @@ public class MusicService extends Service implements OnCompletionListener,
 						.get(mPlayingSongPos).getId() != mPlayList.get(
 						mToBePlayedSongPos).getId())) {
 			mPlayingSongPos = mToBePlayedSongPos;
-			playNextSong();
+			playSong();
 		} else if (mState == State.Paused
 				&& mPlayList.get(mPlayingSongPos).getId() == mPlayList.get(
 						mToBePlayedSongPos).getId()) {
@@ -352,29 +426,19 @@ public class MusicService extends Service implements OnCompletionListener,
 			setUpAsForeground(mPlayList.get(mPlayingSongPos).getTitle()
 					+ " (playing)");
 			configAndStartMediaPlayer();
+		} else if (mPlayer.isLooping()) {
+			mPlayer.start();
 		}
 
-		if (mHasPlayList
-				&& mClientMessengers.get(MusicPlayerActivity.class
-						.getSimpleName()) != null) {
+		if (mHasPlayList) {
 			// 通知播放界面设置播放按钮为播放状态的图片
-			try {
-				mClientMessengers
-						.get(MusicPlayerActivity.class.getSimpleName())
-						.send(Message.obtain(null,
-								MusicPlayerActivity.SET_PAUSE_BUTTON_IMAGE));
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
+			mServiceHandler
+					.sendEmptyMessage(MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE);
 		}
 
-		// 播放时才更新进度条
-		if (mState == State.Playing) {
-			mServiceHandler
-					.removeMessages(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
-			mServiceHandler
-					.sendEmptyMessage(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
-		}
+		// 更新进度条
+		mServiceHandler.removeMessages(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
+		mServiceHandler.sendEmptyMessage(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
 	}
 
 	void processPauseRequest() {
@@ -385,37 +449,96 @@ public class MusicService extends Service implements OnCompletionListener,
 			// 仍然保持着音频焦点
 
 			// 通知播放界面设置播放按钮为暂停状态的图片
-			if (mClientMessengers
-					.get(MusicPlayerActivity.class.getSimpleName()) != null) {
-				try {
-					mClientMessengers.get(
-							MusicPlayerActivity.class.getSimpleName()).send(
-							Message.obtain(null,
-									MusicPlayerActivity.SET_PLAY_BUTTON_IMAGE));
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-			}
-
-			// 暂停时停止更新进度条
 			mServiceHandler
-					.removeMessages(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
+					.sendEmptyMessage(MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE);
 		}
 	}
 
-	void processPreviousRequest() {
-		if (mState == State.Playing || mState == State.Paused)
-			if (--mPlayingSongPos < 0) {
-				mPlayingSongPos = mPlayList.size() - 1;
+	/**
+	 * 播放上一首歌曲。根据播放模式计算出上一首歌的ID，然后调用播放方法。
+	 * 
+	 * @param fromUser
+	 *            是否是来自用户的请求
+	 * */
+	void processPreviousRequest(boolean fromUser) {
+		if (mState == State.Playing || mState == State.Paused
+				|| mState == State.Stopped) {
+			switch (mPlayMode) {
+			case PLAYMODE_REPEAT:
+			case PLAYMODE_SEQUENTIAL:
+				if (--mToBePlayedSongPos < 0) {
+					mToBePlayedSongPos = mPlayList.size() - 1;
+				}
+				break;
+			case PLAYMODE_SHUFFLE:
+				if (mPlayQueue.size() != 0) {
+					mToBePlayedSongPos = mPlayQueue.pop();
+				} else {
+					mToBePlayedSongPos = mRandom.nextInt(mPlayList.size());
+				}
+				break;
+			case PLAYMODE_REPEAT_SINGLE:
+				if (fromUser) {
+					// 如果是用户请求播放上一首，就顺序播放上一首
+					if (--mToBePlayedSongPos < 0) {
+						mToBePlayedSongPos = mPlayList.size() - 1;
+					}
+				} else {
+					// 如果不是用户请求，循环播放
+					mPlayer.setLooping(true);
+				}
+			default:
+				break;
 			}
-		playNextSong();
+			processPlayRequest();
+		}
 	}
 
-	void processNextRequest() {
-		if (mState == State.Playing || mState == State.Paused) {
-			tryToGetAudioFocus();
-			mPlayingSongPos = (mPlayingSongPos + 1) % mPlayList.size();
-			playNextSong();
+	/**
+	 * 播放下一首歌曲。根据播放模式计算出下一首歌的ID，然后调用播放方法
+	 * 
+	 * @param fromUser
+	 *            是否是来自用户的请求
+	 * */
+	void processNextRequest(boolean fromUser) {
+		if (mState == State.Playing || mState == State.Paused
+				|| mState == State.Stopped) {
+			switch (mPlayMode) {
+			case PLAYMODE_REPEAT:
+				mToBePlayedSongPos = (mToBePlayedSongPos + 1)
+						% mPlayList.size();
+				break;
+			case PLAYMODE_SEQUENTIAL:
+				mToBePlayedSongPos = (mToBePlayedSongPos + 1)
+						% mPlayList.size();
+				if (mToBePlayedSongPos == 0) {
+					if (fromUser) {
+						mToBePlayedSongPos = 0;
+					} else {
+						// 播放到当前播放列表的最后一首便停止播放
+						mToBePlayedSongPos = mPlayList.size() - 1;
+						processStopRequest();
+						return;
+					}
+				}
+				break;
+			case PLAYMODE_SHUFFLE:
+				mPlayQueue.push(mToBePlayedSongPos);
+				mToBePlayedSongPos = mRandom.nextInt(mPlayList.size());
+				break;
+			case PLAYMODE_REPEAT_SINGLE:
+				if (fromUser) {
+					// 如果是用户请求，就顺序播放下一首
+					mToBePlayedSongPos = (mToBePlayedSongPos + 1)
+							% mPlayList.size();
+				} else {
+					// 如果不是用户请求，循环播放
+					mPlayer.setLooping(true);
+				}
+			default:
+				break;
+			}
+			processPlayRequest();
 		}
 	}
 
@@ -434,9 +557,10 @@ public class MusicService extends Service implements OnCompletionListener,
 			// 本服务已经不再使用，终结它
 			// stopSelf();
 
-			// 停止更新进度条
+			// 设置播放界面信息
 			mServiceHandler
-					.removeMessages(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
+					.sendEmptyMessage(MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE);
+			mServiceHandler.sendEmptyMessage(MESSAGE_DELIVER_PLAYING_INFO);
 		}
 	}
 
@@ -498,10 +622,9 @@ public class MusicService extends Service implements OnCompletionListener,
 	}
 
 	/**
-	 * 开始播放下一首歌曲. 默认单曲循环。
+	 * 播放mPlayingSongPos指定的歌曲.
 	 */
-	void playNextSong() {
-		// TODO 尚未处理好
+	void playSong() {
 		mState = State.Stopped;
 		relaxResources(false); // 除了MediaPlayer，释放所有资源
 
@@ -552,21 +675,6 @@ public class MusicService extends Service implements OnCompletionListener,
 		}
 	}
 
-	/** MediaPlayer完成了一首歌曲的播放时调用此方法 */
-	public void onCompletion(MediaPlayer player) {
-		// 当前播放完成，播放下一首
-		playNextSong();
-	}
-
-	/** MediaPlayer完成了准备时调用此方法 */
-	public void onPrepared(MediaPlayer player) {
-		// 准备完成了，可以播放歌曲了
-		mState = State.Playing;
-		updateNotification(mPlayList.get(mPlayingSongPos).getTitle()
-				+ " (playing)");
-		configAndStartMediaPlayer();
-	}
-
 	/** 更新通知栏. */
 	void updateNotification(String text) {
 		PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),
@@ -595,30 +703,60 @@ public class MusicService extends Service implements OnCompletionListener,
 		startForeground(NOTIFICATION_ID, mNotification);
 	}
 
+	/** MediaPlayer完成了一首歌曲的播放时调用此方法 */
+	public void onCompletion(MediaPlayer player) {
+		// 当前播放完成，播放下一首
+		processNextRequest(false);
+	}
+
+	/** MediaPlayer完成了准备时调用此方法 */
+	public void onPrepared(MediaPlayer player) {
+		// 准备完成了，可以播放歌曲了
+		mState = State.Playing;
+		updateNotification(mPlayList.get(mPlayingSongPos).getTitle()
+				+ " (playing)");
+		configAndStartMediaPlayer();
+		if (!mServiceHandler.hasMessages(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS)) {
+			mServiceHandler
+					.sendEmptyMessage(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
+		}
+	}
+
 	/**
-	 * 播放媒体时发生了错误调用此方法。MediaPlayer切换到“停止”状态，给用户一个警告提示，并重置MediaPlayer
+	 * 播放媒体时发生了错误调用此方法,错误发生后停止播放.
 	 */
 	public boolean onError(MediaPlayer mp, int what, int extra) {
 		Toast.makeText(getApplicationContext(),
 				"Media player error! Resetting.", Toast.LENGTH_SHORT).show();
-		Log.e(TAG,
-				"Error: what=" + String.valueOf(what) + ", extra="
-						+ String.valueOf(extra));
-		mState = State.Stopped;
-		relaxResources(true);
-		giveUpAudioFocus();
-
-		// 播放发送错误时，重置播放页面的按钮状态
-		if (mClientMessengers.get(MusicPlayerActivity.class.getSimpleName()) != null) {
-			try {
-				mClientMessengers
-						.get(MusicPlayerActivity.class.getSimpleName())
-						.send(Message.obtain(null,
-								MusicPlayerActivity.SET_PLAY_BUTTON_IMAGE));
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
+		switch (what) {
+		case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
+			Log.e(TAG, "Error: "
+					+ "MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK"
+					+ ", extra=" + String.valueOf(extra));
+			break;
+		case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
+			Log.e(TAG, "Error: " + "MEDIA_ERROR_SERVER_DIED" + ", extra="
+					+ String.valueOf(extra));
+			break;
+		case MediaPlayer.MEDIA_ERROR_UNKNOWN:
+			Log.e(TAG,
+					"Error: " + "MEDIA_ERROR_UNKNOWN" + ", extra="
+							+ String.valueOf(extra));
+			break;
+		case -38:
+			Log.e(TAG,
+					"Error: what"
+							+ what
+							+ ", extra="
+							+ extra
+							+ ",see at http://blog.sina.com.cn/s/blog_632b619d01012991.html");
+			break;
+		default:
+			Log.e(TAG, "Error: what" + what + ", extra=" + extra);
+			break;
 		}
+
+		processStopRequest(false);
 
 		return true; // true表示我们处理了发生的错误
 	}
