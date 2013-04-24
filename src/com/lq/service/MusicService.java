@@ -18,7 +18,6 @@ package com.lq.service;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -37,13 +36,11 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
-import android.os.Bundle;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.Messenger;
 import android.os.PowerManager;
-import android.os.RemoteException;
 import android.provider.MediaStore.Audio.Media;
 import android.util.Log;
 import android.widget.Toast;
@@ -54,12 +51,84 @@ import com.lq.entity.MusicItem;
 import com.lq.fragment.LocalMusicFragment;
 
 /**
- * 这是处理音乐回放的服务，在应用中对媒体的所有处理都交给这个服务。初始化时，
- * 先启动MusicRetriever扫描出用户的媒体文件。然后等待接收来自Activity的Intent请求，
- * 根据Intent的指示执行特定的操作：播放、暂停、上一首、下一首等。
+ * 这是处理音乐回放的服务，在应用中对媒体的所有处理都交给这个服务。
  */
 public class MusicService extends Service implements OnCompletionListener,
 		OnPreparedListener, OnErrorListener, MusicFocusable {
+
+	/**
+	 * 自定义的一个服务连接监听器。 <br>
+	 * 在显示组件与服务组件连接时，用以将业务数据通知并传递给显示层进行初始化；<br>
+	 * 在显示组件与服务组件断开连接时，通知显示层。
+	 */
+	public interface OnServiceConnectionListener {
+		/**
+		 * 在调用MusicService里的
+		 * {@linkplain com.lq.service.MusicService#registerOnServiceConnectionListener
+		 * registerOnServiceConnectionListener()} 方法后调用此方法
+		 * 
+		 * @param currentPlayerState
+		 *            当前音乐播放状态
+		 * @param playingSong
+		 *            当前播放的歌曲
+		 * @param currenPlayPosition
+		 *            当前已经播放到的位置
+		 * @param playMode
+		 *            当前播放模式（顺序播放、列表循环、单曲循环、随机播放）
+		 * */
+		public abstract void onServiceConnected(State currentPlayerState,
+				MusicItem playingSong, int currenPlayPosition, int playMode);
+
+		/**
+		 * 在调用MusicService里的
+		 * {@linkplain com.lq.service.MusicService#unregisterOnServiceConnectionListener
+		 * unregisterOnServiceConnectionListener()} 方法后调用此方法
+		 */
+		public abstract void onServiceDisconnected();
+	}
+
+	/** 定义音乐回放时一系列状态变化时的回调接口 */
+	public interface OnPlaybackStateChangeListener {
+		/** 音乐开始播放时调用此方法 */
+		public abstract void onMusicPlayed();
+
+		/** 音乐播放停止时调用此方法 */
+		public abstract void onMusicPaused();
+
+		/** 音乐播放暂停时调用此方法 */
+		public abstract void onMusicStopped();
+
+		/**
+		 * 播放新的歌曲时调用此方法
+		 * 
+		 * @param playingSong
+		 *            新的歌曲信息
+		 * */
+		public abstract void onPlayNewSong(MusicItem playingSong);
+
+		/**
+		 * 播放模式改变时调用此方法
+		 * 
+		 * @param playMode
+		 *            播放模式
+		 * */
+		public abstract void onPlayModeChanged(int playMode);
+
+		/**
+		 * 播放的音乐进度改变时调用此方法
+		 * 
+		 * @param currentMillis
+		 *            当前播放进度 （已播放的毫秒数）
+		 * */
+		public abstract void onPlayProgressUpdate(int currentMillis);
+	}
+
+	public class MusicPlaybackLocalBinder extends Binder {
+		/** 返回本service的实例到客户端，于是客户端可以调用本service的公开方法 */
+		public MusicService getService() {
+			return MusicService.this;
+		}
+	}
 
 	// 打印调试信息用的标记
 	final static String TAG = MusicService.class.getSimpleName();
@@ -69,21 +138,11 @@ public class MusicService extends Service implements OnCompletionListener,
 	public static final String ACTION_PLAY = "com.lq.musicplayer.action.PLAY";
 	public static final String ACTION_PAUSE = "com.lq.musicplayer.action.PAUSE";
 	public static final String ACTION_STOP = "com.lq.musicplayer.action.STOP";
-	// public static final String ACTION_URL = "com.lq.musicplayer.action.URL";
+	public static final String ACTION_PREVIOUS = "com.lq.musicplayer.action.PREVIOUS";
+	public static final String ACTION_NEXT = "com.lq.musicplayer.action.NEXT";
 
-	// 发送给客户端的消息类型
+	// 消息类型
 	public static final int MESSAGE_UPDATE_PLAYING_SONG_PROGRESS = 1;
-	public static final int MESSAGE_STOP_UPDATE_PLAYING_SONG_PROGRESS = 7;
-	public static final int MESSAGE_REGISTER_CLIENT_MESSENGER = 2;
-	public static final int MESSAGE_UNREGISTER_CLIENT_MESSENGER = 3;
-	public static final int MESSAGE_DELIVER_CURRENT_MUSIC_LIST = 4;
-	public static final int MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE = 5;
-	public static final int MESSAGE_SET_PLAYING_SONG_PROGRESS = 6;
-	public static final int MESSAGE_DELIVER_PLAYING_SONG_INFO = 8;
-	public static final int MESSAGE_PLAY_PREVIOUS_SONG = 9;
-	public static final int MESSAGE_PLAY_NEXT_SONG = 10;
-	public static final int MESSAGE_CHANGE_PLAY_MODE = 11;
-	public static final int MESSAGE_DELIVER_PLAYING_INFO = 12;
 
 	public static final int PLAYMODE_REPEAT_SINGLE = 0;
 	public static final int PLAYMODE_REPEAT = 1;
@@ -91,7 +150,15 @@ public class MusicService extends Service implements OnCompletionListener,
 	public static final int PLAYMODE_SHUFFLE = 3;
 
 	/** 0代表单曲循环，1代表列表循环，2代表顺序播放，3代表随机播放 */
-	int mPlayMode = 0;
+	int mPlayMode = 1;
+
+	/** 服务连接观察者集合 */
+	ArrayList<OnServiceConnectionListener> mOnServiceConnectionListeners = new ArrayList<MusicService.OnServiceConnectionListener>();
+
+	/** 回放状态变化的观察者集合 */
+	ArrayList<OnPlaybackStateChangeListener> mOnPlaybackStateChangeListeners = new ArrayList<MusicService.OnPlaybackStateChangeListener>();
+
+	MusicPlaybackLocalBinder mBinder = new MusicPlaybackLocalBinder();
 
 	// 当前播放列表
 	List<MusicItem> mPlayList = new ArrayList<MusicItem>();
@@ -105,7 +172,9 @@ public class MusicService extends Service implements OnCompletionListener,
 	// 音频焦点的辅助类（API LEVEL > 8 时才能使用）
 	AudioFocusHelper mAudioFocusHelper = null;
 
-	// 指示本服务的当前状态
+	/**
+	 * 指示本服务的当前状态(Preparing,Playing,Paused,Stopped)
+	 * */
 	public enum State {
 		// Retrieving, // 正在检索媒体文件
 		Stopped, // MediaPlayer已经停止工作，不再准备播放
@@ -156,12 +225,6 @@ public class MusicService extends Service implements OnCompletionListener,
 	ServiceIncomingHandler mServiceHandler = new ServiceIncomingHandler(
 			MusicService.this);
 
-	/** 客户端的信使，通过它发送消息来与客户端交互 */
-	HashMap<String, Messenger> mClientMessengers = new HashMap<String, Messenger>();
-
-	/** 服务端的信使，通过绑定将其引用传递给客户端，客户端通过它发送消息给ServiceIncomingHandler处理 */
-	private final Messenger mServiceMessenger = new Messenger(mServiceHandler);
-
 	/** 处理来自客户端的消息 */
 	private static class ServiceIncomingHandler extends Handler {
 		// 使用弱引用，避免Handler造成的内存泄露(Message持有Handler的引用，内部定义的Handler类持有外部类的引用)
@@ -176,169 +239,54 @@ public class MusicService extends Service implements OnCompletionListener,
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
-			case MESSAGE_REGISTER_CLIENT_MESSENGER:
-				Log.i(TAG, "注册客户端：" + (String) msg.obj);
-				// 在客户端一旦服务与客户端连接成功，立即会收到此消息，保持客户端的信使的引用
-				mService.mClientMessengers.put((String) msg.obj, msg.replyTo);
-				break;
-			case MESSAGE_UNREGISTER_CLIENT_MESSENGER:
-				Log.i(TAG, "注销客户端：" + (String) msg.obj);
-				// 客户端不再与服务端连接时，释放信使资源
-				mService.mClientMessengers.remove((String) msg.obj);
-				break;
-			case MESSAGE_DELIVER_CURRENT_MUSIC_LIST:
-				mService.mPlayList.clear();
-				mService.mPlayList.addAll((List<MusicItem>) msg.obj);
-				mService.mHasPlayList = true;
-				mService.mToBePlayedSongPos = 0;
-				break;
-			case MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE:
-				try {
-					if (null != mService.mClientMessengers
-							.get(MusicPlayerActivity.class.getSimpleName())) {
-						if (mService.mState == State.Playing
-								|| mService.mState == State.Preparing) {
-							mService.mClientMessengers
-									.get(MusicPlayerActivity.class
-											.getSimpleName())
-									.send(Message
-											.obtain(null,
-													MusicPlayerActivity.SET_PAUSE_BUTTON_IMAGE));
-						} else {
-							mService.mClientMessengers
-									.get(MusicPlayerActivity.class
-											.getSimpleName())
-									.send(Message
-											.obtain(null,
-													MusicPlayerActivity.SET_PLAY_BUTTON_IMAGE));
-						}
-					}
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-				break;
 			case MESSAGE_UPDATE_PLAYING_SONG_PROGRESS:
-				if (mService.mState == State.Playing
-						&& null != mService.mClientMessengers
-								.get(MusicPlayerActivity.class.getSimpleName())) {
-					Message msg_set_progress = Message.obtain(null,
-							MusicPlayerActivity.UPDATE_PLAYING_SONG_PROGRESS);
-					msg_set_progress.arg1 = mService.mPlayer
-							.getCurrentPosition();
-					msg_set_progress.arg2 = mService.mPlayer.getDuration();
-					try {
-						mService.mClientMessengers.get(
-								MusicPlayerActivity.class.getSimpleName())
-								.send(msg_set_progress);
-					} catch (RemoteException e) {
-						e.printStackTrace();
+				if (mService.mState == State.Playing) {
+					for (int i = 0; i < mService.mOnPlaybackStateChangeListeners
+							.size(); i++) {
+						mService.mOnPlaybackStateChangeListeners.get(i)
+								.onPlayProgressUpdate(
+										mService.mPlayer.getCurrentPosition());
 					}
 					mService.mServiceHandler.sendEmptyMessageDelayed(
 							MESSAGE_UPDATE_PLAYING_SONG_PROGRESS, 1000);
 				}
 				break;
-			case MESSAGE_STOP_UPDATE_PLAYING_SONG_PROGRESS:
-				mService.mServiceHandler
-						.removeMessages(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
-				break;
-			case MESSAGE_SET_PLAYING_SONG_PROGRESS:
-				if (mService.mState != State.Stopped) {
-					mService.mPlayer.seekTo(msg.arg1
-							* mService.mPlayer.getDuration() / msg.arg2);
-				}
-				break;
-			case MESSAGE_DELIVER_PLAYING_SONG_INFO:
-				try {
-					// 如果当前有歌曲正在播放，才传递当前歌曲的信息
-					if (mService.mState == State.Playing
-							|| mService.mState == State.Paused) {
-						mService.mClientMessengers
-								.get(MusicPlayerActivity.class.getSimpleName())
-								.send(Message
-										.obtain(null,
-												MusicPlayerActivity.SET_PLAYING_SONG_INFO,
-												mService.mPlayMode,
-												0,
-												mService.mPlayList
-														.get(mService.mPlayingSongPos)));
-					}
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-				break;
-			case MESSAGE_PLAY_PREVIOUS_SONG:
-				if (mService.mHasPlayList) {
-					mService.processPreviousRequest(true);
-				}
-				break;
-
-			case MESSAGE_PLAY_NEXT_SONG:
-				if (mService.mHasPlayList) {
-					mService.processNextRequest(true);
-				}
-				break;
-			case MESSAGE_CHANGE_PLAY_MODE:
-				mService.mPlayMode = (mService.mPlayMode + 1) % 4;
-				if (mService.mPlayer != null) {
-					switch (mService.mPlayMode) {
-					case PLAYMODE_REPEAT_SINGLE:
-						mService.mPlayer.setLooping(true);
-						break;
-					default:
-						mService.mPlayer.setLooping(false);
-						break;
-					}
-				}
-				if (null != mService.mClientMessengers
-						.get(MusicPlayerActivity.class.getSimpleName())) {
-					try {
-						mService.mClientMessengers.get(
-								MusicPlayerActivity.class.getSimpleName())
-								.send(Message.obtain(null,
-										MusicPlayerActivity.SET_PLAYING_MODE,
-										mService.mPlayMode, 0));
-					} catch (RemoteException e) {
-						e.printStackTrace();
-					}
-				}
-				break;
-			case MESSAGE_DELIVER_PLAYING_INFO:
-				// 信息全都存储在一个Bundle里
-				Bundle info = new Bundle();
-				if (mService.mState == State.Paused
-						|| mService.mState == State.Playing) {
-					info.putInt("cur_pos",
-							mService.mPlayer.getCurrentPosition());
-					info.putInt("duration", mService.mPlayer.getDuration());
-				} else {
-					info.putInt("cur_pos", 0);
-					info.putInt("duration", 0);
-				}
-				info.putInt("playmode", mService.mPlayMode);
-				if (mService.mState == State.Stopped) {
-					info.putString("songtitle", "");
-				} else {
-					info.putString("songtitle",
-							mService.mPlayList.get(mService.mPlayingSongPos)
-									.getTitle());
-				}
-
-				// 传递Bundle数据包给客户端
-				try {
-					mService.mClientMessengers.get(
-							MusicPlayerActivity.class.getSimpleName()).send(
-							Message.obtain(null,
-									MusicPlayerActivity.SET_PLAYING_INFO, 0, 0,
-									info));
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-
-				break;
 			default:
 				super.handleMessage(msg);
 			}
 		}
+	}
+
+	public void registerOnServiceConnectionListener(
+			OnServiceConnectionListener listener) {
+		mOnServiceConnectionListeners.add(listener);
+
+		// 传递当前播放歌曲信息
+		MusicItem item = null;
+		int currentPlayPos = 0;
+		if (mState == State.Playing || mState == State.Paused) {
+			item = mPlayList.get(mPlayingSongPos);
+			currentPlayPos = mPlayer.getCurrentPosition();
+		}
+
+		// 通知观察者服务服务已经连接上，并传递初始化数据
+		listener.onServiceConnected(mState, item, currentPlayPos, mPlayMode);
+	}
+
+	public void unregisterOnServiceConnectionListener(
+			OnServiceConnectionListener listener) {
+		listener.onServiceDisconnected();
+		mOnServiceConnectionListeners.remove(listener);
+	}
+
+	public void registerOnPlaybackStateChangeListener(
+			OnPlaybackStateChangeListener listener) {
+		mOnPlaybackStateChangeListeners.add(listener);
+	}
+
+	public void unregisterOnPlaybackStateChangeListener(
+			OnPlaybackStateChangeListener listener) {
+		mOnPlaybackStateChangeListeners.remove(listener);
 	}
 
 	@Override
@@ -370,18 +318,42 @@ public class MusicService extends Service implements OnCompletionListener,
 		String action = intent.getAction();
 
 		if (action.equals(ACTION_PLAY)) {
-			int flag = intent.getIntExtra(LocalMusicFragment.FLAG_PLAY_ITEM, 0);
-			if (flag == 1) {// 如果是列表中点击的
-				mToBePlayedSongPos = intent.getIntExtra(
-						"playing_position_in_list", 0);
+			if (mHasPlayList) {
+				int flag = intent.getIntExtra(
+						LocalMusicFragment.FLAG_PLAY_ITEM, 0);
+				if (flag == 1) {// 如果是列表中点击的
+					mToBePlayedSongPos = intent.getIntExtra(
+							"playing_position_in_list", 0);
+				}
+				processPlayRequest();
 			}
-			processPlayRequest();
 		} else if (action.equals(ACTION_PAUSE)) {
 			processPauseRequest();
 		} else if (action.equals(ACTION_STOP)) {
 			processStopRequest();
+		} else if (action.equals(ACTION_PREVIOUS)) {
+			if (mHasPlayList) {
+				processPreviousRequest(true);
+			}
+		} else if (action.equals(ACTION_NEXT)) {
+			if (mHasPlayList) {
+				processNextRequest(true);
+			}
 		}
 		return START_NOT_STICKY; // 当本服务被系统关闭后，不必再重启启动
+	}
+
+	@Override
+	public IBinder onBind(Intent arg0) {
+		return mBinder;
+	}
+
+	@Override
+	public void onDestroy() {
+		// Service关闭时释放所有持有的资源
+		mState = State.Stopped;
+		relaxResources(true);
+		giveUpAudioFocus();
 	}
 
 	/**
@@ -430,15 +402,16 @@ public class MusicService extends Service implements OnCompletionListener,
 			mPlayer.start();
 		}
 
-		if (mHasPlayList) {
-			// 通知播放界面设置播放按钮为播放状态的图片
-			mServiceHandler
-					.sendEmptyMessage(MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE);
+		// 通知所有的观察者音乐开始播放了
+		for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
+			mOnPlaybackStateChangeListeners.get(i).onMusicPlayed();
 		}
 
 		// 更新进度条
-		mServiceHandler.removeMessages(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
-		mServiceHandler.sendEmptyMessage(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
+		if (!mServiceHandler.hasMessages(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS)) {
+			mServiceHandler
+					.sendEmptyMessage(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
+		}
 	}
 
 	void processPauseRequest() {
@@ -448,9 +421,10 @@ public class MusicService extends Service implements OnCompletionListener,
 			relaxResources(false); // 暂停时，取消“前台服务”的状态，但依然保持MediaPlayer的资源
 			// 仍然保持着音频焦点
 
-			// 通知播放界面设置播放按钮为暂停状态的图片
-			mServiceHandler
-					.sendEmptyMessage(MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE);
+			// 通知所有的观察者音乐暂停了
+			for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
+				mOnPlaybackStateChangeListeners.get(i).onMusicPaused();
+			}
 		}
 	}
 
@@ -557,10 +531,10 @@ public class MusicService extends Service implements OnCompletionListener,
 			// 本服务已经不再使用，终结它
 			// stopSelf();
 
-			// 设置播放界面信息
-			mServiceHandler
-					.sendEmptyMessage(MESSAGE_SET_PLAYBUTTON_IMAGE_BY_MEDIAPLAYER_STATE);
-			mServiceHandler.sendEmptyMessage(MESSAGE_DELIVER_PLAYING_INFO);
+			// 通知所有的观察者音乐停止播放了
+			for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
+				mOnPlaybackStateChangeListeners.get(i).onMusicStopped();
+			}
 		}
 	}
 
@@ -660,18 +634,10 @@ public class MusicService extends Service implements OnCompletionListener,
 			ex.printStackTrace();
 		}
 
-		// 每次播放新的歌曲的时候，把当前播放的歌曲信息传递给播放界面的组件
-		try {
-			if (mClientMessengers
-					.get(MusicPlayerActivity.class.getSimpleName()) != null) {
-				mClientMessengers
-						.get(MusicPlayerActivity.class.getSimpleName())
-						.send(Message.obtain(null,
-								MusicPlayerActivity.SET_PLAYING_SONG_INFO, 0,
-								0, mPlayList.get(mPlayingSongPos)));
-			}
-		} catch (RemoteException e) {
-			e.printStackTrace();
+		// 每次播放新的歌曲的时候，把当前播放的歌曲信息传递给播放观察者
+		for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
+			mOnPlaybackStateChangeListeners.get(i).onPlayNewSong(
+					mPlayList.get(mPlayingSongPos));
 		}
 	}
 
@@ -783,20 +749,38 @@ public class MusicService extends Service implements OnCompletionListener,
 			configAndStartMediaPlayer();
 	}
 
-	@Override
-	public void onDestroy() {
-		// Service关闭时释放所有持有的资源
-		mState = State.Stopped;
-		relaxResources(true);
-		giveUpAudioFocus();
-	}
-
-	@Override
-	public IBinder onBind(Intent arg0) {
-		return mServiceMessenger.getBinder();
-	}
-
-	public State getState() {
+	public State getPlayState() {
 		return mState;
+	}
+
+	public void seekToSpecifiedPosition(int milliSeconds) {
+		if (mState != State.Stopped) {
+			mPlayer.seekTo(milliSeconds);
+		}
+	}
+
+	public void changePlayMode() {
+		mPlayMode = (mPlayMode + 1) % 4;
+		if (mPlayer != null) {
+			switch (mPlayMode) {
+			case PLAYMODE_REPEAT_SINGLE:
+				mPlayer.setLooping(true);
+				break;
+			default:
+				mPlayer.setLooping(false);
+				break;
+			}
+		}
+
+		for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
+			mOnPlaybackStateChangeListeners.get(i).onPlayModeChanged(mPlayMode);
+		}
+	}
+
+	public void setCurrentPlayList(List<MusicItem> list) {
+		mPlayList.clear();
+		mPlayList.addAll(list);
+		mHasPlayList = true;
+		mToBePlayedSongPos = 0;
 	}
 }

@@ -13,8 +13,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.provider.MediaStore.Audio.Media;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
@@ -30,7 +28,6 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.actionbarsherlock.view.Menu;
@@ -43,6 +40,7 @@ import com.lq.activity.R;
 import com.lq.entity.MusicItem;
 import com.lq.loader.MusicRetrieveLoader;
 import com.lq.service.MusicService;
+import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 
 /**
  * 读取并显示设备外存上的音乐文件
@@ -77,12 +75,10 @@ public class LocalMusicFragment extends SherlockFragment implements
 	/** SearchView输入栏的过滤 */
 	private String mCurFilter = null;
 
-	/** 服务端的信使，通过它发送消息来与MusicService交互 */
-	private Messenger mServiceMessenger = null;
+	private ClientIncomingHandler mHandler = new ClientIncomingHandler(
+			LocalMusicFragment.this);
 
-	/** 客户端的信使，公布给服务端，服务端通过它发送消息给IncomingHandler处理 */
-	private final Messenger mClientMessenger = new Messenger(
-			new ClientIncomingHandler(LocalMusicFragment.this));
+	private MusicService mMusicService = null;
 
 	/** 处理来自服务端的消息 */
 	private static class ClientIncomingHandler extends Handler {
@@ -112,22 +108,11 @@ public class LocalMusicFragment extends SherlockFragment implements
 	private ServiceConnection mServiceConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			// 保持一个对服务端信使的引用，以便向服务端发送消息
-			mServiceMessenger = new Messenger(service);
-			try {
-				// 一旦客户端与服务端连接上，让服务端保持一个客户端信使的引用，以便服务端向客户端发送消息
-				Message msg = Message.obtain(null,
-						MusicService.MESSAGE_REGISTER_CLIENT_MESSENGER);
-				msg.replyTo = mClientMessenger;
-				msg.obj = LocalMusicFragment.class.getSimpleName();
-				mServiceMessenger.send(msg);
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
+			mMusicService = ((MusicPlaybackLocalBinder) service).getService();
 		}
 
 		// 与服务端连接异常丢失时才调用，调用unBindService不调用此方法哎
 		public void onServiceDisconnected(ComponentName className) {
-			stopCommuncateWithService();
 		}
 	};
 
@@ -219,7 +204,6 @@ public class LocalMusicFragment extends SherlockFragment implements
 
 		// Fragment不可见时，无需更新UI，取消服务绑定
 		mActivity.unbindService(mServiceConnection);
-		stopCommuncateWithService();
 	}
 
 	@Override
@@ -269,16 +253,8 @@ public class LocalMusicFragment extends SherlockFragment implements
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position,
 			long id) {
-		if (mHasNewData) {
-			try {
-				// 将新的载入数据传递给Service
-				Message msg = Message.obtain(null,
-						MusicService.MESSAGE_DELIVER_CURRENT_MUSIC_LIST);
-				msg.obj = mAdapter.getData();
-				mServiceMessenger.send(msg);
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
+		if (mHasNewData && mMusicService != null) {
+			mMusicService.setCurrentPlayList(mAdapter.getData());
 		}
 		mHasNewData = false;
 		Intent intent = new Intent(MusicService.ACTION_PLAY);
@@ -371,19 +347,6 @@ public class LocalMusicFragment extends SherlockFragment implements
 	public void onLoaderReset(Loader<List<MusicItem>> loader) {
 		Log.i(TAG, "onLoaderReset");
 		mAdapter.setData(null);
-	}
-
-	private void stopCommuncateWithService() {
-		// 客户端与服务端取消连接时，告知服务端停止向本客户端发送消息
-		try {
-			Message msg = Message.obtain(null,
-					MusicService.MESSAGE_UNREGISTER_CLIENT_MESSENGER);
-			msg.obj = LocalMusicFragment.class.getSimpleName();
-			mServiceMessenger.send(msg);
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
-		mServiceMessenger = null;
 	}
 
 	private class MusicListAdapter extends BaseAdapter {

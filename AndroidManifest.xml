@@ -9,6 +9,7 @@
         android:targetSdkVersion="14" />
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RESTART_PACKAGES" />
 
     <application
         android:allowBackup="true"
@@ -41,6 +42,8 @@
                 <action android:name="com.lq.musicplayer.action.PLAY" />
                 <action android:name="com.lq.musicplayer.action.PAUSE" />
                 <action android:name="com.lq.musicplayer.action.STOP" />
+                <action android:name="com.lq.musicplayer.action.PREVIOUS" />
+                <action android:name="com.lq.musicplayer.action.NEXT" />
             </intent-filter>
         </service>
     </application>

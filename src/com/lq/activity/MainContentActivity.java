@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.KeyEvent;
@@ -18,9 +19,12 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.lq.fragment.LocalMusicFragment;
 import com.lq.fragment.MenuFragment;
+import com.lq.service.MusicService;
 import com.slidingmenu.lib.SlidingMenu;
 
 public class MainContentActivity extends SherlockFragmentActivity {
+	private static final String TAG = MainContentActivity.class.getSimpleName();
+
 	public static final int MESSAGE_SWITCH_TO_PLAY_IMAGE = 0;
 	public static final int MESSAGE_SWITCH_TO_PAUSE_IMAGE = 1;
 
@@ -34,6 +38,7 @@ public class MainContentActivity extends SherlockFragmentActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		Log.i(TAG, "onCreate");
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_content);
 
@@ -93,6 +98,18 @@ public class MainContentActivity extends SherlockFragmentActivity {
 	}
 
 	@Override
+	protected void onStop() {
+		Log.i(TAG, "onStop");
+		super.onStop();
+	}
+
+	@Override
+	protected void onDestroy() {
+		Log.i(TAG, "onDestroy");
+		super.onDestroy();
+	}
+
+	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case android.R.id.home:
@@ -140,12 +157,8 @@ public class MainContentActivity extends SherlockFragmentActivity {
 	}
 
 	public void exit() {
-		// 结束所有Activity和Service
-		// ActivityManager am = (ActivityManager)
-		// getSystemService(Context.ACTIVITY_SERVICE);
-		// am.killBackgroundProcesses(getPackageName());
+		stopService(new Intent(MainContentActivity.this, MusicService.class));
 		MainContentActivity.this.finish();
-		// Process.killProcess(Process.myPid());
 	}
 
 	@Override
