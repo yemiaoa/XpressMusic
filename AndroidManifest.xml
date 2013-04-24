@@ -46,6 +46,17 @@
                 <action android:name="com.lq.musicplayer.action.NEXT" />
             </intent-filter>
         </service>
+
+        <receiver android:name="com.lq.receiver.MediaButtonReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.lq.receiver.AudioBecomingNoisyReceiver" >
+            <intent-filter>
+                <action android:name="android.media.AUDIO_BECOMING_NOISY" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

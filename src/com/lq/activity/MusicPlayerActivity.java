@@ -26,7 +26,7 @@ import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.service.MusicService.OnPlaybackStateChangeListener;
 import com.lq.service.MusicService.OnServiceConnectionListener;
 import com.lq.service.MusicService.State;
-import com.lq.utility.TimeUtility;
+import com.lq.util.TimeHelper;
 
 public class MusicPlayerActivity extends FragmentActivity {
 	public final String TAG = MusicPlayerActivity.class.getSimpleName();
@@ -48,7 +48,7 @@ public class MusicPlayerActivity extends FragmentActivity {
 
 	private GestureDetector mDetector = null;
 
-	private MusicService mMusicService = null;
+	private MusicPlaybackLocalBinder mMusicServiceBinder = null;
 
 	private ClientIncomingHandler mHandler = new ClientIncomingHandler(
 			MusicPlayerActivity.this);
@@ -80,15 +80,15 @@ public class MusicPlayerActivity extends FragmentActivity {
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			Log.i(TAG, "onServiceConnected");
 
-			// 保持对Service的引用，以便调用Service提供的公共方法访问后台数据
-			mMusicService = ((MusicPlaybackLocalBinder) service).getService();
+			// 保持对Service的Binder引用，以便调用Service提供给客户端的方法
+			mMusicServiceBinder = (MusicPlaybackLocalBinder) service;
 
 			// 传递OnServiceConnectionListener对象给Service，以便其发生变化时通知本Activity
-			mMusicService
+			mMusicServiceBinder
 					.registerOnServiceConnectionListener(mOnServiceConnectionListener);
 
 			// 传递OnPlaybackStateChangeListener对象给Service，以便其发生变化时通知本Activity
-			mMusicService
+			mMusicServiceBinder
 					.registerOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
 
 		}
@@ -97,10 +97,10 @@ public class MusicPlayerActivity extends FragmentActivity {
 		public void onServiceDisconnected(ComponentName className) {
 			Log.i(TAG, "onServiceDisconnected");
 
-			if (mMusicService != null) {
-				mMusicService
+			if (mMusicServiceBinder != null) {
+				mMusicServiceBinder
 						.unregisterOnServiceConnectionListener(mOnServiceConnectionListener);
-				mMusicService
+				mMusicServiceBinder
 						.unregisterOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
 			}
 		}
@@ -136,10 +136,10 @@ public class MusicPlayerActivity extends FragmentActivity {
 
 		// 本Activity界面不可见时取消绑定服务，服务端无需发送消息过来，本Activity不可见时无需更新界面
 		unbindService(mServiceConnection);
-		if (mMusicService != null) {
-			mMusicService
+		if (mMusicServiceBinder != null) {
+			mMusicServiceBinder
 					.unregisterOnServiceConnectionListener(mOnServiceConnectionListener);
-			mMusicService
+			mMusicServiceBinder
 					.unregisterOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
 		}
 		MusicPlayerActivity.this.finish();
@@ -176,9 +176,9 @@ public class MusicPlayerActivity extends FragmentActivity {
 		mView_tv_total_time = (TextView) findViewById(R.id.play_song_total_time);
 		mView_tv_songtitle = (TextView) findViewById(R.id.play_song_title);
 
-		mView_tv_current_time.setText(TimeUtility
+		mView_tv_current_time.setText(TimeHelper
 				.milliSecondsToFormatTimeString(0));
-		mView_tv_total_time.setText(TimeUtility
+		mView_tv_total_time.setText(TimeHelper
 				.milliSecondsToFormatTimeString(0));
 
 		mView_ib_back.setOnClickListener(new View.OnClickListener() {
@@ -191,8 +191,8 @@ public class MusicPlayerActivity extends FragmentActivity {
 		mView_ib_play_mode.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if (mMusicService != null) {
-					mMusicService.changePlayMode();
+				if (mMusicServiceBinder != null) {
+					mMusicServiceBinder.changePlayMode();
 				}
 			}
 		});
@@ -228,8 +228,8 @@ public class MusicPlayerActivity extends FragmentActivity {
 					@Override
 					public void onStopTrackingTouch(SeekBar seekBar) {
 						// 拖动播放进度条后发送消息给服务端，指示从指定进度开始播放
-						if (mMusicService != null && mPlaySong != null) {
-							mMusicService.seekToSpecifiedPosition(seekBar
+						if (mMusicServiceBinder != null && mPlaySong != null) {
+							mMusicServiceBinder.seekToSpecifiedPosition(seekBar
 									.getProgress()
 									* (int) mPlaySong.getDuration()
 									/ seekBar.getMax());
@@ -245,7 +245,7 @@ public class MusicPlayerActivity extends FragmentActivity {
 							int progress, boolean fromUser) {
 						if (fromUser && mPlaySong != null) {
 							// 根据滑动的进度计算出对应的播放时刻
-							mView_tv_current_time.setText(TimeUtility
+							mView_tv_current_time.setText(TimeHelper
 									.milliSecondsToFormatTimeString(progress
 											* mPlaySong.getDuration()
 											/ seekBar.getMax()));
@@ -335,11 +335,11 @@ public class MusicPlayerActivity extends FragmentActivity {
 			// 设置歌曲标题、时长、当前播放时间、当前播放进度
 			mPlaySong = playingSong;
 			if (playingSong != null) {
-				mView_tv_total_time.setText(TimeUtility
+				mView_tv_total_time.setText(TimeHelper
 						.milliSecondsToFormatTimeString(playingSong
 								.getDuration()));
 				mView_tv_songtitle.setText(playingSong.getTitle());
-				mView_tv_current_time.setText(TimeUtility
+				mView_tv_current_time.setText(TimeHelper
 						.milliSecondsToFormatTimeString(currenPlayPosition));
 				mView_sb_song_progress.setProgress(currenPlayPosition
 						* mView_sb_song_progress.getMax()
@@ -378,10 +378,10 @@ public class MusicPlayerActivity extends FragmentActivity {
 			// 音乐播放停止时，清空歌曲信息的显示
 			mIsPlay = false;
 			mView_ib_play_or_pause.setImageResource(R.drawable.button_play);
-			mView_tv_total_time.setText(TimeUtility
+			mView_tv_total_time.setText(TimeHelper
 					.milliSecondsToFormatTimeString(0));
 			mView_tv_songtitle.setText("");
-			mView_tv_current_time.setText(TimeUtility
+			mView_tv_current_time.setText(TimeHelper
 					.milliSecondsToFormatTimeString(0));
 			mView_sb_song_progress.setProgress(0);
 			mPlaySong = null;
@@ -392,11 +392,11 @@ public class MusicPlayerActivity extends FragmentActivity {
 			// 播放新的歌曲时，更新显示的歌曲信息
 			mPlaySong = playingSong;
 			if (playingSong != null) {
-				mView_tv_total_time.setText(TimeUtility
+				mView_tv_total_time.setText(TimeHelper
 						.milliSecondsToFormatTimeString(playingSong
 								.getDuration()));
 				mView_tv_songtitle.setText(playingSong.getTitle());
-				mView_tv_current_time.setText(TimeUtility
+				mView_tv_current_time.setText(TimeHelper
 						.milliSecondsToFormatTimeString(0));
 				mView_sb_song_progress.setProgress(0);
 			}
@@ -410,7 +410,7 @@ public class MusicPlayerActivity extends FragmentActivity {
 		@Override
 		public void onPlayProgressUpdate(int currentMillis) {
 			// 更新当前播放时间
-			mView_tv_current_time.setText(TimeUtility
+			mView_tv_current_time.setText(TimeHelper
 					.milliSecondsToFormatTimeString(currentMillis));
 			// 更新当前播放进度
 			mView_sb_song_progress.setProgress(currentMillis

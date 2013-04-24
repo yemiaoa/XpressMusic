@@ -26,6 +26,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -49,6 +50,9 @@ import com.lq.activity.MusicPlayerActivity;
 import com.lq.activity.R;
 import com.lq.entity.MusicItem;
 import com.lq.fragment.LocalMusicFragment;
+import com.lq.receiver.MediaButtonReceiver;
+import com.lq.util.AudioFocusHelper;
+import com.lq.util.AudioFocusHelper.MusicFocusable;
 
 /**
  * 这是处理音乐回放的服务，在应用中对媒体的所有处理都交给这个服务。
@@ -124,9 +128,87 @@ public class MusicService extends Service implements OnCompletionListener,
 	}
 
 	public class MusicPlaybackLocalBinder extends Binder {
-		/** 返回本service的实例到客户端，于是客户端可以调用本service的公开方法 */
-		public MusicService getService() {
-			return MusicService.this;
+
+		public void registerOnServiceConnectionListener(
+				OnServiceConnectionListener listener) {
+			mOnServiceConnectionListeners.add(listener);
+
+			// 传递当前播放歌曲信息
+			MusicItem item = null;
+			int currentPlayPos = 0;
+			if (mState == State.Playing || mState == State.Paused) {
+				item = mPlayList.get(mPlayingSongPos);
+				currentPlayPos = mMediaPlayer.getCurrentPosition();
+			}
+
+			// 通知观察者服务服务已经连接上，并传递初始化数据
+			listener.onServiceConnected(mState, item, currentPlayPos, mPlayMode);
+		}
+
+		public void unregisterOnServiceConnectionListener(
+				OnServiceConnectionListener listener) {
+			listener.onServiceDisconnected();
+			mOnServiceConnectionListeners.remove(listener);
+		}
+
+		public void registerOnPlaybackStateChangeListener(
+				OnPlaybackStateChangeListener listener) {
+			mOnPlaybackStateChangeListeners.add(listener);
+		}
+
+		public void unregisterOnPlaybackStateChangeListener(
+				OnPlaybackStateChangeListener listener) {
+			mOnPlaybackStateChangeListeners.remove(listener);
+		}
+
+		/**
+		 * 让MediaPlayer将当前播放跳转到指定播放位置
+		 * 
+		 * @param milliSeconds
+		 *            指定的已播放的毫秒数
+		 * */
+		public void seekToSpecifiedPosition(int milliSeconds) {
+			if (mState != State.Stopped) {
+				mMediaPlayer.seekTo(milliSeconds);
+			}
+		}
+
+		/** 改变播放模式 */
+		public void changePlayMode() {
+			mPlayMode = (mPlayMode + 1) % 4;
+
+			if (mMediaPlayer != null) {
+				// 如果正在播放歌曲
+				switch (mPlayMode) {
+				case PLAYMODE_REPEAT_SINGLE:
+					// 如果是单曲循环，给MediaPlayer启动单曲播放
+					mMediaPlayer.setLooping(true);
+					break;
+				default:
+					// 如果不是单曲循环，取消MediaPlayer的单曲播放
+					mMediaPlayer.setLooping(false);
+					break;
+				}
+			}
+
+			// 通知各个OnPlaybackStateChangeListener播放模式已经改变，并传递新的播放
+			for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
+				mOnPlaybackStateChangeListeners.get(i).onPlayModeChanged(
+						mPlayMode);
+			}
+		}
+
+		/**
+		 * 设置当前的播放列表
+		 * 
+		 * @param list
+		 *            播放列表,每项包含每首歌曲的详细信息
+		 * */
+		public void setCurrentPlayList(List<MusicItem> list) {
+			mPlayList.clear();
+			mPlayList.addAll(list);
+			mHasPlayList = true;
+			mToBePlayedSongPos = 0;
 		}
 	}
 
@@ -167,7 +249,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	public static final float DUCK_VOLUME = 0.1f;
 
 	// 我们的媒体播放控制器
-	MediaPlayer mPlayer = null;
+	MediaPlayer mMediaPlayer = null;
 
 	// 音频焦点的辅助类（API LEVEL > 8 时才能使用）
 	AudioFocusHelper mAudioFocusHelper = null;
@@ -186,16 +268,6 @@ public class MusicService extends Service implements OnCompletionListener,
 	};
 
 	private State mState = State.Stopped;
-
-	// 定义音频焦点的相关状态
-	enum AudioFocus {
-		NoFocusNoDuck, // 没有音频焦点，也不能低声播放
-		NoFocusCanDuck, // 没有音频焦点，可以低声播放
-		Focused // 有音频焦点，尽情大声播放吧
-	}
-
-	// 当前音频焦点状态
-	AudioFocus mAudioFocus = AudioFocus.NoFocusNoDuck;
 
 	/** 当前播放列表的播放队列，记录当前播放列表歌曲播放顺序 */
 	LinkedList<Integer> mPlayQueue = new LinkedList<Integer>();
@@ -218,6 +290,8 @@ public class MusicService extends Service implements OnCompletionListener,
 	NotificationManager mNotificationManager;
 
 	Notification mNotification = null;
+
+	ComponentName mAudioBecomingNoisyReceiverName = null;
 
 	Random mRandom = new Random();
 
@@ -245,7 +319,8 @@ public class MusicService extends Service implements OnCompletionListener,
 							.size(); i++) {
 						mService.mOnPlaybackStateChangeListeners.get(i)
 								.onPlayProgressUpdate(
-										mService.mPlayer.getCurrentPosition());
+										mService.mMediaPlayer
+												.getCurrentPosition());
 					}
 					mService.mServiceHandler.sendEmptyMessageDelayed(
 							MESSAGE_UPDATE_PLAYING_SONG_PROGRESS, 1000);
@@ -255,38 +330,6 @@ public class MusicService extends Service implements OnCompletionListener,
 				super.handleMessage(msg);
 			}
 		}
-	}
-
-	public void registerOnServiceConnectionListener(
-			OnServiceConnectionListener listener) {
-		mOnServiceConnectionListeners.add(listener);
-
-		// 传递当前播放歌曲信息
-		MusicItem item = null;
-		int currentPlayPos = 0;
-		if (mState == State.Playing || mState == State.Paused) {
-			item = mPlayList.get(mPlayingSongPos);
-			currentPlayPos = mPlayer.getCurrentPosition();
-		}
-
-		// 通知观察者服务服务已经连接上，并传递初始化数据
-		listener.onServiceConnected(mState, item, currentPlayPos, mPlayMode);
-	}
-
-	public void unregisterOnServiceConnectionListener(
-			OnServiceConnectionListener listener) {
-		listener.onServiceDisconnected();
-		mOnServiceConnectionListeners.remove(listener);
-	}
-
-	public void registerOnPlaybackStateChangeListener(
-			OnPlaybackStateChangeListener listener) {
-		mOnPlaybackStateChangeListeners.add(listener);
-	}
-
-	public void unregisterOnPlaybackStateChangeListener(
-			OnPlaybackStateChangeListener listener) {
-		mOnPlaybackStateChangeListeners.remove(listener);
 	}
 
 	@Override
@@ -300,13 +343,13 @@ public class MusicService extends Service implements OnCompletionListener,
 		mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		mAudioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
 
+		mAudioBecomingNoisyReceiverName = new ComponentName(getPackageName(),
+				MediaButtonReceiver.class.getName());
+		mAudioManager
+				.registerMediaButtonEventReceiver(mAudioBecomingNoisyReceiverName);
+
 		// 创建音频焦点辅助类，API LEVEL > 8 时SDK才支持音频焦点这个特性
-		if (android.os.Build.VERSION.SDK_INT >= 8)
-			mAudioFocusHelper = new AudioFocusHelper(getApplicationContext(),
-					this);
-		else
-			mAudioFocus = AudioFocus.Focused; // no focus feature, so we always
-												// "have" audio focus
+		mAudioFocusHelper = new AudioFocusHelper(getApplicationContext(), this);
 	}
 
 	/**
@@ -353,320 +396,14 @@ public class MusicService extends Service implements OnCompletionListener,
 		// Service关闭时释放所有持有的资源
 		mState = State.Stopped;
 		relaxResources(true);
-		giveUpAudioFocus();
-	}
-
-	/**
-	 * 确保MediaPlayer存在，并且已经被重置。 这个方法将会在需要时创建一个MediaPlayer，
-	 * 或者重置一个已存在的MediaPlayer。
-	 */
-	void createMediaPlayerIfNeeded() {
-		if (mPlayer == null) {
-			mPlayer = new MediaPlayer();
-
-			// 确保我们的MediaPlayer在播放时获取了一个唤醒锁，
-			// 如果不这样做，当歌曲播放很久时，CPU进入休眠从而导致播放停止
-			// 要使用唤醒锁，要确保在AndroidManifest.xml中声明了android.permission.WAKE_LOCK权限
-			mPlayer.setWakeMode(getApplicationContext(),
-					PowerManager.PARTIAL_WAKE_LOCK);
-
-			// 在MediaPlayer在它准备完成时、完成播放时、发生错误时通过监听器通知我们，
-			// 以便我们做出相应处理
-			mPlayer.setOnPreparedListener(this);
-			mPlayer.setOnCompletionListener(this);
-			mPlayer.setOnErrorListener(this);
-		} else
-			mPlayer.reset();
-	}
-
-	void processPlayRequest() {
-		tryToGetAudioFocus();
-
-		// 如果处于“停止”状态，直接播放下一首歌曲
-		// 如果处于“播放”或者“暂停”状态，并且请求播放的歌曲与当前播放的歌曲不同，则播放请求的歌曲
-		if (mState == State.Stopped
-				|| ((mState == State.Paused || mState == State.Playing) && mPlayList
-						.get(mPlayingSongPos).getId() != mPlayList.get(
-						mToBePlayedSongPos).getId())) {
-			mPlayingSongPos = mToBePlayedSongPos;
-			playSong();
-		} else if (mState == State.Paused
-				&& mPlayList.get(mPlayingSongPos).getId() == mPlayList.get(
-						mToBePlayedSongPos).getId()) {
-			// 如果处于“暂停”状态，则继续播放，并且恢复“前台服务”的状态
-			mState = State.Playing;
-			setUpAsForeground(mPlayList.get(mPlayingSongPos).getTitle()
-					+ " (playing)");
-			configAndStartMediaPlayer();
-		} else if (mPlayer.isLooping()) {
-			mPlayer.start();
+		mAudioFocusHelper.giveUpAudioFocus();
+		if (mAudioManager != null && mAudioBecomingNoisyReceiverName != null) {
+			mAudioManager
+					.unregisterMediaButtonEventReceiver(mAudioBecomingNoisyReceiverName);
 		}
-
-		// 通知所有的观察者音乐开始播放了
-		for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
-			mOnPlaybackStateChangeListeners.get(i).onMusicPlayed();
+		if (mState != State.Stopped) {
+			processStopRequest();
 		}
-
-		// 更新进度条
-		if (!mServiceHandler.hasMessages(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS)) {
-			mServiceHandler
-					.sendEmptyMessage(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
-		}
-	}
-
-	void processPauseRequest() {
-		if (mState == State.Playing) {
-			mState = State.Paused;
-			mPlayer.pause();
-			relaxResources(false); // 暂停时，取消“前台服务”的状态，但依然保持MediaPlayer的资源
-			// 仍然保持着音频焦点
-
-			// 通知所有的观察者音乐暂停了
-			for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
-				mOnPlaybackStateChangeListeners.get(i).onMusicPaused();
-			}
-		}
-	}
-
-	/**
-	 * 播放上一首歌曲。根据播放模式计算出上一首歌的ID，然后调用播放方法。
-	 * 
-	 * @param fromUser
-	 *            是否是来自用户的请求
-	 * */
-	void processPreviousRequest(boolean fromUser) {
-		if (mState == State.Playing || mState == State.Paused
-				|| mState == State.Stopped) {
-			switch (mPlayMode) {
-			case PLAYMODE_REPEAT:
-			case PLAYMODE_SEQUENTIAL:
-				if (--mToBePlayedSongPos < 0) {
-					mToBePlayedSongPos = mPlayList.size() - 1;
-				}
-				break;
-			case PLAYMODE_SHUFFLE:
-				if (mPlayQueue.size() != 0) {
-					mToBePlayedSongPos = mPlayQueue.pop();
-				} else {
-					mToBePlayedSongPos = mRandom.nextInt(mPlayList.size());
-				}
-				break;
-			case PLAYMODE_REPEAT_SINGLE:
-				if (fromUser) {
-					// 如果是用户请求播放上一首，就顺序播放上一首
-					if (--mToBePlayedSongPos < 0) {
-						mToBePlayedSongPos = mPlayList.size() - 1;
-					}
-				} else {
-					// 如果不是用户请求，循环播放
-					mPlayer.setLooping(true);
-				}
-			default:
-				break;
-			}
-			processPlayRequest();
-		}
-	}
-
-	/**
-	 * 播放下一首歌曲。根据播放模式计算出下一首歌的ID，然后调用播放方法
-	 * 
-	 * @param fromUser
-	 *            是否是来自用户的请求
-	 * */
-	void processNextRequest(boolean fromUser) {
-		if (mState == State.Playing || mState == State.Paused
-				|| mState == State.Stopped) {
-			switch (mPlayMode) {
-			case PLAYMODE_REPEAT:
-				mToBePlayedSongPos = (mToBePlayedSongPos + 1)
-						% mPlayList.size();
-				break;
-			case PLAYMODE_SEQUENTIAL:
-				mToBePlayedSongPos = (mToBePlayedSongPos + 1)
-						% mPlayList.size();
-				if (mToBePlayedSongPos == 0) {
-					if (fromUser) {
-						mToBePlayedSongPos = 0;
-					} else {
-						// 播放到当前播放列表的最后一首便停止播放
-						mToBePlayedSongPos = mPlayList.size() - 1;
-						processStopRequest();
-						return;
-					}
-				}
-				break;
-			case PLAYMODE_SHUFFLE:
-				mPlayQueue.push(mToBePlayedSongPos);
-				mToBePlayedSongPos = mRandom.nextInt(mPlayList.size());
-				break;
-			case PLAYMODE_REPEAT_SINGLE:
-				if (fromUser) {
-					// 如果是用户请求，就顺序播放下一首
-					mToBePlayedSongPos = (mToBePlayedSongPos + 1)
-							% mPlayList.size();
-				} else {
-					// 如果不是用户请求，循环播放
-					mPlayer.setLooping(true);
-				}
-			default:
-				break;
-			}
-			processPlayRequest();
-		}
-	}
-
-	void processStopRequest() {
-		processStopRequest(false);
-	}
-
-	void processStopRequest(boolean force) {
-		if (mState == State.Playing || mState == State.Paused || force) {
-			mState = State.Stopped;
-
-			// 释放所有持有的资源
-			relaxResources(true);
-			giveUpAudioFocus();
-
-			// 本服务已经不再使用，终结它
-			// stopSelf();
-
-			// 通知所有的观察者音乐停止播放了
-			for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
-				mOnPlaybackStateChangeListeners.get(i).onMusicStopped();
-			}
-		}
-	}
-
-	/**
-	 * 释放本服务所使用的资源，包括“前台服务”状态，通知，唤醒锁，和MediaPlayer
-	 * 
-	 * @param releaseMediaPlayer
-	 *            指示MediaPlayer是否要释放掉
-	 */
-	void relaxResources(boolean releaseMediaPlayer) {
-		// 取消 "foreground service"的状态
-		stopForeground(true);
-
-		// 停止并释放MediaPlayer
-		if (releaseMediaPlayer && mPlayer != null) {
-			mPlayer.reset();
-			mPlayer.release();
-			mPlayer = null;
-		}
-
-		// 如果持有Wifi锁，也将其释放
-		if (mWifiLock.isHeld())
-			mWifiLock.release();
-	}
-
-	/** 放弃音频焦点的持有 */
-	void giveUpAudioFocus() {
-		if (mAudioFocus == AudioFocus.Focused && mAudioFocusHelper != null
-				&& mAudioFocusHelper.abandonFocus())
-			mAudioFocus = AudioFocus.NoFocusNoDuck;
-	}
-
-	/**
-	 * 根据音频焦点的设置重新设置MediaPlayer的参数，然后启动或者重启它。 如果我们拥有音频焦点，则正常播放;
-	 * 如果没有音频焦点，根据当前的焦点设置将MediaPlayer切换为“暂停”状态或者低声播放。
-	 * 这个方法已经假设mPlayer不为空，所以如果要调用此方法，确保正确的使用它。
-	 */
-	void configAndStartMediaPlayer() {
-		if (mAudioFocus == AudioFocus.NoFocusNoDuck) {
-			// 如果丢失了音频焦点也不允许低声播放，我们必须让播放暂停，即使mState处于State.Playing状态。
-			// 但是我们并不修改mState的状态，因为我们会在获得音频焦点时返回立即返回播放状态。
-			if (mPlayer.isPlaying())
-				mPlayer.pause();
-			return;
-		} else if (mAudioFocus == AudioFocus.NoFocusCanDuck)
-			mPlayer.setVolume(DUCK_VOLUME, DUCK_VOLUME); // 设置一个较为安静的音量
-		else
-			mPlayer.setVolume(1.0f, 1.0f); // 设置大声播放
-
-		if (!mPlayer.isPlaying())
-			mPlayer.start();
-	}
-
-	/** 尝试获取音频焦点 */
-	void tryToGetAudioFocus() {
-		if (mAudioFocus != AudioFocus.Focused && mAudioFocusHelper != null
-				&& mAudioFocusHelper.requestFocus())
-			mAudioFocus = AudioFocus.Focused;
-	}
-
-	/**
-	 * 播放mPlayingSongPos指定的歌曲.
-	 */
-	void playSong() {
-		mState = State.Stopped;
-		relaxResources(false); // 除了MediaPlayer，释放所有资源
-
-		try {
-			if (mHasPlayList) {
-				createMediaPlayerIfNeeded();
-				mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-				mPlayer.setDataSource(getApplicationContext(), ContentUris
-						.withAppendedId(Media.EXTERNAL_CONTENT_URI, mPlayList
-								.get(mPlayingSongPos).getId()));
-			} else {
-				processStopRequest(true);
-				return;
-			}
-
-			mState = State.Preparing;
-			setUpAsForeground(mPlayList.get(mPlayingSongPos).getTitle()
-					+ " (loading)");
-
-			// 在后台准备MediaPlayer，准备完成后会调用OnPreparedListener的onPrepared()方法。
-			// 在MediaPlayer准备好之前，我们不能调用其start()方法
-			mPlayer.prepareAsync();
-
-			// 如果正在从网络获取歌曲，我们要持有一个Wifi锁，以防止在音乐播放时系统休眠暂停了音乐。
-			// 另一方面，如果没有从网络获取歌曲，并且持有一个Wifi锁，我们要将它释放掉。
-			if (mIsStreaming)
-				mWifiLock.acquire();
-			else if (mWifiLock.isHeld())
-				mWifiLock.release();
-		} catch (Exception ex) {
-			Log.e("MusicService",
-					"IOException playing next song: " + ex.getMessage());
-			ex.printStackTrace();
-		}
-
-		// 每次播放新的歌曲的时候，把当前播放的歌曲信息传递给播放观察者
-		for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
-			mOnPlaybackStateChangeListeners.get(i).onPlayNewSong(
-					mPlayList.get(mPlayingSongPos));
-		}
-	}
-
-	/** 更新通知栏. */
-	void updateNotification(String text) {
-		PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),
-				0, new Intent(getApplicationContext(),
-						MusicPlayerActivity.class),
-				PendingIntent.FLAG_UPDATE_CURRENT);
-		mNotification.setLatestEventInfo(getApplicationContext(),
-				"LQMusicPlayer", text, pi);
-		mNotificationManager.notify(NOTIFICATION_ID, mNotification);
-	}
-
-	/**
-	 * 将本服务设置为“前台服务”。“前台服务”是一个与用户正在交互的服务， 必须在通知栏显示一个通知表示正在交互
-	 */
-	void setUpAsForeground(String text) {
-		PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),
-				0, new Intent(getApplicationContext(),
-						MusicPlayerActivity.class),
-				PendingIntent.FLAG_UPDATE_CURRENT);
-		mNotification = new Notification();
-		mNotification.tickerText = text;
-		mNotification.icon = R.drawable.ic_stat_playing;
-		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-		mNotification.setLatestEventInfo(getApplicationContext(),
-				getResources().getString(R.string.app_name), text, pi);
-		startForeground(NOTIFICATION_ID, mNotification);
 	}
 
 	/** MediaPlayer完成了一首歌曲的播放时调用此方法 */
@@ -728,59 +465,318 @@ public class MusicService extends Service implements OnCompletionListener,
 	}
 
 	public void onGainedAudioFocus() {
-		Toast.makeText(getApplicationContext(), "gained audio focus.",
-				Toast.LENGTH_SHORT).show();
-		mAudioFocus = AudioFocus.Focused;
+		Log.i(TAG, "gained audio focus.");
 
 		// 用新的音频焦点状态来重置MediaPlayer
 		if (mState == State.Playing)
 			configAndStartMediaPlayer();
 	}
 
-	public void onLostAudioFocus(boolean canDuck) {
-		Toast.makeText(getApplicationContext(),
-				"lost audio focus." + (canDuck ? "can duck" : "no duck"),
-				Toast.LENGTH_SHORT).show();
-		mAudioFocus = canDuck ? AudioFocus.NoFocusCanDuck
-				: AudioFocus.NoFocusNoDuck;
+	public void onLostAudioFocus() {
+		Log.i(TAG, "lost audio focus.");
 
 		// 以新的焦点参数启动/重启/暂停MediaPlayer
-		if (mPlayer != null && mPlayer.isPlaying())
+		if (mMediaPlayer != null && mMediaPlayer.isPlaying())
 			configAndStartMediaPlayer();
 	}
 
-	public State getPlayState() {
-		return mState;
+	/**
+	 * 确保MediaPlayer存在，并且已经被重置。 这个方法将会在需要时创建一个MediaPlayer，
+	 * 或者重置一个已存在的MediaPlayer。
+	 */
+	void createMediaPlayerIfNeeded() {
+		if (mMediaPlayer == null) {
+			mMediaPlayer = new MediaPlayer();
+
+			// 确保我们的MediaPlayer在播放时获取了一个唤醒锁，
+			// 如果不这样做，当歌曲播放很久时，CPU进入休眠从而导致播放停止
+			// 要使用唤醒锁，要确保在AndroidManifest.xml中声明了android.permission.WAKE_LOCK权限
+			mMediaPlayer.setWakeMode(getApplicationContext(),
+					PowerManager.PARTIAL_WAKE_LOCK);
+
+			// 在MediaPlayer在它准备完成时、完成播放时、发生错误时通过监听器通知我们，
+			// 以便我们做出相应处理
+			mMediaPlayer.setOnPreparedListener(this);
+			mMediaPlayer.setOnCompletionListener(this);
+			mMediaPlayer.setOnErrorListener(this);
+		} else
+			mMediaPlayer.reset();
 	}
 
-	public void seekToSpecifiedPosition(int milliSeconds) {
-		if (mState != State.Stopped) {
-			mPlayer.seekTo(milliSeconds);
+	void processPlayRequest() {
+		mAudioFocusHelper.tryToGetAudioFocus();
+
+		// 如果处于“停止”状态，直接播放下一首歌曲
+		// 如果处于“播放”或者“暂停”状态，并且请求播放的歌曲与当前播放的歌曲不同，则播放请求的歌曲
+		if (mState == State.Stopped
+				|| ((mState == State.Paused || mState == State.Playing) && mPlayList
+						.get(mPlayingSongPos).getId() != mPlayList.get(
+						mToBePlayedSongPos).getId())) {
+			mPlayingSongPos = mToBePlayedSongPos;
+			playSong();
+		} else if (mState == State.Paused
+				&& mPlayList.get(mPlayingSongPos).getId() == mPlayList.get(
+						mToBePlayedSongPos).getId()) {
+			// 如果处于“暂停”状态，则继续播放，并且恢复“前台服务”的状态
+			mState = State.Playing;
+			setUpAsForeground(mPlayList.get(mPlayingSongPos).getTitle()
+					+ " (playing)");
+			configAndStartMediaPlayer();
+		} else if (mMediaPlayer.isLooping()) {
+			mMediaPlayer.start();
+		}
+
+		// 通知所有的观察者音乐开始播放了
+		for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
+			mOnPlaybackStateChangeListeners.get(i).onMusicPlayed();
+		}
+
+		// 更新进度条
+		if (!mServiceHandler.hasMessages(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS)) {
+			mServiceHandler
+					.sendEmptyMessage(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS);
 		}
 	}
 
-	public void changePlayMode() {
-		mPlayMode = (mPlayMode + 1) % 4;
-		if (mPlayer != null) {
-			switch (mPlayMode) {
-			case PLAYMODE_REPEAT_SINGLE:
-				mPlayer.setLooping(true);
-				break;
-			default:
-				mPlayer.setLooping(false);
-				break;
+	void processPauseRequest() {
+		if (mState == State.Playing) {
+			mState = State.Paused;
+			mMediaPlayer.pause();
+			relaxResources(false); // 暂停时，取消“前台服务”的状态，但依然保持MediaPlayer的资源
+			// 仍然保持着音频焦点
+
+			// 通知所有的观察者音乐暂停了
+			for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
+				mOnPlaybackStateChangeListeners.get(i).onMusicPaused();
 			}
 		}
+	}
 
-		for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
-			mOnPlaybackStateChangeListeners.get(i).onPlayModeChanged(mPlayMode);
+	/**
+	 * 播放上一首歌曲。根据播放模式计算出上一首歌的ID，然后调用播放方法。
+	 * 
+	 * @param fromUser
+	 *            是否是来自用户的请求
+	 * */
+	void processPreviousRequest(boolean fromUser) {
+		if (mState == State.Playing || mState == State.Paused
+				|| mState == State.Stopped) {
+			switch (mPlayMode) {
+			case PLAYMODE_REPEAT:
+			case PLAYMODE_SEQUENTIAL:
+				if (--mToBePlayedSongPos < 0) {
+					mToBePlayedSongPos = mPlayList.size() - 1;
+				}
+				break;
+			case PLAYMODE_SHUFFLE:
+				if (mPlayQueue.size() != 0) {
+					mToBePlayedSongPos = mPlayQueue.pop();
+				} else {
+					mToBePlayedSongPos = mRandom.nextInt(mPlayList.size());
+				}
+				break;
+			case PLAYMODE_REPEAT_SINGLE:
+				if (fromUser) {
+					// 如果是用户请求播放上一首，就顺序播放上一首
+					if (--mToBePlayedSongPos < 0) {
+						mToBePlayedSongPos = mPlayList.size() - 1;
+					}
+				} else {
+					// 如果不是用户请求，循环播放
+					mMediaPlayer.setLooping(true);
+				}
+			default:
+				break;
+			}
+			processPlayRequest();
 		}
 	}
 
-	public void setCurrentPlayList(List<MusicItem> list) {
-		mPlayList.clear();
-		mPlayList.addAll(list);
-		mHasPlayList = true;
-		mToBePlayedSongPos = 0;
+	/**
+	 * 播放下一首歌曲。根据播放模式计算出下一首歌的ID，然后调用播放方法
+	 * 
+	 * @param fromUser
+	 *            是否是来自用户的请求
+	 * */
+	void processNextRequest(boolean fromUser) {
+		if (mState == State.Playing || mState == State.Paused
+				|| mState == State.Stopped) {
+			switch (mPlayMode) {
+			case PLAYMODE_REPEAT:
+				mToBePlayedSongPos = (mToBePlayedSongPos + 1)
+						% mPlayList.size();
+				break;
+			case PLAYMODE_SEQUENTIAL:
+				mToBePlayedSongPos = (mToBePlayedSongPos + 1)
+						% mPlayList.size();
+				if (mToBePlayedSongPos == 0) {
+					if (fromUser) {
+						mToBePlayedSongPos = 0;
+					} else {
+						// 播放到当前播放列表的最后一首便停止播放
+						mToBePlayedSongPos = mPlayList.size() - 1;
+						processStopRequest();
+						return;
+					}
+				}
+				break;
+			case PLAYMODE_SHUFFLE:
+				mPlayQueue.push(mToBePlayedSongPos);
+				mToBePlayedSongPos = mRandom.nextInt(mPlayList.size());
+				break;
+			case PLAYMODE_REPEAT_SINGLE:
+				if (fromUser) {
+					// 如果是用户请求，就顺序播放下一首
+					mToBePlayedSongPos = (mToBePlayedSongPos + 1)
+							% mPlayList.size();
+				} else {
+					// 如果不是用户请求，循环播放
+					mMediaPlayer.setLooping(true);
+				}
+			default:
+				break;
+			}
+			processPlayRequest();
+		}
 	}
+
+	void processStopRequest() {
+		processStopRequest(false);
+	}
+
+	void processStopRequest(boolean force) {
+		if (mState == State.Playing || mState == State.Paused || force) {
+			mState = State.Stopped;
+
+			// 释放所有持有的资源
+			relaxResources(true);
+			mAudioFocusHelper.giveUpAudioFocus();
+
+			// 本服务已经不再使用，终结它
+			// stopSelf();
+
+			// 通知所有的观察者音乐停止播放了
+			for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
+				mOnPlaybackStateChangeListeners.get(i).onMusicStopped();
+			}
+		}
+	}
+
+	/**
+	 * 释放本服务所使用的资源，包括“前台服务”状态，通知，唤醒锁，和MediaPlayer
+	 * 
+	 * @param releaseMediaPlayer
+	 *            指示MediaPlayer是否要释放掉
+	 */
+	void relaxResources(boolean releaseMediaPlayer) {
+		// 取消 "foreground service"的状态
+		stopForeground(true);
+
+		// 停止并释放MediaPlayer
+		if (releaseMediaPlayer && mMediaPlayer != null) {
+			mMediaPlayer.reset();
+			mMediaPlayer.release();
+			mMediaPlayer = null;
+		}
+
+		// 如果持有Wifi锁，也将其释放
+		if (mWifiLock.isHeld())
+			mWifiLock.release();
+	}
+
+	/**
+	 * 根据音频焦点的设置重新设置MediaPlayer的参数，然后启动或者重启它。 如果我们拥有音频焦点，则正常播放;
+	 * 如果没有音频焦点，根据当前的焦点设置将MediaPlayer切换为“暂停”状态或者低声播放。
+	 * 这个方法已经假设mPlayer不为空，所以如果要调用此方法，确保正确的使用它。
+	 */
+	void configAndStartMediaPlayer() {
+		if (mAudioFocusHelper.getAudioFocus() == AudioFocusHelper.NoFocusNoDuck) {
+			// 如果丢失了音频焦点也不允许低声播放，我们必须让播放暂停，即使mState处于State.Playing状态。
+			// 但是我们并不修改mState的状态，因为我们会在获得音频焦点时返回立即返回播放状态。
+			if (mMediaPlayer.isPlaying())
+				mMediaPlayer.pause();
+			return;
+		} else if (mAudioFocusHelper.getAudioFocus() == AudioFocusHelper.NoFocusCanDuck)
+			mMediaPlayer.setVolume(DUCK_VOLUME, DUCK_VOLUME); // 设置一个较为安静的音量
+		else
+			mMediaPlayer.setVolume(1.0f, 1.0f); // 设置大声播放
+
+		if (!mMediaPlayer.isPlaying())
+			mMediaPlayer.start();
+	}
+
+	/**
+	 * 播放mPlayingSongPos指定的歌曲.
+	 */
+	void playSong() {
+		mState = State.Stopped;
+		relaxResources(false); // 除了MediaPlayer，释放所有资源
+
+		try {
+			if (mHasPlayList) {
+				createMediaPlayerIfNeeded();
+				mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+				mMediaPlayer.setDataSource(getApplicationContext(), ContentUris
+						.withAppendedId(Media.EXTERNAL_CONTENT_URI, mPlayList
+								.get(mPlayingSongPos).getId()));
+			} else {
+				processStopRequest(true);
+				return;
+			}
+
+			mState = State.Preparing;
+			setUpAsForeground(mPlayList.get(mPlayingSongPos).getTitle()
+					+ " (loading)");
+
+			// 在后台准备MediaPlayer，准备完成后会调用OnPreparedListener的onPrepared()方法。
+			// 在MediaPlayer准备好之前，我们不能调用其start()方法
+			mMediaPlayer.prepareAsync();
+
+			// 如果正在从网络获取歌曲，我们要持有一个Wifi锁，以防止在音乐播放时系统休眠暂停了音乐。
+			// 另一方面，如果没有从网络获取歌曲，并且持有一个Wifi锁，我们要将它释放掉。
+			if (mIsStreaming)
+				mWifiLock.acquire();
+			else if (mWifiLock.isHeld())
+				mWifiLock.release();
+		} catch (Exception ex) {
+			Log.e("MusicService",
+					"IOException playing next song: " + ex.getMessage());
+			ex.printStackTrace();
+		}
+
+		// 每次播放新的歌曲的时候，把当前播放的歌曲信息传递给播放观察者
+		for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
+			mOnPlaybackStateChangeListeners.get(i).onPlayNewSong(
+					mPlayList.get(mPlayingSongPos));
+		}
+	}
+
+	/** 更新通知栏. */
+	void updateNotification(String text) {
+		PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),
+				0, new Intent(getApplicationContext(),
+						MusicPlayerActivity.class),
+				PendingIntent.FLAG_UPDATE_CURRENT);
+		mNotification.setLatestEventInfo(getApplicationContext(),
+				"LQMusicPlayer", text, pi);
+		mNotificationManager.notify(NOTIFICATION_ID, mNotification);
+	}
+
+	/**
+	 * 将本服务设置为“前台服务”。“前台服务”是一个与用户正在交互的服务， 必须在通知栏显示一个通知表示正在交互
+	 */
+	void setUpAsForeground(String text) {
+		PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),
+				0, new Intent(getApplicationContext(),
+						MusicPlayerActivity.class),
+				PendingIntent.FLAG_UPDATE_CURRENT);
+		mNotification = new Notification();
+		mNotification.tickerText = text;
+		mNotification.icon = R.drawable.ic_stat_playing;
+		mNotification.flags |= Notification.FLAG_ONGOING_EVENT;
+		mNotification.setLatestEventInfo(getApplicationContext(),
+				getResources().getString(R.string.app_name), text, pi);
+		startForeground(NOTIFICATION_ID, mNotification);
+	}
+
 }

@@ -78,7 +78,7 @@ public class LocalMusicFragment extends SherlockFragment implements
 	private ClientIncomingHandler mHandler = new ClientIncomingHandler(
 			LocalMusicFragment.this);
 
-	private MusicService mMusicService = null;
+	private MusicPlaybackLocalBinder mMusicServiceBinder = null;
 
 	/** 处理来自服务端的消息 */
 	private static class ClientIncomingHandler extends Handler {
@@ -107,8 +107,7 @@ public class LocalMusicFragment extends SherlockFragment implements
 	/** 与Service连接时交互的类 */
 	private ServiceConnection mServiceConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
-			// 保持一个对服务端信使的引用，以便向服务端发送消息
-			mMusicService = ((MusicPlaybackLocalBinder) service).getService();
+			mMusicServiceBinder = (MusicPlaybackLocalBinder) service;
 		}
 
 		// 与服务端连接异常丢失时才调用，调用unBindService不调用此方法哎
@@ -253,8 +252,8 @@ public class LocalMusicFragment extends SherlockFragment implements
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position,
 			long id) {
-		if (mHasNewData && mMusicService != null) {
-			mMusicService.setCurrentPlayList(mAdapter.getData());
+		if (mHasNewData && mMusicServiceBinder != null) {
+			mMusicServiceBinder.setCurrentPlayList(mAdapter.getData());
 		}
 		mHasNewData = false;
 		Intent intent = new Intent(MusicService.ACTION_PLAY);

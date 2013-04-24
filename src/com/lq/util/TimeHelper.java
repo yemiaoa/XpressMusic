@@ -1,11 +1,9 @@
-package com.lq.utility;
+package com.lq.util;
 
 import java.util.Locale;
 
-import android.util.Log;
-
-public class TimeUtility {
-	private static final String TAG = TimeUtility.class.getSimpleName();
+public class TimeHelper {
+	// private static final String TAG = TimeHelper.class.getSimpleName();
 
 	/**
 	 * 将给定的毫秒数转换成00:00:00样式的字符串
@@ -28,7 +26,8 @@ public class TimeUtility {
 			finalTimerString = String.format(Locale.getDefault(), "%02d:%02d",
 					minutes, seconds);
 		}
-		Log.d(TAG, "milliseconds=" + milliseconds + "\t finalTimerString=" + finalTimerString);
+		// Log.d(TAG, "milliseconds=" + milliseconds + "\t finalTimerString=" +
+		// finalTimerString);
 		return finalTimerString;
 	}
 }
