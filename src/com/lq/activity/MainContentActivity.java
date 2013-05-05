@@ -6,19 +6,17 @@ import java.util.List;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.Log;
-import android.view.GestureDetector;
-import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
+import com.lq.adapter.MainPagerAdapter;
 import com.lq.fragment.LocalMusicFragment;
 import com.lq.fragment.MenuFragment;
+import com.lq.fragment.MusicPlayFragment;
 import com.lq.service.MusicService;
 import com.slidingmenu.lib.SlidingMenu;
 
@@ -28,13 +26,18 @@ public class MainContentActivity extends SherlockFragmentActivity {
 	public static final int MESSAGE_SWITCH_TO_PLAY_IMAGE = 0;
 	public static final int MESSAGE_SWITCH_TO_PAUSE_IMAGE = 1;
 
-	private List<String> mFragmentsName = new ArrayList<String>();
-
 	/** 侧滑菜单控件 */
 	private SlidingMenu mSlidingMenu = null;
 
-	/** 手势检测 */
-	private GestureDetector mDetector = null;
+	/** 总共就两页，第一页为主页面，可以替换掉，第二页始终为音乐播放界面 */
+	private ViewPager mViewPager = null;
+	
+	MainPagerAdapter mMainPagerAdapter = null;
+
+	private List<Fragment> mFragmentShowList = null;
+	private List<Fragment> mFragmentList = null;
+
+	private MusicPlayFragment mMusicPlayFragment = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -45,12 +48,8 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		// 初始化SlidingMenu，并为其填充Fragment
 		initSlidingMenu();
 		initPopulateFragment();
+		initViewPager();
 
-		// 设置ActionBar
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-		// 设置滑动手势
-		mDetector = new GestureDetector(new RightGestureListener());
 	}
 
 	/** 设置SlidingMenu */
@@ -61,7 +60,7 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		// 2.为SlidingMenu指定布局
 		mSlidingMenu.setMenu(R.layout.layout_menu);
 		// 3.设置SlidingMenu从何处可以滑出
-		mSlidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_MARGIN);
+		mSlidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
 		// 4.设置SlidingMenu的滑出方向
 		mSlidingMenu.setMode(SlidingMenu.LEFT);
 		// 5.设置SlidingMenu的其他参数
@@ -75,26 +74,63 @@ public class MainContentActivity extends SherlockFragmentActivity {
 
 	/** 为SlidingMenu和Content填充Fragment */
 	private void initPopulateFragment() {
+		MenuFragment menuFragment = new MenuFragment();
+		LocalMusicFragment localMusicFragment = new LocalMusicFragment();
+		mMusicPlayFragment = new MusicPlayFragment();
 
 		FragmentTransaction fragmentTransaction = getSupportFragmentManager()
 				.beginTransaction();
-		fragmentTransaction.replace(R.id.frame_menu, new MenuFragment(),
+		fragmentTransaction.replace(R.id.frame_menu, menuFragment,
 				MenuFragment.class.getName());
-		fragmentTransaction.replace(R.id.frame_content,
-				new LocalMusicFragment(), LocalMusicFragment.class.getName());
 		fragmentTransaction.commit();
-		mFragmentsName.add(LocalMusicFragment.class.getName());
 
+		mFragmentList = new ArrayList<Fragment>();
+		mFragmentShowList = new ArrayList<Fragment>(2);
+		mFragmentList.add(localMusicFragment);
+		mFragmentList.add(mMusicPlayFragment);
+		mFragmentShowList.add(localMusicFragment);
+		mFragmentShowList.add(mMusicPlayFragment);
+	}
+
+	private void initViewPager() {
+		mViewPager = (ViewPager) findViewById(R.id.viewpager_main);
+		mViewPager.setOnPageChangeListener(new OnPageChangeListener() {
+			@Override
+			public void onPageScrollStateChanged(int arg0) {
+			}
+
+			@Override
+			public void onPageScrolled(int arg0, float arg1, int arg2) {
+			}
+
+			@Override
+			public void onPageSelected(int position) {
+				switch (position) {
+				case 0:
+					getSlidingMenu().setTouchModeAbove(
+							SlidingMenu.TOUCHMODE_FULLSCREEN);
+					if (mFragmentShowList.get(0).getClass().getSimpleName()
+							.equals("LocalMusicFragment")) {
+						((LocalMusicFragment) mFragmentShowList.get(0))
+								.smoothScrollToCurrentPosition();
+					}
+					break;
+				default:
+					getSlidingMenu().setTouchModeAbove(
+							SlidingMenu.TOUCHMODE_NONE);
+					break;
+				}
+			}
+		});
+		mMainPagerAdapter = new MainPagerAdapter(getSupportFragmentManager(),
+				mFragmentShowList);
+
+		mViewPager.setAdapter(mMainPagerAdapter);
+		mViewPager.setCurrentItem(0);
 	}
 
 	public SlidingMenu getSlidingMenu() {
 		return mSlidingMenu;
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getSupportMenuInflater().inflate(R.menu.main_content, menu);
-		return super.onCreateOptionsMenu(menu);
 	}
 
 	@Override
@@ -107,53 +143,52 @@ public class MainContentActivity extends SherlockFragmentActivity {
 	protected void onDestroy() {
 		Log.i(TAG, "onDestroy");
 		super.onDestroy();
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case android.R.id.home:
-			mSlidingMenu.toggle();
-			return true;
-		case R.id.go_to_play:
-			switchToMusicPlayer();
-			return true;
-		}
-		return false;
+		mFragmentList.clear();
+		mFragmentShowList.clear();
+		mFragmentList = null;
+		mFragmentShowList = null;
 	}
 
 	/**
-	 * 切换主页内容。<br>
-	 * 如果要切换的Fragment已经存在，则隐藏其他已经存在的Fragment，显示已开启过的Fragment。<br>
-	 * 按返回键可以在Fragment之间回退。
+	 * 切换主页内容
 	 */
 	public void switchContent(String fragmentName) {
-		FragmentManager fm = getSupportFragmentManager();
-		Fragment fragment = fm.findFragmentByTag(fragmentName);
-		if (null != fragment) {
-			FragmentTransaction ft = fm.beginTransaction();
-			for (int i = 0; i < mFragmentsName.size(); i++) {
-				if (!mFragmentsName.get(i)
-						.equals(fragment.getClass().getName())) {
-					ft.hide(fm.findFragmentByTag(mFragmentsName.get(i)));
-				}
+		Fragment tFragment = null;
+		boolean existed = false;
+
+		// 遍历当前已打开的Fragment集合
+		for (int i = 0; i < mFragmentList.size(); i++) {
+			// 如果要求切换至的fragment已经存在，则直接把已经存在的显示出来
+			if (mFragmentList.get(i).getClass().getName().equals(fragmentName)) {
+				existed = true;
+				mFragmentShowList.set(0, mFragmentList.get(i));
+				mMainPagerAdapter.notifyDataSetChanged();
+				break;
 			}
-			ft.show(fragment);
-			ft.commit();
-		} else {
-			fragment = Fragment.instantiate(getApplicationContext(),
-					fragmentName);
-			FragmentTransaction ft = fm.beginTransaction();
-			for (int i = 0; i < mFragmentsName.size(); i++) {
-				ft.hide(fm.findFragmentByTag(mFragmentsName.get(i)));
-			}
-			ft.add(R.id.frame_content, fragment, fragmentName).addToBackStack(
-					fragmentName);
-			ft.show(fragment);
-			ft.commit();
-			mFragmentsName.add(fragmentName);
 		}
-		getSlidingMenu().showContent();
+		// 如果不存在，则新建
+		if (!existed) {
+			tFragment = Fragment.instantiate(getApplicationContext(),
+					fragmentName);
+			mFragmentList.add(tFragment);
+			mFragmentShowList.set(0, tFragment);
+			mMainPagerAdapter.notifyDataSetChanged();
+		}
+
+		mSlidingMenu.showContent();
+	}
+
+	public void switchToMain() {
+		mViewPager.setCurrentItem(0, true);
+	}
+
+	public void switchToMusicPlayer() {
+		mViewPager.setCurrentItem(1, true);
+	}
+
+	public void switchToSlidingMenu() {
+		switchToMain();
+		mSlidingMenu.toggle();
 	}
 
 	public void exit() {
@@ -163,62 +198,35 @@ public class MainContentActivity extends SherlockFragmentActivity {
 
 	@Override
 	public void onBackPressed() {
-		FragmentManager fm = getSupportFragmentManager();
-		// 规定在显示菜单时才可退出程序，按返回键弹出侧滑菜单
-		if (mSlidingMenu.isMenuShowing()) {
-			// 显示菜单时，按返回键退出程序
-			this.finish();
-		} else if (fm.getBackStackEntryCount() > 0) {
-			// 如果已经打开多个Fragment，允许返回键将Fragment回退
-			String name = fm.getBackStackEntryAt(
-					fm.getBackStackEntryCount() - 1).getName();
-			mFragmentsName.remove(name);
-			if (!fm.popBackStackImmediate()) {
-				finish();
-			}
-		} else {
-			// Fragment已经回退完，此时菜单没有显示，就弹出菜单
-			mSlidingMenu.showMenu();
-		}
-	}
-
-	@Override
-	public boolean onTouchEvent(MotionEvent event) {
-		return MainContentActivity.this.mDetector.onTouchEvent(event);
+		// 什么也不做
+		// 默认执行父类方法，会finish本Activity
 	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		switch (keyCode) {
-		case KeyEvent.KEYCODE_MENU:
-			mSlidingMenu.toggle();
-			break;
-
-		default:
-			break;
+		if (mViewPager.getCurrentItem() == 0) {
+			switch (keyCode) {
+			case KeyEvent.KEYCODE_MENU:
+				mSlidingMenu.toggle();
+				break;
+			case KeyEvent.KEYCODE_BACK:
+				// 规定在显示菜单时才可退出程序，按返回键弹出侧滑菜单
+				if (mSlidingMenu.isMenuShowing()) {
+					// 显示菜单时，按返回键退出程序
+					this.finish();
+				} else {
+					// 菜单没有显示，就弹出菜单
+					mSlidingMenu.showMenu();
+				}
+				break;
+			default:
+				break;
+			}
+		} else {
+			// 分享onKeyDown事件给播放界面
+			mMusicPlayFragment.onKeyDown(keyCode, event);
 		}
 		return super.onKeyDown(keyCode, event);
-	}
-
-	public void switchToMusicPlayer() {
-		startActivity(new Intent(MainContentActivity.this,
-				MusicPlayerActivity.class));
-		overridePendingTransition(R.anim.push_left_in, R.anim.push_left_out);
-	}
-
-	protected class RightGestureListener extends SimpleOnGestureListener {
-		@Override
-		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
-				float velocityY) {
-			// 从左向右滑动
-			if (e1 != null && e2 != null) {
-				if (e1.getX() - e2.getX() > 120) {
-					switchToMusicPlayer();
-					return true;
-				}
-			}
-			return false;
-		}
 	}
 
 }

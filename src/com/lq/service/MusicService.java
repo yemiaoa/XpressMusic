@@ -38,6 +38,7 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -46,19 +47,22 @@ import android.provider.MediaStore.Audio.Media;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.lq.activity.MusicPlayerActivity;
+import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
+import com.lq.entity.LyricSentence;
 import com.lq.entity.MusicItem;
 import com.lq.fragment.LocalMusicFragment;
 import com.lq.receiver.MediaButtonReceiver;
 import com.lq.util.AudioFocusHelper;
 import com.lq.util.AudioFocusHelper.MusicFocusable;
+import com.lq.util.LyricLoadHelper;
+import com.lq.util.LyricLoadHelper.LyricListener;
 
 /**
  * 这是处理音乐回放的服务，在应用中对媒体的所有处理都交给这个服务。
  */
 public class MusicService extends Service implements OnCompletionListener,
-		OnPreparedListener, OnErrorListener, MusicFocusable {
+		OnPreparedListener, OnErrorListener, MusicFocusable, LyricListener {
 
 	/**
 	 * 自定义的一个服务连接监听器。 <br>
@@ -143,6 +147,12 @@ public class MusicService extends Service implements OnCompletionListener,
 
 			// 通知观察者服务服务已经连接上，并传递初始化数据
 			listener.onServiceConnected(mState, item, currentPlayPos, mPlayMode);
+
+			// 如果当前正在播放歌曲，通知LyricListener载入歌词
+			if (mState == State.Playing || mState == State.Paused) {
+				loadLyric(mPlayList.get(mPlayingSongPos).getData());
+				mLyricLoadHelper.notifyTime(mMediaPlayer.getCurrentPosition());
+			}
 		}
 
 		public void unregisterOnServiceConnectionListener(
@@ -159,6 +169,10 @@ public class MusicService extends Service implements OnCompletionListener,
 		public void unregisterOnPlaybackStateChangeListener(
 				OnPlaybackStateChangeListener listener) {
 			mOnPlaybackStateChangeListeners.remove(listener);
+		}
+
+		public void registerLyricListener(LyricListener listener) {
+			mLyricListener = listener;
 		}
 
 		/**
@@ -225,6 +239,8 @@ public class MusicService extends Service implements OnCompletionListener,
 
 	// 消息类型
 	public static final int MESSAGE_UPDATE_PLAYING_SONG_PROGRESS = 1;
+	public static final int MESSAGE_ON_LYRIC_LOADED = 2;
+	public static final int MESSAGE_ON_LYRIC_SENTENCE_CHANGED = 3;
 
 	public static final int PLAYMODE_REPEAT_SINGLE = 0;
 	public static final int PLAYMODE_REPEAT = 1;
@@ -241,6 +257,8 @@ public class MusicService extends Service implements OnCompletionListener,
 	ArrayList<OnPlaybackStateChangeListener> mOnPlaybackStateChangeListeners = new ArrayList<MusicService.OnPlaybackStateChangeListener>();
 
 	MusicPlaybackLocalBinder mBinder = new MusicPlaybackLocalBinder();
+
+	LyricListener mLyricListener = null;
 
 	// 当前播放列表
 	List<MusicItem> mPlayList = new ArrayList<MusicItem>();
@@ -273,6 +291,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	LinkedList<Integer> mPlayQueue = new LinkedList<Integer>();
 
 	boolean mHasPlayList = false;
+	boolean mHasLyric = false;
 
 	int mPlayingSongPos = 0;
 	int mToBePlayedSongPos = 0;
@@ -295,6 +314,8 @@ public class MusicService extends Service implements OnCompletionListener,
 
 	Random mRandom = new Random();
 
+	LyricLoadHelper mLyricLoadHelper = new LyricLoadHelper();
+
 	/** Service的Handler,可以延迟指定时间发送消息，而messenger不可以延时发送消息 */
 	ServiceIncomingHandler mServiceHandler = new ServiceIncomingHandler(
 			MusicService.this);
@@ -315,15 +336,33 @@ public class MusicService extends Service implements OnCompletionListener,
 			switch (msg.what) {
 			case MESSAGE_UPDATE_PLAYING_SONG_PROGRESS:
 				if (mService.mState == State.Playing) {
+					int millisecond = mService.mMediaPlayer
+							.getCurrentPosition();
+					// 通知所有音乐播放的观察者，进度更新了唉
 					for (int i = 0; i < mService.mOnPlaybackStateChangeListeners
 							.size(); i++) {
 						mService.mOnPlaybackStateChangeListeners.get(i)
-								.onPlayProgressUpdate(
-										mService.mMediaPlayer
-												.getCurrentPosition());
+								.onPlayProgressUpdate(millisecond);
 					}
+
+					if (mService.mHasLyric) {
+						// 通知歌词载入辅助类当前播放时间
+						mService.mLyricLoadHelper.notifyTime(millisecond);
+					}
+
 					mService.mServiceHandler.sendEmptyMessageDelayed(
-							MESSAGE_UPDATE_PLAYING_SONG_PROGRESS, 1000);
+							MESSAGE_UPDATE_PLAYING_SONG_PROGRESS, 500);
+				}
+				break;
+			case MESSAGE_ON_LYRIC_LOADED:
+				if (mService.mLyricListener != null) {
+					mService.mLyricListener.onLyricLoaded(
+							(List<LyricSentence>) msg.obj, msg.arg1);
+				}
+				break;
+			case MESSAGE_ON_LYRIC_SENTENCE_CHANGED:
+				if (mService.mLyricListener != null) {
+					mService.mLyricListener.onLyricSentenceChanged(msg.arg1);
 				}
 				break;
 			default:
@@ -350,6 +389,10 @@ public class MusicService extends Service implements OnCompletionListener,
 
 		// 创建音频焦点辅助类，API LEVEL > 8 时SDK才支持音频焦点这个特性
 		mAudioFocusHelper = new AudioFocusHelper(getApplicationContext(), this);
+
+		// 本Service实现LyricListener接口，只是为了做个代理延迟一下歌词事件的调用。
+		// 因为bindService启动过程稍慢，客户端的LyricListener来不及注册歌词就已经加载好了。
+		mLyricLoadHelper.setLyricListener(MusicService.this);
 	}
 
 	/**
@@ -408,6 +451,8 @@ public class MusicService extends Service implements OnCompletionListener,
 
 	/** MediaPlayer完成了一首歌曲的播放时调用此方法 */
 	public void onCompletion(MediaPlayer player) {
+		mHasLyric = false;
+		mLyricLoadHelper.setIndexOfCurrentSentence(-1);
 		// 当前播放完成，播放下一首
 		processNextRequest(false);
 	}
@@ -725,6 +770,9 @@ public class MusicService extends Service implements OnCompletionListener,
 			}
 
 			mState = State.Preparing;
+
+			loadLyric(mPlayList.get(mPlayingSongPos).getData());
+
 			setUpAsForeground(mPlayList.get(mPlayingSongPos).getTitle()
 					+ " (loading)");
 
@@ -755,7 +803,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	void updateNotification(String text) {
 		PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),
 				0, new Intent(getApplicationContext(),
-						MusicPlayerActivity.class),
+						MainContentActivity.class),
 				PendingIntent.FLAG_UPDATE_CURRENT);
 		mNotification.setLatestEventInfo(getApplicationContext(),
 				"LQMusicPlayer", text, pi);
@@ -768,7 +816,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	void setUpAsForeground(String text) {
 		PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),
 				0, new Intent(getApplicationContext(),
-						MusicPlayerActivity.class),
+						MainContentActivity.class),
 				PendingIntent.FLAG_UPDATE_CURRENT);
 		mNotification = new Notification();
 		mNotification.tickerText = text;
@@ -777,6 +825,45 @@ public class MusicService extends Service implements OnCompletionListener,
 		mNotification.setLatestEventInfo(getApplicationContext(),
 				getResources().getString(R.string.app_name), text, pi);
 		startForeground(NOTIFICATION_ID, mNotification);
+	}
+
+	/**
+	 * 读取歌词文件
+	 * 
+	 * @param path
+	 *            歌曲文件的路径
+	 */
+	private void loadLyric(String path) {
+		// 取得歌曲同目录下的歌词文件绝对路径
+		// String lyricFilePath = path.substring(0, path.lastIndexOf(".") + 1)
+		// + "lrc";
+		String lyricFilePath = Environment.getExternalStorageDirectory()
+				+ "/MIUI/music/lyric/"
+				+ mPlayList.get(mPlayingSongPos).getTitle() + "_"
+				+ mPlayList.get(mPlayingSongPos).getArtist() + ".lrc";
+		mHasLyric = mLyricLoadHelper.loadLyric(lyricFilePath);
+	}
+
+	@Override
+	public void onLyricLoaded(List<LyricSentence> lyricSentences, int index) {
+		if (mLyricListener != null) {
+			mLyricListener.onLyricLoaded(lyricSentences, index);
+		} else {
+			// 来自客户端的LyricListener还没来的及注册，就延迟一会等它注册好了再把参数传递给它
+			mServiceHandler.sendMessageDelayed(Message.obtain(null,
+					MESSAGE_ON_LYRIC_LOADED, index, 0, lyricSentences), 500);
+		}
+	}
+
+	@Override
+	public void onLyricSentenceChanged(int indexOfCurSentence) {
+		if (mLyricListener != null) {
+			mLyricListener.onLyricSentenceChanged(indexOfCurSentence);
+		} else {
+			// 来自客户端的LyricListener还没来的及注册，就延迟一会等它注册好了再把参数传递给它
+			mServiceHandler.sendMessageDelayed(Message.obtain(null,
+					MESSAGE_ON_LYRIC_LOADED, indexOfCurSentence, 0), 500);
+		}
 	}
 
 }

@@ -3,7 +3,7 @@
     android:id="@+id/player_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/player_bg"
+    android:background="@drawable/playback_backround"
     android:orientation="vertical" >
 
     <RelativeLayout
@@ -50,7 +50,29 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="9" >
+
+        <ListView
+            android:id="@+id/lyricshow"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:descendantFocusability="blocksDescendants"
+            android:divider="@color/transparent"
+            android:gravity="center"
+            android:scrollbars="none" />
+
+        <TextView
+            android:id="@+id/lyric_empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="15dip"
+            android:text="@string/there_is_no_lyric_yet"
+            android:textColor="@color/white"
+            android:textIsSelectable="false"
+            android:textSize="18sp"
+            android:visibility="gone" />
     </FrameLayout>
+
     <!-- android:background="#cc010101" -->
 
     <LinearLayout
@@ -74,6 +96,7 @@
                 android:ellipsize="marquee"
                 android:gravity="center"
                 android:singleLine="true"
+                android:textColor="@color/white"
                 android:textIsSelectable="false"
                 android:textSize="15sp" />
 
@@ -87,6 +110,7 @@
                 android:ellipsize="marquee"
                 android:gravity="center"
                 android:singleLine="true"
+                android:textColor="@color/white"
                 android:textIsSelectable="false"
                 android:textSize="15sp" />
 

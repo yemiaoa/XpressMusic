@@ -17,7 +17,8 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
 
 	/** 要从MediaStore检索的列 */
 	private final String[] mProjection = new String[] { Media._ID, Media.TITLE,
-			Media.ALBUM, Media.ARTIST, Media.DATA, Media.SIZE, Media.DURATION };
+			Media.ALBUM, Media.ARTIST, Media.DATA, Media.SIZE, Media.DURATION,
+			Media.DISPLAY_NAME };
 
 	// 数据库查询相关参数
 	private String mSelection = null;
@@ -49,6 +50,7 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
 		int index_album = cursor.getColumnIndex(Media.ALBUM);
 		int index_duration = cursor.getColumnIndex(Media.DURATION);
 		int index_size = cursor.getColumnIndex(Media.SIZE);
+		int index_displayname = cursor.getColumnIndex(Media.DISPLAY_NAME);
 
 		List<MusicItem> itemsList = new ArrayList<MusicItem>();
 
@@ -63,6 +65,7 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
 				item.setData(cursor.getString(index_data));
 				item.setDuration(cursor.getLong(index_duration));
 				item.setSize(cursor.getLong(index_size));
+				item.setDisplayName(cursor.getString(index_displayname));
 				itemsList.add(item);
 			}
 		}

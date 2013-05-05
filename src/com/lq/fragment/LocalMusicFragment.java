@@ -17,7 +17,6 @@ import android.provider.MediaStore.Audio.Media;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,11 +29,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-import com.actionbarsherlock.widget.SearchView;
-import com.actionbarsherlock.widget.SearchView.OnQueryTextListener;
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
 import com.lq.entity.MusicItem;
@@ -48,8 +42,7 @@ import com.lq.service.MusicService.MusicPlaybackLocalBinder;
  * @author lq
  * */
 public class LocalMusicFragment extends SherlockFragment implements
-		OnQueryTextListener, LoaderManager.LoaderCallbacks<List<MusicItem>>,
-		OnItemClickListener {
+		LoaderManager.LoaderCallbacks<List<MusicItem>>, OnItemClickListener {
 	// 调试用的标记
 	private static final String TAG = LocalMusicFragment.class.getSimpleName();
 
@@ -72,8 +65,8 @@ public class LocalMusicFragment extends SherlockFragment implements
 	/** 正在播放的条目编号 */
 	private int mActivateItemPosition = -1;
 
-	/** SearchView输入栏的过滤 */
-	private String mCurFilter = null;
+	// /** SearchView输入栏的过滤 */
+	// private String mCurFilter = null;
 
 	private ClientIncomingHandler mHandler = new ClientIncomingHandler(
 			LocalMusicFragment.this);
@@ -265,37 +258,37 @@ public class LocalMusicFragment extends SherlockFragment implements
 		mActivity.switchToMusicPlayer();
 	}
 
-	/** 创建ActionBar上的选项菜单，在这里我们添加一个SearchView提供搜索过滤 */
-	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		super.onCreateOptionsMenu(menu, inflater);
-		// 添加一个ActionBar选项菜单项，设置参数
-		MenuItem item = menu.add("Search");
-		item.setIcon(android.R.drawable.ic_menu_search);
-		item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-
-		// 绑定SearchView到ActionBar，设置其监听器
-		SearchView sv = new SearchView(getActivity());
-		sv.setOnQueryTextListener(this);
-		item.setActionView(sv);
-	}
-
-	/** 当ActionBar的搜索内容改变时调用此方法 */
-	@Override
-	public boolean onQueryTextChange(String newText) {
-		// 用户在查询输入框输入不为空则将输入的文字赋值给mCurFilter
-		// mCurFilter = !TextUtils.isEmpty(newText) ? newText : null;
-
-		// 重启0号装载器
-		// getLoaderManager().restartLoader(0, null, this);
-		return true;
-	}
-
-	@Override
-	public boolean onQueryTextSubmit(String query) {
-		// 不关心这个方法的实现
-		return true;
-	}
+	// /** 创建ActionBar上的选项菜单，在这里我们添加一个SearchView提供搜索过滤 */
+	// @Override
+	// public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+	// super.onCreateOptionsMenu(menu, inflater);
+	// // 添加一个ActionBar选项菜单项，设置参数
+	// MenuItem item = menu.add("Search");
+	// item.setIcon(android.R.drawable.ic_menu_search);
+	// item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+	//
+	// // 绑定SearchView到ActionBar，设置其监听器
+	// SearchView sv = new SearchView(getActivity());
+	// sv.setOnQueryTextListener(this);
+	// item.setActionView(sv);
+	// }
+	//
+	// /** 当ActionBar的搜索内容改变时调用此方法 */
+	// @Override
+	// public boolean onQueryTextChange(String newText) {
+	// // 用户在查询输入框输入不为空则将输入的文字赋值给mCurFilter
+	// // mCurFilter = !TextUtils.isEmpty(newText) ? newText : null;
+	//
+	// // 重启0号装载器
+	// // getLoaderManager().restartLoader(0, null, this);
+	// return true;
+	// }
+	//
+	// @Override
+	// public boolean onQueryTextSubmit(String query) {
+	// // 不关心这个方法的实现
+	// return true;
+	// }
 
 	/** 在装载器需要被创建时执行此方法，这里只有一个装载器，所以我们不必关心装载器的ID */
 	@Override
@@ -327,7 +320,7 @@ public class LocalMusicFragment extends SherlockFragment implements
 
 		if (mActivateItemPosition != -1) {
 			mAdapter.setSpecifiedIndicator(mActivateItemPosition);
-			mListView.setSelection(mActivateItemPosition);
+			mListView.smoothScrollToPosition(mActivateItemPosition);
 		}
 
 		// 数据加载完成，显示列表
@@ -348,31 +341,29 @@ public class LocalMusicFragment extends SherlockFragment implements
 		mAdapter.setData(null);
 	}
 
+	public void smoothScrollToCurrentPosition() {
+		if (mActivateItemPosition != -1) {
+			mListView.smoothScrollToPosition(mActivateItemPosition);
+		}
+	}
+
 	private class MusicListAdapter extends BaseAdapter {
 		/** 数据源 */
 		private List<MusicItem> mData = null;
 
 		/** 播放时为相应播放条目显示一个播放标记 */
-		private SparseBooleanArray mItemActivateIndicator = null;
+		private int mActivateItemPos = -1;
 
 		public MusicListAdapter() {
 			mData = new ArrayList<MusicItem>();
-			mItemActivateIndicator = new SparseBooleanArray();
 		}
 
 		public void setData(List<MusicItem> data) {
-			if (mData != null) {
+			if (mData != null && data != null) {
 				mData.clear();
-			}
-			if (mItemActivateIndicator != null) {
-				mItemActivateIndicator.clear();
-			}
-			if (data != null) {
 				mData.addAll(data);
-				for (int i = 0; i < mData.size(); i++) {
-					mItemActivateIndicator.put(i, false);
-				}
 			}
+			mActivateItemPos = -1;
 		}
 
 		public List<MusicItem> getData() {
@@ -381,8 +372,13 @@ public class LocalMusicFragment extends SherlockFragment implements
 
 		/** 让指定位置的条目显示一个正在播放标记（活动状态标记） */
 		public void setSpecifiedIndicator(int position) {
-			mItemActivateIndicator.put(position, true);
+			mActivateItemPos = position;
 			notifyDataSetChanged();
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return mData.size() == 0;
 		}
 
 		@Override
@@ -417,9 +413,11 @@ public class LocalMusicFragment extends SherlockFragment implements
 			} else {
 				holder = (ViewHolder) convertView.getTag();
 			}
-			holder.indicator
-					.setVisibility(mItemActivateIndicator.get(position) ? View.VISIBLE
-							: View.INVISIBLE);
+			if (mActivateItemPos == position) {
+				holder.indicator.setVisibility(View.VISIBLE);
+			} else {
+				holder.indicator.setVisibility(View.INVISIBLE);
+			}
 			holder.title.setText(getItem(position).getTitle());
 			holder.artist.setText(getItem(position).getArtist());
 

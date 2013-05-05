@@ -13,5 +13,6 @@
     <string name="playmode_repeat_single">单曲循环</string>
     <string name="playmode_shuffle">随机播放</string>
     <string name="playmode_sequential">顺序播放</string>
+    <string name="there_is_no_lyric_yet">暂无歌词</string>
 
 </resources>

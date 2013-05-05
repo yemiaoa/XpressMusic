@@ -2,8 +2,6 @@ package com.lq.fragment;
 
 import java.util.Random;
 
-import com.lq.activity.R;
-
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -11,9 +9,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+import com.lq.activity.R;
+
 public class ColorFragment extends Fragment {
 
-	private int mColorRes = -1;
+	private int mColorRes = R.color.holo_blue_dark;
 
 	public ColorFragment() {
 		switch (new Random().nextInt(5)) {
@@ -44,7 +44,8 @@ public class ColorFragment extends Fragment {
 			Bundle savedInstanceState) {
 		if (savedInstanceState != null)
 			mColorRes = savedInstanceState.getInt("mColorRes");
-		int color = getResources().getColor(mColorRes);
+		// int color = getResources().getColor(mColorRes);
+		int color = R.color.holo_red_dark;
 		// construct the RelativeLayout
 		RelativeLayout v = new RelativeLayout(getActivity());
 		v.setBackgroundColor(color);

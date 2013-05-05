@@ -8,6 +8,9 @@ public class MusicItem {
 	/** 不带扩展名的文件名 */
 	private String title;
 
+	/** 文件名 */
+	private String display_name;
+
 	/** 专辑名，一般为文件夹名 */
 	private String album;
 
@@ -82,6 +85,14 @@ public class MusicItem {
 
 	public void setArtist(String artist) {
 		this.artist = artist;
+	}
+
+	public String getDisplayName() {
+		return display_name;
+	}
+
+	public void setDisplayName(String display_name) {
+		this.display_name = display_name;
 	}
 
 }

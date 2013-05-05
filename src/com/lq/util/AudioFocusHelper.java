@@ -16,10 +16,10 @@
 
 package com.lq.util;
 
-import com.lq.service.MusicService;
-
 import android.content.Context;
 import android.media.AudioManager;
+
+import com.lq.service.MusicService;
 
 /**
  * Convenience class to deal with audio focus. This class deals with everything

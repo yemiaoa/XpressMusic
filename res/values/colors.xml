@@ -23,8 +23,10 @@
     <color name="holo_blue_bright">#ff00ddff</color>
     <color name="white">#ffffffff</color>
     <color name="white_translucence">#ddffffff</color>
+    <color name="white_translucence2">#99ffffff</color>
     <color name="black">#ff000000</color>
     <color name="black_translucence">#dd000000</color>
+    <color name="black_translucence2">#55000000</color>
     <color name="grey_dark">#ff454545</color>
     <color name="grey_dark2">#cc666666</color>
     <color name="transparent">#00000000</color>
