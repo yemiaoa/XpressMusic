@@ -18,13 +18,16 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -49,15 +52,23 @@ public class LocalMusicFragment extends SherlockFragment implements
 	public static final String FLAG_PLAY_ITEM = "flag_play_item";
 	private static final int MUSIC_RETRIEVE_LOADER = 0;
 
+	private String mSortOrder = Media.DEFAULT_SORT_ORDER;
+
 	private boolean mHasNewData = false;
 
 	private MainContentActivity mActivity = null;
 
 	/** 显示本地音乐的列表 */
-	private ListView mListView = null;
+	private ListView mView_ListView = null;
 
 	/** 数据加载完成前显示的进度条 */
-	private ProgressBar mProgressBar = null;
+	private ProgressBar mView_ProgressBar = null;
+
+	private ImageView mView_MenuNavigation = null;
+	private ImageView mView_MoreFunctions = null;
+	private TextView mView_Title = null;
+
+	private PopupMenu mOverflowPopupMenu = null;
 
 	/** 用来绑定数据至ListView的适配器 */
 	private MusicListAdapter mAdapter = null;
@@ -132,9 +143,22 @@ public class LocalMusicFragment extends SherlockFragment implements
 		Log.i(TAG, "onCreateView");
 		View rootView = inflater.inflate(R.layout.layout_local_music_list,
 				container, false);
-		mListView = (ListView) rootView.findViewById(R.id.listview_local_music);
-		mProgressBar = (ProgressBar) rootView
+		mView_ListView = (ListView) rootView
+				.findViewById(R.id.listview_local_music);
+		mView_ProgressBar = (ProgressBar) rootView
 				.findViewById(R.id.progressbar_loading_local_music);
+		mView_MenuNavigation = (ImageView) rootView
+				.findViewById(R.id.menu_navigation);
+		mView_Title = (TextView) rootView
+				.findViewById(R.id.title_of_local_music);
+		mView_MoreFunctions = (ImageView) rootView
+				.findViewById(R.id.more_functions);
+
+		mOverflowPopupMenu = new PopupMenu(getActivity(), mView_MoreFunctions);
+		mOverflowPopupMenu.getMenuInflater().inflate(
+				R.menu.popup_local_music_list, mOverflowPopupMenu.getMenu());
+
+		setListeners();
 		return rootView;
 	}
 
@@ -154,10 +178,10 @@ public class LocalMusicFragment extends SherlockFragment implements
 		mAdapter = new MusicListAdapter();
 
 		// 为ListView绑定数据适配器
-		mListView.setAdapter(mAdapter);
+		mView_ListView.setAdapter(mAdapter);
 
 		// 为ListView的条目绑定一个点击事件监听
-		mListView.setOnItemClickListener(this);
+		mView_ListView.setOnItemClickListener(this);
 
 		// 数据加载完成之前，显示一个进度条，隐藏列表，完成加载后显示列表隐藏进度条
 		setListShown(false, true);
@@ -217,29 +241,71 @@ public class LocalMusicFragment extends SherlockFragment implements
 	private void setListShown(boolean shown, boolean animate) {
 		if (shown) {
 			if (animate) {
-				mProgressBar.startAnimation(AnimationUtils.loadAnimation(
+				mView_ProgressBar.startAnimation(AnimationUtils.loadAnimation(
 						getActivity(), android.R.anim.fade_out));
-				mListView.startAnimation(AnimationUtils.loadAnimation(
+				mView_ListView.startAnimation(AnimationUtils.loadAnimation(
 						getActivity(), android.R.anim.fade_in));
 			} else {
-				mProgressBar.clearAnimation();
-				mListView.clearAnimation();
+				mView_ProgressBar.clearAnimation();
+				mView_ListView.clearAnimation();
 			}
-			mProgressBar.setVisibility(View.GONE);
-			mListView.setVisibility(View.VISIBLE);
+			mView_ProgressBar.setVisibility(View.GONE);
+			mView_ListView.setVisibility(View.VISIBLE);
 		} else {
 			if (animate) {
-				mProgressBar.startAnimation(AnimationUtils.loadAnimation(
+				mView_ProgressBar.startAnimation(AnimationUtils.loadAnimation(
 						getActivity(), android.R.anim.fade_in));
-				mListView.startAnimation(AnimationUtils.loadAnimation(
+				mView_ListView.startAnimation(AnimationUtils.loadAnimation(
 						getActivity(), android.R.anim.fade_out));
 			} else {
-				mProgressBar.clearAnimation();
-				mListView.clearAnimation();
+				mView_ProgressBar.clearAnimation();
+				mView_ListView.clearAnimation();
 			}
-			mProgressBar.setVisibility(View.VISIBLE);
-			mListView.setVisibility(View.GONE);
+			mView_ProgressBar.setVisibility(View.VISIBLE);
+			mView_ListView.setVisibility(View.GONE);
 		}
+	}
+
+	private void setListeners() {
+		mOverflowPopupMenu
+				.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+					public boolean onMenuItemClick(MenuItem item) {
+						switch (item.getItemId()) {
+						case R.id.sort_by_artist:
+							mSortOrder = Media.ARTIST;
+							getLoaderManager().restartLoader(
+									MUSIC_RETRIEVE_LOADER, null,
+									LocalMusicFragment.this);
+							break;
+						case R.id.sort_by_music_name:
+							mSortOrder = Media.DEFAULT_SORT_ORDER;
+							getLoaderManager().restartLoader(
+									MUSIC_RETRIEVE_LOADER, null,
+									LocalMusicFragment.this);
+							break;
+
+						default:
+							break;
+						}
+						return true;
+					}
+				});
+
+		mView_MenuNavigation.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				mActivity.getSlidingMenu().showMenu();
+			}
+		});
+
+		mView_MoreFunctions.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				mOverflowPopupMenu.show();
+			}
+		});
+
 	}
 
 	@Override
@@ -304,9 +370,8 @@ public class LocalMusicFragment extends SherlockFragment implements
 		// select += " and " + Media.TITLE + " like '%" + mCurFilter + "%'";
 		// }
 
-		// 创建并返回一个CursorLoader
-		return new MusicRetrieveLoader(getActivity(), select, null,
-				Media.DEFAULT_SORT_ORDER);
+		// 创建并返回一个Loader
+		return new MusicRetrieveLoader(getActivity(), select, null, mSortOrder);
 	}
 
 	@Override
@@ -320,9 +385,13 @@ public class LocalMusicFragment extends SherlockFragment implements
 
 		if (mActivateItemPosition != -1) {
 			mAdapter.setSpecifiedIndicator(mActivateItemPosition);
-			mListView.smoothScrollToPosition(mActivateItemPosition);
+			mView_ListView.smoothScrollToPosition(mActivateItemPosition);
 		}
 
+		if (data != null && data.size() != 0) {
+			mView_Title.setText(getResources().getString(R.string.local_music)
+					+ "(" + data.size() + ")");
+		}
 		// 数据加载完成，显示列表
 		if (isResumed()) {
 			// Fragment页面处于前端（Resumed状态）则显示页面变化的动画
@@ -343,7 +412,7 @@ public class LocalMusicFragment extends SherlockFragment implements
 
 	public void smoothScrollToCurrentPosition() {
 		if (mActivateItemPosition != -1) {
-			mListView.smoothScrollToPosition(mActivateItemPosition);
+			mView_ListView.smoothScrollToPosition(mActivateItemPosition);
 		}
 	}
 

@@ -14,5 +14,10 @@
     <string name="playmode_shuffle">随机播放</string>
     <string name="playmode_sequential">顺序播放</string>
     <string name="there_is_no_lyric_yet">暂无歌词</string>
+    <string name="sort_by_music_name">按歌曲名称排序</string>
+    <string name="sort_by_artist">按歌手名称排序</string>
+    <string name="classify_by_artist">按歌手分类</string>
+    <string name="classify_by_directory">按文件夹分类</string>
+    <string name="local_music">本地音乐</string>
 
 </resources>
