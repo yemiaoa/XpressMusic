@@ -11,6 +11,9 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.View.OnTouchListener;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.lq.adapter.MainPagerAdapter;
@@ -31,7 +34,7 @@ public class MainContentActivity extends SherlockFragmentActivity {
 
 	/** 总共就两页，第一页为主页面，可以替换掉，第二页始终为音乐播放界面 */
 	private ViewPager mViewPager = null;
-	
+	private boolean mViewPagerSlidable = true;
 	MainPagerAdapter mMainPagerAdapter = null;
 
 	private List<Fragment> mFragmentShowList = null;
@@ -109,16 +112,27 @@ public class MainContentActivity extends SherlockFragmentActivity {
 				case 0:
 					getSlidingMenu().setTouchModeAbove(
 							SlidingMenu.TOUCHMODE_FULLSCREEN);
-					if (mFragmentShowList.get(0).getClass().getSimpleName()
-							.equals("LocalMusicFragment")) {
-						((LocalMusicFragment) mFragmentShowList.get(0))
-								.smoothScrollToCurrentPosition();
-					}
 					break;
 				default:
 					getSlidingMenu().setTouchModeAbove(
 							SlidingMenu.TOUCHMODE_NONE);
 					break;
+				}
+			}
+		});
+
+		// 拦截viewpager的触摸事件
+		mViewPager.setOnTouchListener(new OnTouchListener() {
+
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				// 根据自定义的变量决定viewpager是否响应Touch事件，来达到控制禁止滑动的目的
+				if (mViewPagerSlidable) {
+					// 允许滑动，返回false，会将触摸事件分发到viewpager包含的子控件中
+					return false;
+				} else {
+					// 不允许滑动，返回true，viewpager的子控件将不会接受到触摸事件
+					return true;
 				}
 			}
 		});
@@ -191,6 +205,16 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		mSlidingMenu.toggle();
 	}
 
+	public void forbidSlide() {
+		mSlidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_NONE);
+		mViewPagerSlidable = false;
+	}
+
+	public void allowSlide() {
+		mSlidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
+		mViewPagerSlidable = true;
+	}
+
 	public void exit() {
 		stopService(new Intent(MainContentActivity.this, MusicService.class));
 		MainContentActivity.this.finish();
@@ -207,7 +231,9 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		if (mViewPager.getCurrentItem() == 0) {
 			switch (keyCode) {
 			case KeyEvent.KEYCODE_MENU:
-				mSlidingMenu.toggle();
+				if (mViewPagerSlidable) {
+					mSlidingMenu.toggle();
+				}
 				break;
 			case KeyEvent.KEYCODE_BACK:
 				// 规定在显示菜单时才可退出程序，按返回键弹出侧滑菜单

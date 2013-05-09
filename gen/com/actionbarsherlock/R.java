@@ -48,7 +48,7 @@ public final class R {
 		public static final int abs__title = 0x7f050020;
 		public static final int abs__progress_circular = 0x7f05000e;
 		public static final int useLogo = 0x7f050004;
-		public static final int action_settings = 0x7f05005e;
+		public static final int action_settings = 0x7f050060;
 		public static final int tabMode = 0x7f050003;
 		public static final int abs__search_edit_frame = 0x7f050030;
 		public static final int abs__radio = 0x7f050025;

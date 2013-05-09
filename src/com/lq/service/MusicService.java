@@ -52,6 +52,8 @@ import com.lq.activity.R;
 import com.lq.entity.LyricSentence;
 import com.lq.entity.MusicItem;
 import com.lq.fragment.LocalMusicFragment;
+import com.lq.listener.OnPlaybackStateChangeListener;
+import com.lq.listener.OnServiceConnectionListener;
 import com.lq.receiver.MediaButtonReceiver;
 import com.lq.util.AudioFocusHelper;
 import com.lq.util.AudioFocusHelper.MusicFocusable;
@@ -63,73 +65,6 @@ import com.lq.util.LyricLoadHelper.LyricListener;
  */
 public class MusicService extends Service implements OnCompletionListener,
 		OnPreparedListener, OnErrorListener, MusicFocusable, LyricListener {
-
-	/**
-	 * 自定义的一个服务连接监听器。 <br>
-	 * 在显示组件与服务组件连接时，用以将业务数据通知并传递给显示层进行初始化；<br>
-	 * 在显示组件与服务组件断开连接时，通知显示层。
-	 */
-	public interface OnServiceConnectionListener {
-		/**
-		 * 在调用MusicService里的
-		 * {@linkplain com.lq.service.MusicService#registerOnServiceConnectionListener
-		 * registerOnServiceConnectionListener()} 方法后调用此方法
-		 * 
-		 * @param currentPlayerState
-		 *            当前音乐播放状态
-		 * @param playingSong
-		 *            当前播放的歌曲
-		 * @param currenPlayPosition
-		 *            当前已经播放到的位置
-		 * @param playMode
-		 *            当前播放模式（顺序播放、列表循环、单曲循环、随机播放）
-		 * */
-		public abstract void onServiceConnected(State currentPlayerState,
-				MusicItem playingSong, int currenPlayPosition, int playMode);
-
-		/**
-		 * 在调用MusicService里的
-		 * {@linkplain com.lq.service.MusicService#unregisterOnServiceConnectionListener
-		 * unregisterOnServiceConnectionListener()} 方法后调用此方法
-		 */
-		public abstract void onServiceDisconnected();
-	}
-
-	/** 定义音乐回放时一系列状态变化时的回调接口 */
-	public interface OnPlaybackStateChangeListener {
-		/** 音乐开始播放时调用此方法 */
-		public abstract void onMusicPlayed();
-
-		/** 音乐播放停止时调用此方法 */
-		public abstract void onMusicPaused();
-
-		/** 音乐播放暂停时调用此方法 */
-		public abstract void onMusicStopped();
-
-		/**
-		 * 播放新的歌曲时调用此方法
-		 * 
-		 * @param playingSong
-		 *            新的歌曲信息
-		 * */
-		public abstract void onPlayNewSong(MusicItem playingSong);
-
-		/**
-		 * 播放模式改变时调用此方法
-		 * 
-		 * @param playMode
-		 *            播放模式
-		 * */
-		public abstract void onPlayModeChanged(int playMode);
-
-		/**
-		 * 播放的音乐进度改变时调用此方法
-		 * 
-		 * @param currentMillis
-		 *            当前播放进度 （已播放的毫秒数）
-		 * */
-		public abstract void onPlayProgressUpdate(int currentMillis);
-	}
 
 	public class MusicPlaybackLocalBinder extends Binder {
 
@@ -222,8 +157,9 @@ public class MusicService extends Service implements OnCompletionListener,
 			mPlayList.clear();
 			mPlayList.addAll(list);
 			mHasPlayList = true;
-			mToBePlayedSongPos = 0;
+			mRequestPlayPos = 0;
 		}
+		
 	}
 
 	// 打印调试信息用的标记
@@ -251,10 +187,10 @@ public class MusicService extends Service implements OnCompletionListener,
 	int mPlayMode = 1;
 
 	/** 服务连接观察者集合 */
-	ArrayList<OnServiceConnectionListener> mOnServiceConnectionListeners = new ArrayList<MusicService.OnServiceConnectionListener>();
+	ArrayList<OnServiceConnectionListener> mOnServiceConnectionListeners = new ArrayList<OnServiceConnectionListener>();
 
 	/** 回放状态变化的观察者集合 */
-	ArrayList<OnPlaybackStateChangeListener> mOnPlaybackStateChangeListeners = new ArrayList<MusicService.OnPlaybackStateChangeListener>();
+	ArrayList<OnPlaybackStateChangeListener> mOnPlaybackStateChangeListeners = new ArrayList<OnPlaybackStateChangeListener>();
 
 	MusicPlaybackLocalBinder mBinder = new MusicPlaybackLocalBinder();
 
@@ -294,7 +230,8 @@ public class MusicService extends Service implements OnCompletionListener,
 	boolean mHasLyric = false;
 
 	int mPlayingSongPos = 0;
-	int mToBePlayedSongPos = 0;
+	int mRequestPlayPos = -1;
+	long mRequsetPlayId = -1;
 
 	// 我们要播放的音乐是否是来自网络的媒体流
 	boolean mIsStreaming = false;
@@ -405,13 +342,18 @@ public class MusicService extends Service implements OnCompletionListener,
 
 		if (action.equals(ACTION_PLAY)) {
 			if (mHasPlayList) {
-				int flag = intent.getIntExtra(
-						LocalMusicFragment.FLAG_PLAY_ITEM, 0);
-				if (flag == 1) {// 如果是列表中点击的
-					mToBePlayedSongPos = intent.getIntExtra(
-							"playing_position_in_list", 0);
+				// 如果是列表中点击的
+				if (1 == intent.getIntExtra(
+						LocalMusicFragment.FLAG_CLICK_ITEM_IN_LIST, 0)) {
+					// 获取到点击的歌曲的ID
+					mRequsetPlayId = intent.getLongExtra(
+							LocalMusicFragment.REQUEST_PLAY_ID, 0);
+					mRequestPlayPos = seekPosInListById(mPlayList,
+							mRequsetPlayId);
 				}
-				processPlayRequest();
+				if (mRequestPlayPos != -1) {
+					processPlayRequest();
+				}
 			}
 		} else if (action.equals(ACTION_PAUSE)) {
 			processPauseRequest();
@@ -556,12 +498,12 @@ public class MusicService extends Service implements OnCompletionListener,
 		if (mState == State.Stopped
 				|| ((mState == State.Paused || mState == State.Playing) && mPlayList
 						.get(mPlayingSongPos).getId() != mPlayList.get(
-						mToBePlayedSongPos).getId())) {
-			mPlayingSongPos = mToBePlayedSongPos;
+						mRequestPlayPos).getId())) {
+			mPlayingSongPos = mRequestPlayPos;
 			playSong();
 		} else if (mState == State.Paused
 				&& mPlayList.get(mPlayingSongPos).getId() == mPlayList.get(
-						mToBePlayedSongPos).getId()) {
+						mRequestPlayPos).getId()) {
 			// 如果处于“暂停”状态，则继续播放，并且恢复“前台服务”的状态
 			mState = State.Playing;
 			setUpAsForeground(mPlayList.get(mPlayingSongPos).getTitle()
@@ -609,22 +551,22 @@ public class MusicService extends Service implements OnCompletionListener,
 			switch (mPlayMode) {
 			case PLAYMODE_REPEAT:
 			case PLAYMODE_SEQUENTIAL:
-				if (--mToBePlayedSongPos < 0) {
-					mToBePlayedSongPos = mPlayList.size() - 1;
+				if (--mRequestPlayPos < 0) {
+					mRequestPlayPos = mPlayList.size() - 1;
 				}
 				break;
 			case PLAYMODE_SHUFFLE:
 				if (mPlayQueue.size() != 0) {
-					mToBePlayedSongPos = mPlayQueue.pop();
+					mRequestPlayPos = mPlayQueue.pop();
 				} else {
-					mToBePlayedSongPos = mRandom.nextInt(mPlayList.size());
+					mRequestPlayPos = mRandom.nextInt(mPlayList.size());
 				}
 				break;
 			case PLAYMODE_REPEAT_SINGLE:
 				if (fromUser) {
 					// 如果是用户请求播放上一首，就顺序播放上一首
-					if (--mToBePlayedSongPos < 0) {
-						mToBePlayedSongPos = mPlayList.size() - 1;
+					if (--mRequestPlayPos < 0) {
+						mRequestPlayPos = mPlayList.size() - 1;
 					}
 				} else {
 					// 如果不是用户请求，循环播放
@@ -633,6 +575,7 @@ public class MusicService extends Service implements OnCompletionListener,
 			default:
 				break;
 			}
+			mRequsetPlayId = mPlayList.get(mRequestPlayPos).getId();
 			processPlayRequest();
 		}
 	}
@@ -648,32 +591,29 @@ public class MusicService extends Service implements OnCompletionListener,
 				|| mState == State.Stopped) {
 			switch (mPlayMode) {
 			case PLAYMODE_REPEAT:
-				mToBePlayedSongPos = (mToBePlayedSongPos + 1)
-						% mPlayList.size();
+				mRequestPlayPos = (mRequestPlayPos + 1) % mPlayList.size();
 				break;
 			case PLAYMODE_SEQUENTIAL:
-				mToBePlayedSongPos = (mToBePlayedSongPos + 1)
-						% mPlayList.size();
-				if (mToBePlayedSongPos == 0) {
+				mRequestPlayPos = (mRequestPlayPos + 1) % mPlayList.size();
+				if (mRequestPlayPos == 0) {
 					if (fromUser) {
-						mToBePlayedSongPos = 0;
+						mRequestPlayPos = 0;
 					} else {
 						// 播放到当前播放列表的最后一首便停止播放
-						mToBePlayedSongPos = mPlayList.size() - 1;
+						mRequestPlayPos = mPlayList.size() - 1;
 						processStopRequest();
 						return;
 					}
 				}
 				break;
 			case PLAYMODE_SHUFFLE:
-				mPlayQueue.push(mToBePlayedSongPos);
-				mToBePlayedSongPos = mRandom.nextInt(mPlayList.size());
+				mPlayQueue.push(mRequestPlayPos);
+				mRequestPlayPos = mRandom.nextInt(mPlayList.size());
 				break;
 			case PLAYMODE_REPEAT_SINGLE:
 				if (fromUser) {
 					// 如果是用户请求，就顺序播放下一首
-					mToBePlayedSongPos = (mToBePlayedSongPos + 1)
-							% mPlayList.size();
+					mRequestPlayPos = (mRequestPlayPos + 1) % mPlayList.size();
 				} else {
 					// 如果不是用户请求，循环播放
 					mMediaPlayer.setLooping(true);
@@ -681,6 +621,7 @@ public class MusicService extends Service implements OnCompletionListener,
 			default:
 				break;
 			}
+			mRequsetPlayId = mPlayList.get(mRequestPlayPos).getId();
 			processPlayRequest();
 		}
 	}
@@ -692,7 +633,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	void processStopRequest(boolean force) {
 		if (mState == State.Playing || mState == State.Paused || force) {
 			mState = State.Stopped;
-
+			mRequsetPlayId = -1;
 			// 释放所有持有的资源
 			relaxResources(true);
 			mAudioFocusHelper.giveUpAudioFocus();
@@ -827,23 +768,6 @@ public class MusicService extends Service implements OnCompletionListener,
 		startForeground(NOTIFICATION_ID, mNotification);
 	}
 
-	/**
-	 * 读取歌词文件
-	 * 
-	 * @param path
-	 *            歌曲文件的路径
-	 */
-	private void loadLyric(String path) {
-		// 取得歌曲同目录下的歌词文件绝对路径
-		// String lyricFilePath = path.substring(0, path.lastIndexOf(".") + 1)
-		// + "lrc";
-		String lyricFilePath = Environment.getExternalStorageDirectory()
-				+ "/MIUI/music/lyric/"
-				+ mPlayList.get(mPlayingSongPos).getTitle() + "_"
-				+ mPlayList.get(mPlayingSongPos).getArtist() + ".lrc";
-		mHasLyric = mLyricLoadHelper.loadLyric(lyricFilePath);
-	}
-
 	@Override
 	public void onLyricLoaded(List<LyricSentence> lyricSentences, int index) {
 		if (mLyricListener != null) {
@@ -866,4 +790,43 @@ public class MusicService extends Service implements OnCompletionListener,
 		}
 	}
 
+	/**
+	 * 读取歌词文件
+	 * 
+	 * @param path
+	 *            歌曲文件的路径
+	 */
+	private void loadLyric(String path) {
+		// 取得歌曲同目录下的歌词文件绝对路径
+		// String lyricFilePath = path.substring(0, path.lastIndexOf(".") + 1)
+		// + "lrc";
+		String lyricFilePath = Environment.getExternalStorageDirectory()
+				+ "/MIUI/music/lyric/"
+				+ mPlayList.get(mPlayingSongPos).getTitle() + "_"
+				+ mPlayList.get(mPlayingSongPos).getArtist() + ".lrc";
+		mHasLyric = mLyricLoadHelper.loadLyric(lyricFilePath);
+	}
+
+	/**
+	 * 根据歌曲的ID，寻找出歌曲在当前播放列表中的位置
+	 * 
+	 * @param list
+	 *            歌曲列表
+	 * @param songId
+	 *            歌曲ID
+	 * @return 返回-1表示未找到
+	 */
+	public static int seekPosInListById(List<MusicItem> list, long songId) {
+		int result = -1;
+		if (list != null) {
+
+			for (int i = 0; i < list.size(); i++) {
+				if (songId == list.get(i).getId()) {
+					result = i;
+					break;
+				}
+			}
+		}
+		return result;
+	}
 }

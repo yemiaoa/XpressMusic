@@ -17,11 +17,17 @@ import android.provider.MediaStore.Audio.Media;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
+import android.view.ActionMode;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
+import android.widget.AbsListView.MultiChoiceModeListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
@@ -30,11 +36,13 @@ import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragment;
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
 import com.lq.entity.MusicItem;
+import com.lq.listener.OnPlaybackStateChangeListener;
 import com.lq.loader.MusicRetrieveLoader;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
@@ -49,7 +57,9 @@ public class LocalMusicFragment extends SherlockFragment implements
 	// 调试用的标记
 	private static final String TAG = LocalMusicFragment.class.getSimpleName();
 
-	public static final String FLAG_PLAY_ITEM = "flag_play_item";
+	public static final String FLAG_CLICK_ITEM_IN_LIST = "flag_click_item_in_list";
+	public static final String REQUEST_PLAY_ID = "request_play_id";
+
 	private static final int MUSIC_RETRIEVE_LOADER = 0;
 
 	private String mSortOrder = Media.DEFAULT_SORT_ORDER;
@@ -67,17 +77,12 @@ public class LocalMusicFragment extends SherlockFragment implements
 	private ImageView mView_MenuNavigation = null;
 	private ImageView mView_MoreFunctions = null;
 	private TextView mView_Title = null;
+	private ViewGroup mView_Top_Container = null;
 
 	private PopupMenu mOverflowPopupMenu = null;
 
 	/** 用来绑定数据至ListView的适配器 */
 	private MusicListAdapter mAdapter = null;
-
-	/** 正在播放的条目编号 */
-	private int mActivateItemPosition = -1;
-
-	// /** SearchView输入栏的过滤 */
-	// private String mCurFilter = null;
 
 	private ClientIncomingHandler mHandler = new ClientIncomingHandler(
 			LocalMusicFragment.this);
@@ -112,6 +117,8 @@ public class LocalMusicFragment extends SherlockFragment implements
 	private ServiceConnection mServiceConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
 			mMusicServiceBinder = (MusicPlaybackLocalBinder) service;
+			mMusicServiceBinder
+					.registerOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
 		}
 
 		// 与服务端连接异常丢失时才调用，调用unBindService不调用此方法哎
@@ -153,12 +160,13 @@ public class LocalMusicFragment extends SherlockFragment implements
 				.findViewById(R.id.title_of_local_music);
 		mView_MoreFunctions = (ImageView) rootView
 				.findViewById(R.id.more_functions);
+		mView_Top_Container = (ViewGroup) rootView
+				.findViewById(R.id.top_of_local_music);
 
 		mOverflowPopupMenu = new PopupMenu(getActivity(), mView_MoreFunctions);
 		mOverflowPopupMenu.getMenuInflater().inflate(
 				R.menu.popup_local_music_list, mOverflowPopupMenu.getMenu());
 
-		setListeners();
 		return rootView;
 	}
 
@@ -167,21 +175,8 @@ public class LocalMusicFragment extends SherlockFragment implements
 	public void onActivityCreated(Bundle savedInstanceState) {
 		Log.i(TAG, "onActivityCreated");
 		super.onActivityCreated(savedInstanceState);
-		// 如果没有数据，就作出提示
-		// mListView.setEmptyView(getView().findViewById(
-		// R.id.textview_local_music_empty));
 
-		// 允许本Fragment在ActionBar上添加选项菜单项
-		setHasOptionsMenu(true);
-
-		// 创建一个空的适配器，用来显示加载的数据，适配器内容稍后由Loader填充
-		mAdapter = new MusicListAdapter();
-
-		// 为ListView绑定数据适配器
-		mView_ListView.setAdapter(mAdapter);
-
-		// 为ListView的条目绑定一个点击事件监听
-		mView_ListView.setOnItemClickListener(this);
+		initViewsSetting();
 
 		// 数据加载完成之前，显示一个进度条，隐藏列表，完成加载后显示列表隐藏进度条
 		setListShown(false, true);
@@ -229,6 +224,12 @@ public class LocalMusicFragment extends SherlockFragment implements
 		mActivity = null;
 	}
 
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v,
+			ContextMenuInfo menuInfo) {
+		super.onCreateContextMenu(menu, v, menuInfo);
+	}
+
 	/**
 	 * 控制是否要显示列表。不显示列表时，可以显示一个进度条以表明正在加载数据
 	 * 
@@ -266,7 +267,60 @@ public class LocalMusicFragment extends SherlockFragment implements
 		}
 	}
 
-	private void setListeners() {
+	private void initViewsSetting() {
+		// 创建一个空的适配器，用来显示加载的数据，适配器内容稍后由Loader填充
+		mAdapter = new MusicListAdapter();
+		// 为ListView绑定数据适配器
+		mView_ListView.setAdapter(mAdapter);
+		// 为ListView的条目绑定一个点击事件监听
+		mView_ListView.setOnItemClickListener(this);
+		mView_ListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+		mView_ListView
+				.setMultiChoiceModeListener(new MultiChoiceModeListener() {
+
+					@Override
+					public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+						mView_Top_Container.setVisibility(View.GONE);
+						mActivity.forbidSlide();
+						MenuInflater inflater = mActivity.getMenuInflater();
+						inflater.inflate(R.menu.main_content, menu);
+						mode.setTitle("Select Items");
+						return true;
+					}
+
+					@Override
+					public boolean onPrepareActionMode(ActionMode mode,
+							Menu menu) {
+						return true;
+					}
+
+					@Override
+					public boolean onActionItemClicked(ActionMode mode,
+							MenuItem item) {
+						switch (item.getItemId()) {
+						case R.id.go_to_play:
+							Toast.makeText(mActivity, "Clicked Action Item",
+									Toast.LENGTH_SHORT).show();
+							mode.finish();
+							break;
+						}
+						return true;
+					}
+
+					@Override
+					public void onDestroyActionMode(ActionMode mode) {
+						mView_Top_Container.setVisibility(View.VISIBLE);
+						mActivity.allowSlide();
+					}
+
+					@Override
+					public void onItemCheckedStateChanged(ActionMode mode,
+							int position, long id, boolean checked) {
+						// TODO Auto-generated method stub
+
+					}
+
+				});
 		mOverflowPopupMenu
 				.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
 					public boolean onMenuItemClick(MenuItem item) {
@@ -316,45 +370,11 @@ public class LocalMusicFragment extends SherlockFragment implements
 		}
 		mHasNewData = false;
 		Intent intent = new Intent(MusicService.ACTION_PLAY);
-		intent.putExtra("playing_position_in_list", position);
-		intent.putExtra(FLAG_PLAY_ITEM, 1);
-		mActivateItemPosition = position;
-		mAdapter.setSpecifiedIndicator(position);
+		intent.putExtra(REQUEST_PLAY_ID, mAdapter.getItem(position).getId());
+		intent.putExtra(FLAG_CLICK_ITEM_IN_LIST, 1);
 		mActivity.startService(intent);
 		mActivity.switchToMusicPlayer();
 	}
-
-	// /** 创建ActionBar上的选项菜单，在这里我们添加一个SearchView提供搜索过滤 */
-	// @Override
-	// public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-	// super.onCreateOptionsMenu(menu, inflater);
-	// // 添加一个ActionBar选项菜单项，设置参数
-	// MenuItem item = menu.add("Search");
-	// item.setIcon(android.R.drawable.ic_menu_search);
-	// item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-	//
-	// // 绑定SearchView到ActionBar，设置其监听器
-	// SearchView sv = new SearchView(getActivity());
-	// sv.setOnQueryTextListener(this);
-	// item.setActionView(sv);
-	// }
-	//
-	// /** 当ActionBar的搜索内容改变时调用此方法 */
-	// @Override
-	// public boolean onQueryTextChange(String newText) {
-	// // 用户在查询输入框输入不为空则将输入的文字赋值给mCurFilter
-	// // mCurFilter = !TextUtils.isEmpty(newText) ? newText : null;
-	//
-	// // 重启0号装载器
-	// // getLoaderManager().restartLoader(0, null, this);
-	// return true;
-	// }
-	//
-	// @Override
-	// public boolean onQueryTextSubmit(String query) {
-	// // 不关心这个方法的实现
-	// return true;
-	// }
 
 	/** 在装载器需要被创建时执行此方法，这里只有一个装载器，所以我们不必关心装载器的ID */
 	@Override
@@ -364,11 +384,6 @@ public class LocalMusicFragment extends SherlockFragment implements
 		// 查询语句：检索出.mp3为后缀名，时长大于两分钟，文件大小大于1MB的媒体文件
 		String select = Media.DATA + " like'%.mp3' and " + Media.DURATION
 				+ " > " + 1000 * 60 * 2 + " and " + Media.SIZE + " > " + 1024;
-
-		// 如果用户在搜索栏输入了文字，追加到查询条件末尾，进行文件名模糊查询
-		// if (mCurFilter != null) {
-		// select += " and " + Media.TITLE + " like '%" + mCurFilter + "%'";
-		// }
 
 		// 创建并返回一个Loader
 		return new MusicRetrieveLoader(getActivity(), select, null, mSortOrder);
@@ -382,11 +397,6 @@ public class LocalMusicFragment extends SherlockFragment implements
 
 		// TODO SD卡拔出时，没有处理
 		mAdapter.setData(data);
-
-		if (mActivateItemPosition != -1) {
-			mAdapter.setSpecifiedIndicator(mActivateItemPosition);
-			mView_ListView.smoothScrollToPosition(mActivateItemPosition);
-		}
 
 		if (data != null && data.size() != 0) {
 			mView_Title.setText(getResources().getString(R.string.local_music)
@@ -408,12 +418,6 @@ public class LocalMusicFragment extends SherlockFragment implements
 	public void onLoaderReset(Loader<List<MusicItem>> loader) {
 		Log.i(TAG, "onLoaderReset");
 		mAdapter.setData(null);
-	}
-
-	public void smoothScrollToCurrentPosition() {
-		if (mActivateItemPosition != -1) {
-			mView_ListView.smoothScrollToPosition(mActivateItemPosition);
-		}
 	}
 
 	private class MusicListAdapter extends BaseAdapter {
@@ -500,4 +504,38 @@ public class LocalMusicFragment extends SherlockFragment implements
 		View indicator;
 	}
 
+	private OnPlaybackStateChangeListener mOnPlaybackStateChangeListener = new OnPlaybackStateChangeListener() {
+
+		@Override
+		public void onMusicPlayed() {
+
+		}
+
+		@Override
+		public void onMusicPaused() {
+
+		}
+
+		@Override
+		public void onMusicStopped() {
+
+		}
+
+		@Override
+		public void onPlayNewSong(MusicItem playingSong) {
+			mAdapter.setSpecifiedIndicator(MusicService.seekPosInListById(
+					mAdapter.getData(), playingSong.getId()));
+		}
+
+		@Override
+		public void onPlayModeChanged(int playMode) {
+
+		}
+
+		@Override
+		public void onPlayProgressUpdate(int currentMillis) {
+
+		}
+
+	};
 }

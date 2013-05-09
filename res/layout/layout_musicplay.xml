@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/player_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/playback_backround"
-    android:orientation="vertical" >
+    android:background="@drawable/playback_backround" >
 
     <RelativeLayout
+        android:id="@+id/player_top"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="48dp"
+        android:layout_alignParentTop="true"
         android:gravity="center_vertical" >
 
         <ImageButton
@@ -43,13 +43,12 @@
             android:contentDescription="@string/app_name"
             android:src="@drawable/button_favorite" />
     </RelativeLayout>
-    <!-- android:background="@color/holo_blue_dark" -->
 
     <FrameLayout
-        android:id="@+id/frame_play_content"
+        android:id="@+id/player_frame_content"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="9" >
+        android:layout_height="400dp"
+        android:layout_below="@id/player_top" >
 
         <ListView
             android:id="@+id/lyricshow"
@@ -73,12 +72,23 @@
             android:visibility="gone" />
     </FrameLayout>
 
-    <!-- android:background="#cc010101" -->
+    <SeekBar
+        android:id="@+id/play_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/player_frame_content"
+        android:max="100"
+        android:maxHeight="2dp"
+        android:minHeight="2dp"
+        android:progress="0"
+        android:progressDrawable="@drawable/playback_playingbar_seekbar_style"
+        android:thumb="@drawable/playback_playingbar_seekbar_thumb" />
 
     <LinearLayout
+        android:id="@+id/player_bottom"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2"
+        android:layout_height="70dp"
+        android:layout_below="@id/play_progress"
         android:background="@drawable/bottom_play_panel"
         android:orientation="vertical" >
 
@@ -92,7 +102,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="5dp"
+                android:layout_marginLeft="10dp"
                 android:ellipsize="marquee"
                 android:gravity="center"
                 android:singleLine="true"
@@ -106,32 +116,18 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
-                android:layout_marginRight="5dp"
+                android:layout_marginRight="10dp"
                 android:ellipsize="marquee"
                 android:gravity="center"
                 android:singleLine="true"
                 android:textColor="@color/white"
                 android:textIsSelectable="false"
                 android:textSize="15sp" />
-
-            <SeekBar
-                android:id="@+id/play_progress"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_toLeftOf="@id/play_song_total_time"
-                android:layout_toRightOf="@id/play_current_time"
-                android:max="100"
-                android:maxHeight="3dp"
-                android:minHeight="3dp"
-                android:progress="0"
-                android:progressDrawable="@drawable/playback_playingbar_seekbar_style"
-                android:thumb="@drawable/playback_playingbar_seekbar_thumb" />
         </RelativeLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="5dp"
             android:orientation="horizontal" >
 
             <ImageButton
@@ -181,4 +177,4 @@
         </LinearLayout>
     </LinearLayout>
 
-</LinearLayout>
+</RelativeLayout>
