@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.provider.MediaStore.Audio.Media;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
@@ -38,7 +39,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockFragment;
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
 import com.lq.entity.MusicItem;
@@ -52,7 +52,7 @@ import com.lq.service.MusicService.MusicPlaybackLocalBinder;
  * 
  * @author lq
  * */
-public class LocalMusicFragment extends SherlockFragment implements
+public class LocalMusicFragment extends Fragment implements
 		LoaderManager.LoaderCallbacks<List<MusicItem>>, OnItemClickListener {
 	// 调试用的标记
 	private static final String TAG = LocalMusicFragment.class.getSimpleName();

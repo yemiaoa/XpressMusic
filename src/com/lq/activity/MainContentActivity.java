@@ -6,6 +6,7 @@ import java.util.List;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
@@ -15,7 +16,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.lq.adapter.MainPagerAdapter;
 import com.lq.fragment.LocalMusicFragment;
 import com.lq.fragment.MenuFragment;
@@ -23,7 +23,7 @@ import com.lq.fragment.MusicPlayFragment;
 import com.lq.service.MusicService;
 import com.slidingmenu.lib.SlidingMenu;
 
-public class MainContentActivity extends SherlockFragmentActivity {
+public class MainContentActivity extends FragmentActivity {
 	private static final String TAG = MainContentActivity.class.getSimpleName();
 
 	public static final int MESSAGE_SWITCH_TO_PLAY_IMAGE = 0;
@@ -72,7 +72,6 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		mSlidingMenu.setBehindOffsetRes(R.dimen.slidingmenu_offset);
 		mSlidingMenu.setFadeDegree(0.35f);
 		mSlidingMenu.setBehindScrollScale(0.0f);// 滑动时侧滑菜单的内容静止不动
-
 	}
 
 	/** 为SlidingMenu和Content填充Fragment */

@@ -5,6 +5,7 @@ import java.util.List;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.PagerAdapter;
 
 public class MainPagerAdapter extends FragmentStatePagerAdapter {
 
@@ -29,6 +30,11 @@ public class MainPagerAdapter extends FragmentStatePagerAdapter {
 
 	@Override
 	public int getItemPosition(Object object) {
-		return FragmentStatePagerAdapter.POSITION_NONE;
+		for (int i = 0; i < getCount(); i++) {
+			if (mFragmentList.get(i) == object) {
+				return PagerAdapter.POSITION_UNCHANGED;
+			}
+		}
+		return PagerAdapter.POSITION_NONE;
 	}
 }
