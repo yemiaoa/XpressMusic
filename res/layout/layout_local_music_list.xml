@@ -69,14 +69,6 @@
         android:fastScrollEnabled="true" >
     </ListView>
 
-    <ProgressBar
-        android:id="@+id/progressbar_loading_local_music"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:visibility="gone" />
-
     <TextView
         android:id="@+id/textview_local_music_empty"
         android:layout_width="match_parent"

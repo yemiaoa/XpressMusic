@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.provider.MediaStore.Audio.Media;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
@@ -34,11 +35,9 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockFragment;
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
 import com.lq.entity.MusicItem;
@@ -52,7 +51,7 @@ import com.lq.service.MusicService.MusicPlaybackLocalBinder;
  * 
  * @author lq
  * */
-public class LocalMusicFragment extends SherlockFragment implements
+public class LocalMusicFragment extends Fragment implements
 		LoaderManager.LoaderCallbacks<List<MusicItem>>, OnItemClickListener {
 	// 调试用的标记
 	private static final String TAG = LocalMusicFragment.class.getSimpleName();
@@ -70,9 +69,6 @@ public class LocalMusicFragment extends SherlockFragment implements
 
 	/** 显示本地音乐的列表 */
 	private ListView mView_ListView = null;
-
-	/** 数据加载完成前显示的进度条 */
-	private ProgressBar mView_ProgressBar = null;
 
 	private ImageView mView_MenuNavigation = null;
 	private ImageView mView_MoreFunctions = null;
@@ -152,8 +148,6 @@ public class LocalMusicFragment extends SherlockFragment implements
 				container, false);
 		mView_ListView = (ListView) rootView
 				.findViewById(R.id.listview_local_music);
-		mView_ProgressBar = (ProgressBar) rootView
-				.findViewById(R.id.progressbar_loading_local_music);
 		mView_MenuNavigation = (ImageView) rootView
 				.findViewById(R.id.menu_navigation);
 		mView_Title = (TextView) rootView
@@ -242,27 +236,19 @@ public class LocalMusicFragment extends SherlockFragment implements
 	private void setListShown(boolean shown, boolean animate) {
 		if (shown) {
 			if (animate) {
-				mView_ProgressBar.startAnimation(AnimationUtils.loadAnimation(
-						getActivity(), android.R.anim.fade_out));
 				mView_ListView.startAnimation(AnimationUtils.loadAnimation(
 						getActivity(), android.R.anim.fade_in));
 			} else {
-				mView_ProgressBar.clearAnimation();
 				mView_ListView.clearAnimation();
 			}
-			mView_ProgressBar.setVisibility(View.GONE);
 			mView_ListView.setVisibility(View.VISIBLE);
 		} else {
 			if (animate) {
-				mView_ProgressBar.startAnimation(AnimationUtils.loadAnimation(
-						getActivity(), android.R.anim.fade_in));
 				mView_ListView.startAnimation(AnimationUtils.loadAnimation(
 						getActivity(), android.R.anim.fade_out));
 			} else {
-				mView_ProgressBar.clearAnimation();
 				mView_ListView.clearAnimation();
 			}
-			mView_ProgressBar.setVisibility(View.VISIBLE);
 			mView_ListView.setVisibility(View.GONE);
 		}
 	}

@@ -6,6 +6,7 @@ import java.util.List;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
@@ -15,15 +16,14 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.lq.adapter.MainPagerAdapter;
+import com.lq.adapter.TwoPagerAdapter;
 import com.lq.fragment.LocalMusicFragment;
 import com.lq.fragment.MenuFragment;
 import com.lq.fragment.MusicPlayFragment;
 import com.lq.service.MusicService;
 import com.slidingmenu.lib.SlidingMenu;
 
-public class MainContentActivity extends SherlockFragmentActivity {
+public class MainContentActivity extends FragmentActivity {
 	private static final String TAG = MainContentActivity.class.getSimpleName();
 
 	public static final int MESSAGE_SWITCH_TO_PLAY_IMAGE = 0;
@@ -35,9 +35,8 @@ public class MainContentActivity extends SherlockFragmentActivity {
 	/** 总共就两页，第一页为主页面，可以替换掉，第二页始终为音乐播放界面 */
 	private ViewPager mViewPager = null;
 	private boolean mViewPagerSlidable = true;
-	MainPagerAdapter mMainPagerAdapter = null;
+	TwoPagerAdapter mMainPagerAdapter = null;
 
-	private List<Fragment> mFragmentShowList = null;
 	private List<Fragment> mFragmentList = null;
 
 	private MusicPlayFragment mMusicPlayFragment = null;
@@ -72,7 +71,6 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		mSlidingMenu.setBehindOffsetRes(R.dimen.slidingmenu_offset);
 		mSlidingMenu.setFadeDegree(0.35f);
 		mSlidingMenu.setBehindScrollScale(0.0f);// 滑动时侧滑菜单的内容静止不动
-
 	}
 
 	/** 为SlidingMenu和Content填充Fragment */
@@ -88,11 +86,10 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		fragmentTransaction.commit();
 
 		mFragmentList = new ArrayList<Fragment>();
-		mFragmentShowList = new ArrayList<Fragment>(2);
 		mFragmentList.add(localMusicFragment);
 		mFragmentList.add(mMusicPlayFragment);
-		mFragmentShowList.add(localMusicFragment);
-		mFragmentShowList.add(mMusicPlayFragment);
+		mMainPagerAdapter = new TwoPagerAdapter(getSupportFragmentManager(),
+				localMusicFragment, mMusicPlayFragment);
 	}
 
 	private void initViewPager() {
@@ -136,8 +133,6 @@ public class MainContentActivity extends SherlockFragmentActivity {
 				}
 			}
 		});
-		mMainPagerAdapter = new MainPagerAdapter(getSupportFragmentManager(),
-				mFragmentShowList);
 
 		mViewPager.setAdapter(mMainPagerAdapter);
 		mViewPager.setCurrentItem(0);
@@ -158,9 +153,7 @@ public class MainContentActivity extends SherlockFragmentActivity {
 		Log.i(TAG, "onDestroy");
 		super.onDestroy();
 		mFragmentList.clear();
-		mFragmentShowList.clear();
 		mFragmentList = null;
-		mFragmentShowList = null;
 	}
 
 	/**
@@ -175,7 +168,7 @@ public class MainContentActivity extends SherlockFragmentActivity {
 			// 如果要求切换至的fragment已经存在，则直接把已经存在的显示出来
 			if (mFragmentList.get(i).getClass().getName().equals(fragmentName)) {
 				existed = true;
-				mFragmentShowList.set(0, mFragmentList.get(i));
+				mMainPagerAdapter.setFirstPage(mFragmentList.get(i));
 				mMainPagerAdapter.notifyDataSetChanged();
 				break;
 			}
@@ -185,7 +178,7 @@ public class MainContentActivity extends SherlockFragmentActivity {
 			tFragment = Fragment.instantiate(getApplicationContext(),
 					fragmentName);
 			mFragmentList.add(tFragment);
-			mFragmentShowList.set(0, tFragment);
+			mMainPagerAdapter.setFirstPage(tFragment);
 			mMainPagerAdapter.notifyDataSetChanged();
 		}
 
@@ -236,13 +229,17 @@ public class MainContentActivity extends SherlockFragmentActivity {
 				}
 				break;
 			case KeyEvent.KEYCODE_BACK:
-				// 规定在显示菜单时才可退出程序，按返回键弹出侧滑菜单
-				if (mSlidingMenu.isMenuShowing()) {
-					// 显示菜单时，按返回键退出程序
-					this.finish();
+				if (getSupportFragmentManager().getBackStackEntryCount() != 0) {
+					getSupportFragmentManager().popBackStackImmediate();
 				} else {
-					// 菜单没有显示，就弹出菜单
-					mSlidingMenu.showMenu();
+					// 规定在显示菜单时才可退出程序，按返回键弹出侧滑菜单
+					if (mSlidingMenu.isMenuShowing()) {
+						// 显示菜单时，按返回键退出程序
+						this.finish();
+					} else {
+						// 菜单没有显示，就弹出菜单
+						mSlidingMenu.showMenu();
+					}
 				}
 				break;
 			default:
