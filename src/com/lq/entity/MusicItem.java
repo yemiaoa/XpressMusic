@@ -1,6 +1,10 @@
 package com.lq.entity;
 
-public class MusicItem {
+import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class MusicItem implements Parcelable {
 
 	/** 在MedieStore存储的主键 */
 	private long id;
@@ -25,6 +29,10 @@ public class MusicItem {
 
 	/** 时长 */
 	private long duration;
+
+	public MusicItem() {
+
+	}
 
 	@Override
 	public String toString() {
@@ -93,6 +101,50 @@ public class MusicItem {
 
 	public void setDisplayName(String display_name) {
 		this.display_name = display_name;
+	}
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	// 写数据进行保存
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		Bundle bundle = new Bundle();
+		bundle.putLong("id", id);
+		bundle.putString("title", title);
+		bundle.putString("display_name", display_name);
+		bundle.putString("album", album);
+		bundle.putString("artist", artist);
+		bundle.putString("data", data);
+		bundle.putLong("size", size);
+		bundle.putLong("duration", duration);
+		dest.writeBundle(bundle);
+	}
+
+	// 用来创建自定义的Parcelable的对象
+	public static final Parcelable.Creator<MusicItem> CREATOR = new Parcelable.Creator<MusicItem>() {
+		public MusicItem createFromParcel(Parcel in) {
+			return new MusicItem(in);
+		}
+
+		public MusicItem[] newArray(int size) {
+			return new MusicItem[size];
+		}
+	};
+
+	// 读数据进行恢复
+	private MusicItem(Parcel in) {
+		Bundle bundle = in.readBundle();
+		id = bundle.getLong("id");
+		title = bundle.getString("title");
+		display_name = bundle.getString("display_name");
+		album = bundle.getString("album");
+		artist = bundle.getString("artist");
+		data = bundle.getString("data");
+		size = bundle.getLong("size");
+		duration = bundle.getLong("duration");
 	}
 
 }

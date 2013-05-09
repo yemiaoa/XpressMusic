@@ -30,10 +30,11 @@ import com.lq.adapter.LyricAdapter;
 import com.lq.entity.LyricSentence;
 import com.lq.entity.MusicItem;
 import com.lq.listener.OnPlaybackStateChangeListener;
-import com.lq.listener.OnServiceConnectionListener;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
+import com.lq.service.MusicService.PlayMode;
 import com.lq.service.MusicService.State;
+import com.lq.util.GlobalConstant;
 import com.lq.util.LyricLoadHelper.LyricListener;
 import com.lq.util.TimeHelper;
 
@@ -104,14 +105,11 @@ public class MusicPlayFragment extends Fragment {
 			// 传递LyricListener对象给Service，以便歌词发生变化时通知本Activity
 			mMusicServiceBinder.registerLyricListener(mLyricListener);
 
-			// 传递OnServiceConnectionListener对象给Service，以便其发生变化时通知本Activity
-			mMusicServiceBinder
-					.registerOnServiceConnectionListener(mOnServiceConnectionListener);
-
 			// 传递OnPlaybackStateChangeListener对象给Service，以便音乐回放状态发生变化时通知本Activity
 			mMusicServiceBinder
 					.registerOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
 
+			initCurrentPlayInfo(mMusicServiceBinder.getCurrentPlayInfo());
 		}
 
 		// 与服务端连接异常丢失时才调用，调用unBindService不调用此方法哎
@@ -119,8 +117,6 @@ public class MusicPlayFragment extends Fragment {
 			Log.i(TAG, "onServiceDisconnected");
 
 			if (mMusicServiceBinder != null) {
-				mMusicServiceBinder
-						.unregisterOnServiceConnectionListener(mOnServiceConnectionListener);
 				mMusicServiceBinder
 						.unregisterOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
 			}
@@ -192,8 +188,6 @@ public class MusicPlayFragment extends Fragment {
 		// 本界面不可见时取消绑定服务，服务端无需发送消息过来，不可见时无需更新界面
 		getActivity().unbindService(mServiceConnection);
 		if (mMusicServiceBinder != null) {
-			mMusicServiceBinder
-					.unregisterOnServiceConnectionListener(mOnServiceConnectionListener);
 			mMusicServiceBinder
 					.unregisterOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
 		}
@@ -319,28 +313,28 @@ public class MusicPlayFragment extends Fragment {
 	 * */
 	private void setPlayModeImage(int mode) {
 		switch (mode) {
-		case MusicService.PLAYMODE_REPEAT_SINGLE:
+		case PlayMode.REPEAT_SINGLE:
 			mView_ib_play_mode
 					.setImageResource(R.drawable.button_playmode_repeat_single);
 			// Toast.makeText(getApplicationContext(),
 			// getResources().getString(R.string.playmode_repeat_single),
 			// Toast.LENGTH_SHORT).show();
 			break;
-		case MusicService.PLAYMODE_REPEAT:
+		case PlayMode.REPEAT:
 			mView_ib_play_mode
 					.setImageResource(R.drawable.button_playmode_repeat);
 			// Toast.makeText(getApplicationContext(),
 			// getResources().getString(R.string.playmode_repeat),
 			// Toast.LENGTH_SHORT).show();
 			break;
-		case MusicService.PLAYMODE_SEQUENTIAL:
+		case PlayMode.SEQUENTIAL:
 			mView_ib_play_mode
 					.setImageResource(R.drawable.button_playmode_sequential);
 			// Toast.makeText(getApplicationContext(),
 			// getResources().getString(R.string.playmode_sequential),
 			// Toast.LENGTH_SHORT).show();
 			break;
-		case MusicService.PLAYMODE_SHUFFLE:
+		case PlayMode.SHUFFLE:
 			mView_ib_play_mode
 					.setImageResource(R.drawable.button_playmode_shuffle);
 			// Toast.makeText(getApplicationContext(),
@@ -352,46 +346,41 @@ public class MusicPlayFragment extends Fragment {
 		}
 	}
 
-	private OnServiceConnectionListener mOnServiceConnectionListener = new OnServiceConnectionListener() {
+	/** 初始化当前播放信息 */
+	private void initCurrentPlayInfo(Bundle bundle) {
+		int playMode = bundle.getInt(GlobalConstant.PLAY_MODE);
+		int currentPlayerState = bundle.getInt(GlobalConstant.PLAYING_STATE);
+		int currenPlayPosition = bundle.getInt(
+				GlobalConstant.CURRENT_PLAY_POSITION, 0);
+		MusicItem playingSong = bundle
+				.getParcelable(GlobalConstant.PLAYING_MUSIC_ITEM);
 
-		@Override
-		public void onServiceConnected(State currentPlayerState,
-				MusicItem playingSong, int currenPlayPosition, int playMode) {
-			// 根据播放状态，设置播放按钮的图片
-			if (currentPlayerState == State.Playing
-					|| currentPlayerState == State.Preparing) {
-				mIsPlay = true;
-				mView_ib_play_or_pause
-						.setImageResource(R.drawable.button_pause);
-			} else {
-				mIsPlay = false;
-				mView_ib_play_or_pause.setImageResource(R.drawable.button_play);
-			}
-
-			// 设置歌曲标题、时长、当前播放时间、当前播放进度
-			mPlaySong = playingSong;
-			if (playingSong != null) {
-				mView_tv_total_time.setText(TimeHelper
-						.milliSecondsToFormatTimeString(playingSong
-								.getDuration()));
-				mView_tv_songtitle.setText(playingSong.getTitle());
-				mView_tv_current_time.setText(TimeHelper
-						.milliSecondsToFormatTimeString(currenPlayPosition));
-				mView_sb_song_progress.setProgress(currenPlayPosition
-						* mView_sb_song_progress.getMax()
-						/ (int) playingSong.getDuration());
-			}
-
-			// 设置播放模式按钮图片
-			setPlayModeImage(playMode);
+		// 根据播放状态，设置播放按钮的图片
+		if (currentPlayerState == State.Playing
+				|| currentPlayerState == State.Preparing) {
+			mIsPlay = true;
+			mView_ib_play_or_pause.setImageResource(R.drawable.button_pause);
+		} else {
+			mIsPlay = false;
+			mView_ib_play_or_pause.setImageResource(R.drawable.button_play);
 		}
 
-		@Override
-		public void onServiceDisconnected() {
-
+		// 设置歌曲标题、时长、当前播放时间、当前播放进度
+		mPlaySong = playingSong;
+		if (playingSong != null) {
+			mView_tv_total_time.setText(TimeHelper
+					.milliSecondsToFormatTimeString(playingSong.getDuration()));
+			mView_tv_songtitle.setText(playingSong.getTitle());
+			mView_tv_current_time.setText(TimeHelper
+					.milliSecondsToFormatTimeString(currenPlayPosition));
+			mView_sb_song_progress.setProgress(currenPlayPosition
+					* mView_sb_song_progress.getMax()
+					/ (int) playingSong.getDuration());
 		}
 
-	};
+		// 设置播放模式按钮图片
+		setPlayModeImage(playMode);
+	}
 
 	private OnPlaybackStateChangeListener mOnPlaybackStateChangeListener = new OnPlaybackStateChangeListener() {
 

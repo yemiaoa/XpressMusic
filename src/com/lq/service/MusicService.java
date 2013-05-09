@@ -38,6 +38,7 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
@@ -53,10 +54,10 @@ import com.lq.entity.LyricSentence;
 import com.lq.entity.MusicItem;
 import com.lq.fragment.LocalMusicFragment;
 import com.lq.listener.OnPlaybackStateChangeListener;
-import com.lq.listener.OnServiceConnectionListener;
 import com.lq.receiver.MediaButtonReceiver;
 import com.lq.util.AudioFocusHelper;
 import com.lq.util.AudioFocusHelper.MusicFocusable;
+import com.lq.util.GlobalConstant;
 import com.lq.util.LyricLoadHelper;
 import com.lq.util.LyricLoadHelper.LyricListener;
 
@@ -67,34 +68,6 @@ public class MusicService extends Service implements OnCompletionListener,
 		OnPreparedListener, OnErrorListener, MusicFocusable, LyricListener {
 
 	public class MusicPlaybackLocalBinder extends Binder {
-
-		public void registerOnServiceConnectionListener(
-				OnServiceConnectionListener listener) {
-			mOnServiceConnectionListeners.add(listener);
-
-			// 传递当前播放歌曲信息
-			MusicItem item = null;
-			int currentPlayPos = 0;
-			if (mState == State.Playing || mState == State.Paused) {
-				item = mPlayList.get(mPlayingSongPos);
-				currentPlayPos = mMediaPlayer.getCurrentPosition();
-			}
-
-			// 通知观察者服务服务已经连接上，并传递初始化数据
-			listener.onServiceConnected(mState, item, currentPlayPos, mPlayMode);
-
-			// 如果当前正在播放歌曲，通知LyricListener载入歌词
-			if (mState == State.Playing || mState == State.Paused) {
-				loadLyric(mPlayList.get(mPlayingSongPos).getData());
-				mLyricLoadHelper.notifyTime(mMediaPlayer.getCurrentPosition());
-			}
-		}
-
-		public void unregisterOnServiceConnectionListener(
-				OnServiceConnectionListener listener) {
-			listener.onServiceDisconnected();
-			mOnServiceConnectionListeners.remove(listener);
-		}
 
 		public void registerOnPlaybackStateChangeListener(
 				OnPlaybackStateChangeListener listener) {
@@ -129,7 +102,7 @@ public class MusicService extends Service implements OnCompletionListener,
 			if (mMediaPlayer != null) {
 				// 如果正在播放歌曲
 				switch (mPlayMode) {
-				case PLAYMODE_REPEAT_SINGLE:
+				case PlayMode.REPEAT_SINGLE:
 					// 如果是单曲循环，给MediaPlayer启动单曲播放
 					mMediaPlayer.setLooping(true);
 					break;
@@ -159,7 +132,29 @@ public class MusicService extends Service implements OnCompletionListener,
 			mHasPlayList = true;
 			mRequestPlayPos = 0;
 		}
-		
+
+		public Bundle getCurrentPlayInfo() {
+			Bundle bundle = new Bundle();
+			MusicItem item = null;
+			int currentPlayPos = 0;
+
+			if (mState == State.Playing || mState == State.Paused) {
+				item = mPlayList.get(mPlayingSongPos);
+				currentPlayPos = mMediaPlayer.getCurrentPosition();
+			}
+			bundle.putParcelable(GlobalConstant.PLAYING_MUSIC_ITEM, item);
+			bundle.putInt(GlobalConstant.CURRENT_PLAY_POSITION, currentPlayPos);
+			bundle.putInt(GlobalConstant.PLAYING_STATE, mState);
+			bundle.putInt(GlobalConstant.PLAY_MODE, mPlayMode);
+
+			// 如果当前正在播放歌曲，通知LyricListener载入歌词
+			if (mState == State.Playing || mState == State.Paused) {
+				loadLyric(mPlayList.get(mPlayingSongPos).getData());
+				mLyricLoadHelper.notifyTime(mMediaPlayer.getCurrentPosition());
+			}
+
+			return bundle;
+		}
 	}
 
 	// 打印调试信息用的标记
@@ -178,83 +173,84 @@ public class MusicService extends Service implements OnCompletionListener,
 	public static final int MESSAGE_ON_LYRIC_LOADED = 2;
 	public static final int MESSAGE_ON_LYRIC_SENTENCE_CHANGED = 3;
 
-	public static final int PLAYMODE_REPEAT_SINGLE = 0;
-	public static final int PLAYMODE_REPEAT = 1;
-	public static final int PLAYMODE_SEQUENTIAL = 2;
-	public static final int PLAYMODE_SHUFFLE = 3;
-
-	/** 0代表单曲循环，1代表列表循环，2代表顺序播放，3代表随机播放 */
-	int mPlayMode = 1;
-
-	/** 服务连接观察者集合 */
-	ArrayList<OnServiceConnectionListener> mOnServiceConnectionListeners = new ArrayList<OnServiceConnectionListener>();
-
-	/** 回放状态变化的观察者集合 */
-	ArrayList<OnPlaybackStateChangeListener> mOnPlaybackStateChangeListeners = new ArrayList<OnPlaybackStateChangeListener>();
-
-	MusicPlaybackLocalBinder mBinder = new MusicPlaybackLocalBinder();
-
-	LyricListener mLyricListener = null;
-
-	// 当前播放列表
-	List<MusicItem> mPlayList = new ArrayList<MusicItem>();
-
-	// 丢失音频焦点，我们为媒体播放设置一个低音量(1.0f为最大)，而不是停止播放
-	public static final float DUCK_VOLUME = 0.1f;
-
-	// 我们的媒体播放控制器
-	MediaPlayer mMediaPlayer = null;
-
-	// 音频焦点的辅助类（API LEVEL > 8 时才能使用）
-	AudioFocusHelper mAudioFocusHelper = null;
-
 	/**
-	 * 指示本服务的当前状态(Preparing,Playing,Paused,Stopped)
+	 * 歌曲播放的状态(Preparing,Playing,Paused,Stopped)
 	 * */
-	public enum State {
-		// Retrieving, // 正在检索媒体文件
-		Stopped, // MediaPlayer已经停止工作，不再准备播放
-		Preparing, // MediaPlayer正在准备中
-		Playing, // 正在播放（MediaPlayer已经准备好了）
-					// （但是当丢失音频焦点时，MediaPlayer在此状态下实际上也许已经暂停了，
-					// 但是我们仍然保持这个状态，以表明我们必须在一获得音频焦点时就返回播放状态）
-		Paused // 播放暂停 (MediaPlayer处于准备好了的状态)
+	public class State {
+		public static final int Stopped = 0; // MediaPlayer已经停止工作，不再准备播放
+		public static final int Preparing = 1; // MediaPlayer正在准备中
+		public static final int Playing = 2; // 正在播放（MediaPlayer已经准备好了）
+		// （但是当丢失音频焦点时，MediaPlayer在此状态下实际上也许已经暂停了，
+		// 但是我们仍然保持这个状态，以表明我们必须在一获得音频焦点时就返回播放状态）
+		public static final int Paused = 3; // 播放暂停 (MediaPlayer处于准备好了的状态)
 	};
 
-	private State mState = State.Stopped;
+	/**
+	 * 播放模式<br>
+	 * 0代表单曲循环，1代表列表循环，2代表顺序播放，3代表随机播放
+	 */
+	public class PlayMode {
+		public static final int REPEAT_SINGLE = 0;
+		public static final int REPEAT = 1;
+		public static final int SEQUENTIAL = 2;
+		public static final int SHUFFLE = 3;
+	}
+
+	private int mState = State.Stopped;
+
+	private int mPlayMode = 1;
+
+	/** 回放状态变化的观察者集合 */
+	private ArrayList<OnPlaybackStateChangeListener> mOnPlaybackStateChangeListeners = new ArrayList<OnPlaybackStateChangeListener>();
+
+	private MusicPlaybackLocalBinder mBinder = new MusicPlaybackLocalBinder();
+
+	private LyricListener mLyricListener = null;
+
+	// 当前播放列表
+	private List<MusicItem> mPlayList = new ArrayList<MusicItem>();
+
+	// 丢失音频焦点，我们为媒体播放设置一个低音量(1.0f为最大)，而不是停止播放
+	private static final float DUCK_VOLUME = 0.1f;
+
+	// 我们的媒体播放控制器
+	private MediaPlayer mMediaPlayer = null;
+
+	// 音频焦点的辅助类（API LEVEL > 8 时才能使用）
+	private AudioFocusHelper mAudioFocusHelper = null;
 
 	/** 当前播放列表的播放队列，记录当前播放列表歌曲播放顺序 */
-	LinkedList<Integer> mPlayQueue = new LinkedList<Integer>();
+	private LinkedList<Integer> mPlayQueue = new LinkedList<Integer>();
 
-	boolean mHasPlayList = false;
-	boolean mHasLyric = false;
+	private boolean mHasPlayList = false;
+	private boolean mHasLyric = false;
 
-	int mPlayingSongPos = 0;
-	int mRequestPlayPos = -1;
-	long mRequsetPlayId = -1;
+	private int mPlayingSongPos = 0;
+	private int mRequestPlayPos = -1;
+	private long mRequsetPlayId = -1;
 
 	// 我们要播放的音乐是否是来自网络的媒体流
-	boolean mIsStreaming = false;
+	private boolean mIsStreaming = false;
 
 	// 当从网络获取媒体流时保持一个Wifi锁，防止设备突然与Wifi连接的音频断开
-	WifiLock mWifiLock;
+	private WifiLock mWifiLock;
 
 	// 提示播放的通知的ID
-	final int NOTIFICATION_ID = 1;
+	private final int NOTIFICATION_ID = 1;
 
-	AudioManager mAudioManager;
-	NotificationManager mNotificationManager;
+	private AudioManager mAudioManager;
+	private NotificationManager mNotificationManager;
 
-	Notification mNotification = null;
+	private Notification mNotification = null;
 
-	ComponentName mAudioBecomingNoisyReceiverName = null;
+	private ComponentName mAudioBecomingNoisyReceiverName = null;
 
-	Random mRandom = new Random();
+	private Random mRandom = new Random();
 
-	LyricLoadHelper mLyricLoadHelper = new LyricLoadHelper();
+	private LyricLoadHelper mLyricLoadHelper = new LyricLoadHelper();
 
 	/** Service的Handler,可以延迟指定时间发送消息，而messenger不可以延时发送消息 */
-	ServiceIncomingHandler mServiceHandler = new ServiceIncomingHandler(
+	private ServiceIncomingHandler mServiceHandler = new ServiceIncomingHandler(
 			MusicService.this);
 
 	/** 处理来自客户端的消息 */
@@ -549,20 +545,20 @@ public class MusicService extends Service implements OnCompletionListener,
 		if (mState == State.Playing || mState == State.Paused
 				|| mState == State.Stopped) {
 			switch (mPlayMode) {
-			case PLAYMODE_REPEAT:
-			case PLAYMODE_SEQUENTIAL:
+			case PlayMode.REPEAT:
+			case PlayMode.SEQUENTIAL:
 				if (--mRequestPlayPos < 0) {
 					mRequestPlayPos = mPlayList.size() - 1;
 				}
 				break;
-			case PLAYMODE_SHUFFLE:
+			case PlayMode.SHUFFLE:
 				if (mPlayQueue.size() != 0) {
 					mRequestPlayPos = mPlayQueue.pop();
 				} else {
 					mRequestPlayPos = mRandom.nextInt(mPlayList.size());
 				}
 				break;
-			case PLAYMODE_REPEAT_SINGLE:
+			case PlayMode.REPEAT_SINGLE:
 				if (fromUser) {
 					// 如果是用户请求播放上一首，就顺序播放上一首
 					if (--mRequestPlayPos < 0) {
@@ -590,10 +586,10 @@ public class MusicService extends Service implements OnCompletionListener,
 		if (mState == State.Playing || mState == State.Paused
 				|| mState == State.Stopped) {
 			switch (mPlayMode) {
-			case PLAYMODE_REPEAT:
+			case PlayMode.REPEAT:
 				mRequestPlayPos = (mRequestPlayPos + 1) % mPlayList.size();
 				break;
-			case PLAYMODE_SEQUENTIAL:
+			case PlayMode.SEQUENTIAL:
 				mRequestPlayPos = (mRequestPlayPos + 1) % mPlayList.size();
 				if (mRequestPlayPos == 0) {
 					if (fromUser) {
@@ -606,11 +602,11 @@ public class MusicService extends Service implements OnCompletionListener,
 					}
 				}
 				break;
-			case PLAYMODE_SHUFFLE:
+			case PlayMode.SHUFFLE:
 				mPlayQueue.push(mRequestPlayPos);
 				mRequestPlayPos = mRandom.nextInt(mPlayList.size());
 				break;
-			case PLAYMODE_REPEAT_SINGLE:
+			case PlayMode.REPEAT_SINGLE:
 				if (fromUser) {
 					// 如果是用户请求，就顺序播放下一首
 					mRequestPlayPos = (mRequestPlayPos + 1) % mPlayList.size();
