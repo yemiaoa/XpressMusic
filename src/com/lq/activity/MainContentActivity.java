@@ -1,11 +1,14 @@
 package com.lq.activity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.Fragment.SavedState;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
@@ -17,7 +20,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 
 import com.lq.adapter.TwoPagerAdapter;
-import com.lq.fragment.LocalMusicFragment;
+import com.lq.fragment.LocalMusicFrameFragment;
 import com.lq.fragment.MenuFragment;
 import com.lq.fragment.MusicPlayFragment;
 import com.lq.service.MusicService;
@@ -37,7 +40,8 @@ public class MainContentActivity extends FragmentActivity {
 	private boolean mViewPagerSlidable = true;
 	TwoPagerAdapter mMainPagerAdapter = null;
 
-	private List<Fragment> mFragmentList = null;
+	private List<Fragment> mFragmentList = new ArrayList<Fragment>();
+	private Map<String, SavedState> mFragmentStates = new HashMap<String, Fragment.SavedState>();
 
 	private MusicPlayFragment mMusicPlayFragment = null;
 
@@ -76,7 +80,7 @@ public class MainContentActivity extends FragmentActivity {
 	/** 为SlidingMenu和Content填充Fragment */
 	private void initPopulateFragment() {
 		MenuFragment menuFragment = new MenuFragment();
-		LocalMusicFragment localMusicFragment = new LocalMusicFragment();
+		LocalMusicFrameFragment localMusicFragment = new LocalMusicFrameFragment();
 		mMusicPlayFragment = new MusicPlayFragment();
 
 		FragmentTransaction fragmentTransaction = getSupportFragmentManager()
@@ -85,7 +89,6 @@ public class MainContentActivity extends FragmentActivity {
 				MenuFragment.class.getName());
 		fragmentTransaction.commit();
 
-		mFragmentList = new ArrayList<Fragment>();
 		mFragmentList.add(localMusicFragment);
 		mFragmentList.add(mMusicPlayFragment);
 		mMainPagerAdapter = new TwoPagerAdapter(getSupportFragmentManager(),
@@ -156,6 +159,14 @@ public class MainContentActivity extends FragmentActivity {
 		mFragmentList = null;
 	}
 
+	public void saveFragmentState(Fragment f, SavedState state) {
+		mFragmentStates.put(f.hashCode() + "", state);
+	}
+
+	public SavedState getFragmentState(Fragment f) {
+		return mFragmentStates.get(f.hashCode() + "");
+	}
+
 	/**
 	 * 切换主页内容
 	 */
@@ -169,7 +180,6 @@ public class MainContentActivity extends FragmentActivity {
 			if (mFragmentList.get(i).getClass().getName().equals(fragmentName)) {
 				existed = true;
 				mMainPagerAdapter.setFirstPage(mFragmentList.get(i));
-				mMainPagerAdapter.notifyDataSetChanged();
 				break;
 			}
 		}
@@ -179,7 +189,6 @@ public class MainContentActivity extends FragmentActivity {
 					fragmentName);
 			mFragmentList.add(tFragment);
 			mMainPagerAdapter.setFirstPage(tFragment);
-			mMainPagerAdapter.notifyDataSetChanged();
 		}
 
 		mSlidingMenu.showContent();
@@ -215,8 +224,29 @@ public class MainContentActivity extends FragmentActivity {
 
 	@Override
 	public void onBackPressed() {
-		// 什么也不做
-		// 默认执行父类方法，会finish本Activity
+		Fragment curFragment = (Fragment) getSupportFragmentManager()
+				.findFragmentByTag(
+						"android:switcher:" + mViewPager.getId() + ":"
+								+ mViewPager.getCurrentItem());
+
+		if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+			getSupportFragmentManager().popBackStackImmediate();
+		} else if (curFragment != null
+				&& curFragment.getChildFragmentManager()
+						.getBackStackEntryCount() > 0) {
+			if (curFragment.getView() != null) {
+				curFragment.getChildFragmentManager().popBackStackImmediate();
+			}
+		} else {
+			// 规定在显示菜单时才可退出程序，按返回键弹出侧滑菜单
+			if (mSlidingMenu.isMenuShowing()) {
+				// 显示菜单时，按返回键退出程序
+				this.finish();
+			} else {
+				// 菜单没有显示，就弹出菜单
+				mSlidingMenu.showMenu();
+			}
+		}
 	}
 
 	@Override
@@ -226,20 +256,6 @@ public class MainContentActivity extends FragmentActivity {
 			case KeyEvent.KEYCODE_MENU:
 				if (mViewPagerSlidable) {
 					mSlidingMenu.toggle();
-				}
-				break;
-			case KeyEvent.KEYCODE_BACK:
-				if (getSupportFragmentManager().getBackStackEntryCount() != 0) {
-					getSupportFragmentManager().popBackStackImmediate();
-				} else {
-					// 规定在显示菜单时才可退出程序，按返回键弹出侧滑菜单
-					if (mSlidingMenu.isMenuShowing()) {
-						// 显示菜单时，按返回键退出程序
-						this.finish();
-					} else {
-						// 菜单没有显示，就弹出菜单
-						mSlidingMenu.showMenu();
-					}
 				}
 				break;
 			default:

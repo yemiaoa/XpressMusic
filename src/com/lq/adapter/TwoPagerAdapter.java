@@ -2,27 +2,25 @@ package com.lq.adapter;
 
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.PagerAdapter;
-import android.view.ViewGroup;
 
 public class TwoPagerAdapter extends FragmentStatePagerAdapter {
 	private final int ITEM_COUNT = 2;
 	private Fragment mFirstPageFragment = null;
 	private Fragment mSecondPageFragment = null;
-	private Fragment mFirstOld = null;
-	private FragmentManager mFragmentManager = null;
 
-	public TwoPagerAdapter(FragmentManager fm, Fragment first, Fragment second) {
+	public TwoPagerAdapter( FragmentManager fm,
+			Fragment first, Fragment second) {
 		super(fm);
-		mFragmentManager = fm;
 		mFirstPageFragment = first;
 		mSecondPageFragment = second;
 	}
 
 	public void setFirstPage(Fragment f) {
-		mFirstOld = mFirstPageFragment;
-		mFirstPageFragment = f;
+		if (mFirstPageFragment != f) {
+			mFirstPageFragment = f;
+			notifyDataSetChanged();
+		}
 	}
 
 	@Override
@@ -50,4 +48,5 @@ public class TwoPagerAdapter extends FragmentStatePagerAdapter {
 			return PagerAdapter.POSITION_NONE;
 		}
 	}
+
 }

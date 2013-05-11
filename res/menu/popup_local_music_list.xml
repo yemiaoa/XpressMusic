@@ -5,9 +5,6 @@
         android:id="@+id/sort_by_music_name"
         android:title="@string/sort_by_music_name"/>
     <item
-        android:id="@+id/sort_by_artist"
-        android:title="@string/sort_by_artist"/>
-    <item
         android:id="@+id/classify_by_artist"
         android:title="@string/classify_by_artist">
     </item>

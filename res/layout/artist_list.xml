@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/container_local_music"
+    android:id="@+id/container_artist_list"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
     <RelativeLayout
-        android:id="@+id/top_of_local_music"
+        android:id="@+id/top_of_artist_list"
         android:layout_width="fill_parent"
         android:layout_height="48dip"
         android:clickable="true"
@@ -41,14 +41,16 @@
             android:src="@drawable/overflow" />
 
         <TextView
+            android:background="@drawable/button_backround_light"
             android:id="@+id/title_of_local_music"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginLeft="8dp"
+            android:layout_marginLeft="5dp"
             android:layout_toLeftOf="@id/more_functions"
             android:layout_toRightOf="@id/section_line_vertical"
+            android:drawableLeft="@drawable/btn_titile_back"
             android:gravity="left|center_vertical"
-            android:text="@string/local_music"
+            android:text="@string/classify_by_artist"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textIsSelectable="false" />
     </RelativeLayout>
@@ -57,27 +59,17 @@
         android:id="@+id/section_line_horizental"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_below="@id/top_of_local_music"
+        android:layout_below="@id/top_of_artist_list"
         android:background="@color/holo_blue_dark" >
     </View>
 
     <ListView
-        android:id="@+id/listview_local_music"
+        android:id="@+id/listview_artist"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/section_line_horizental"
         android:cacheColorHint="#00000000"
         android:fastScrollEnabled="true" >
     </ListView>
-
-    <TextView
-        android:id="@+id/textview_local_music_empty"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="20dp"
-        android:gravity="center_horizontal"
-        android:text="@string/there_is_no_song_yet"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:visibility="gone" />
 
 </RelativeLayout>

@@ -136,7 +136,7 @@ public class LocalMusicFragment extends Fragment implements
 
 		// Activity重建的时候（比如屏幕方向改变）保证这个Fragment实例不被销
 		// onCreate()和onDestroyed()不会被调用
-		setRetainInstance(true);
+		// setRetainInstance(true);
 	}
 
 	/** 在此加载一个ListView，可以使用自定义的ListView */
@@ -172,8 +172,9 @@ public class LocalMusicFragment extends Fragment implements
 
 		initViewsSetting();
 
-		// 数据加载完成之前，显示一个进度条，隐藏列表，完成加载后显示列表隐藏进度条
-		setListShown(false, true);
+		// 数据加载完成之前，隐藏列表
+		// setListShown(false, true);
+
 		// 初始化一个装载器，根据第一个参数，要么连接一个已存在的装载器，要么以此ID创建一个新的装载器
 		getLoaderManager().initLoader(MUSIC_RETRIEVE_LOADER, null, this);
 
@@ -302,7 +303,6 @@ public class LocalMusicFragment extends Fragment implements
 					@Override
 					public void onItemCheckedStateChanged(ActionMode mode,
 							int position, long id, boolean checked) {
-						// TODO Auto-generated method stub
 
 					}
 
@@ -311,19 +311,21 @@ public class LocalMusicFragment extends Fragment implements
 				.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
 					public boolean onMenuItemClick(MenuItem item) {
 						switch (item.getItemId()) {
-						case R.id.sort_by_artist:
-							mSortOrder = Media.ARTIST;
-							getLoaderManager().restartLoader(
-									MUSIC_RETRIEVE_LOADER, null,
-									LocalMusicFragment.this);
-							break;
 						case R.id.sort_by_music_name:
-							mSortOrder = Media.DEFAULT_SORT_ORDER;
+							mSortOrder = Media.TITLE_KEY;
 							getLoaderManager().restartLoader(
 									MUSIC_RETRIEVE_LOADER, null,
 									LocalMusicFragment.this);
 							break;
-
+						case R.id.classify_by_artist:
+							if (null != getParentFragment()
+									&& getParentFragment() instanceof LocalMusicFrameFragment) {
+								LocalMusicFrameFragment parent = (LocalMusicFrameFragment) getParentFragment();
+								parent.switchContent();
+							}
+							break;
+						case R.id.classify_by_directory:
+							break;
 						default:
 							break;
 						}
@@ -388,14 +390,15 @@ public class LocalMusicFragment extends Fragment implements
 			mView_Title.setText(getResources().getString(R.string.local_music)
 					+ "(" + data.size() + ")");
 		}
+
 		// 数据加载完成，显示列表
-		if (isResumed()) {
-			// Fragment页面处于前端（Resumed状态）则显示页面变化的动画
-			setListShown(true, true);
-		} else {
-			// Fragment页面不处于前端则不显示页面变化的动画
-			setListShown(true, false);
-		}
+		// if (isResumed()) {
+		// // Fragment页面处于前端（Resumed状态）则显示页面变化的动画
+		// setListShown(true, true);
+		// } else {
+		// // Fragment页面不处于前端则不显示页面变化的动画
+		// setListShown(true, false);
+		// }
 
 	}
 
@@ -418,11 +421,12 @@ public class LocalMusicFragment extends Fragment implements
 		}
 
 		public void setData(List<MusicItem> data) {
-			if (mData != null && data != null) {
-				mData.clear();
+			mData.clear();
+			if (data != null) {
 				mData.addAll(data);
 			}
 			mActivateItemPos = -1;
+			notifyDataSetChanged();
 		}
 
 		public List<MusicItem> getData() {
