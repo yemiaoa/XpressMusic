@@ -133,10 +133,6 @@ public class LyricLoadHelper {
 			} finally {
 			}
 		}
-		Log.i("test", "lyricLoader:" + System.currentTimeMillis());
-		// for (int i = 0; i < mLyricSentences.size(); i++) {
-		// Log.i(TAG, mLyricSentences.get(i).getContentText() + "\n");
-		// }
 
 		// 如果有谁在监听，通知它歌词载入完啦，并把载入的句子集合也传递过去
 		if (mLyricListener != null) {

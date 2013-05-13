@@ -17,12 +17,12 @@ import com.lq.entity.LyricSentence;
 public class LyricAdapter extends BaseAdapter {
 	/** 歌词句子集合 */
 	List<LyricSentence> mLyricSentences = null;
-	
+
 	Context mContext = null;
-	
+
 	/** 当前的句子索引号 */
 	int mIndexOfCurrentSentence = 0;
-	
+
 	float mCurrentSize = 20;
 	float mNotCurrentSize = 17;
 
@@ -81,8 +81,10 @@ public class LyricAdapter extends BaseAdapter {
 		} else {
 			holder = (ViewHolder) convertView.getTag();
 		}
-		holder.lyric_line.setText(mLyricSentences.get(position)
-				.getContentText());
+		if (position >= 0 && position < mLyricSentences.size()) {
+			holder.lyric_line.setText(mLyricSentences.get(position)
+					.getContentText());
+		}
 		if (mIndexOfCurrentSentence == position) {
 			// 当前播放到的句子设置为白色，字体大小更大
 			holder.lyric_line.setTextColor(Color.WHITE);

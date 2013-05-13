@@ -751,10 +751,11 @@ public class MusicService extends Service implements OnCompletionListener,
 	 * 将本服务设置为“前台服务”。“前台服务”是一个与用户正在交互的服务， 必须在通知栏显示一个通知表示正在交互
 	 */
 	void setUpAsForeground(String text) {
+		Intent intent = new Intent(getApplicationContext(),
+				MainContentActivity.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),
-				0, new Intent(getApplicationContext(),
-						MainContentActivity.class),
-				PendingIntent.FLAG_UPDATE_CURRENT);
+				0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 		mNotification = new Notification();
 		mNotification.tickerText = text;
 		mNotification.icon = R.drawable.ic_stat_playing;

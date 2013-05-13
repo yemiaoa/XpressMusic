@@ -1,90 +1,92 @@
 package com.lq.loader;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
+import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Media;
+import android.provider.MediaStore.Files.FileColumns;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
-import com.lq.activity.R;
-import com.lq.entity.MusicItem;
+import com.lq.entity.FolderInfo;
 
-public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
-	private final String TAG = MusicRetrieveLoader.class.getSimpleName();
+public class FolderInfoRetreiveLoader extends AsyncTaskLoader<List<FolderInfo>> {
+	private final String TAG = this.getClass().getSimpleName();
+	private ContentResolver mContentResolver = null;
+	private List<FolderInfo> mArtistInfoList = null;
+
+	private String num_of_songs = "num_of_songs";
 
 	/** 要从MediaStore检索的列 */
-	private final String[] mProjection = new String[] { Media._ID, Media.TITLE,
-			Media.ALBUM, Media.ARTIST, Media.DATA, Media.SIZE, Media.DURATION,
-			Media.DISPLAY_NAME };
+	private final String[] mProjection = new String[] { FileColumns.DATA,
+			"count(" + FileColumns.PARENT + ") as " + num_of_songs };
+	/** where子句 */
 
-	// 数据库查询相关参数
-	private String mSelection = null;
+	private String mSelection = FileColumns.MEDIA_TYPE + " = "
+			+ FileColumns.MEDIA_TYPE_AUDIO + " and " + FileColumns.DATA
+			+ " like'%.mp3' and " + Media.DURATION + " > " + 1000 * 60 * 1
+			+ " and " + FileColumns.SIZE + " > " + 1024 + " ) "
+			+ " group by ( " + FileColumns.PARENT;
 	private String[] mSelectionArgs = null;
 	private String mSortOrder = null;
 
-	private ContentResolver mContentResolver = null;
-
-	private List<MusicItem> mMusicItemList = null;
-
-	private Context mContext = null;
-
-	public MusicRetrieveLoader(Context context, String selection,
-			String[] selectionArgs, String sortOrder) {
+	public FolderInfoRetreiveLoader(Context context, String sortOrder) {
 		super(context);
-		mContext = context;
-		this.mSelection = selection;
-		this.mSelectionArgs = selectionArgs;
-		this.mSortOrder = sortOrder;
 		mContentResolver = context.getContentResolver();
+		mSortOrder = sortOrder;
 	}
 
 	@Override
-	public List<MusicItem> loadInBackground() {
+	public List<FolderInfo> loadInBackground() {
 		Log.i(TAG, "loadInBackground");
-		Cursor cursor = mContentResolver.query(Media.EXTERNAL_CONTENT_URI,
-				mProjection, mSelection, mSelectionArgs, mSortOrder);
-		int index_id = cursor.getColumnIndex(Media._ID);
-		int index_title = cursor.getColumnIndex(Media.TITLE);
-		int index_data = cursor.getColumnIndex(Media.DATA);
-		int index_artist = cursor.getColumnIndex(Media.ARTIST);
-		int index_album = cursor.getColumnIndex(Media.ALBUM);
-		int index_duration = cursor.getColumnIndex(Media.DURATION);
-		int index_size = cursor.getColumnIndex(Media.SIZE);
-		int index_displayname = cursor.getColumnIndex(Media.DISPLAY_NAME);
+		String filepath, folderpath, foldername;
+		int song_num = 0;
 
-		List<MusicItem> itemsList = new ArrayList<MusicItem>();
+		Cursor cursor = mContentResolver.query(
+				MediaStore.Files.getContentUri("external"), mProjection,
+				mSelection, mSelectionArgs, mSortOrder);
+		int index_data = cursor
+				.getColumnIndex(MediaStore.Files.FileColumns.DATA);
+		int index_num_of_songs = cursor.getColumnIndex(num_of_songs);
+
+		List<FolderInfo> itemsList = new ArrayList<FolderInfo>();
 
 		// 将数据库查询结果保存到一个List集合中(存放在RAM)
 		if (cursor != null) {
 			while (cursor.moveToNext()) {
-				MusicItem item = new MusicItem();
-				item.setId(cursor.getLong(index_id));
-				item.setAlbum(cursor.getString(index_album));
-				item.setTitle(cursor.getString(index_title));
-				item.setData(cursor.getString(index_data));
-				item.setDuration(cursor.getLong(index_duration));
-				item.setSize(cursor.getLong(index_size));
-				item.setDisplayName(cursor.getString(index_displayname));
-				if (cursor.getString(index_artist).equals("<unknown>")) {
-					item.setArtist(mContext.getResources().getString(
-							R.string.unknown_artist));
-				} else {
-					item.setArtist(cursor.getString(index_artist));
-				}
+				FolderInfo item = new FolderInfo();
+
+				// 获取每个目录下的歌曲数量
+				song_num = cursor.getInt(index_num_of_songs);
+				item.setNumOfTracks(song_num);
+
+				// 获取文件的路径，如/storage/sdcard0/MIUI/music/Baby.mp3
+				filepath = cursor.getString(index_data);
+
+				// 获取文件所属文件夹的路径，如/storage/sdcard0/MIUI/music
+				folderpath = filepath.substring(0,
+						filepath.lastIndexOf(File.separator));
+
+				// 获取文件所属文件夹的名称，如music
+				foldername = folderpath.substring(folderpath
+						.lastIndexOf(File.separator) + 1);
+				item.setFolderName(foldername);
+				item.setFolderPath(folderpath);
+
 				itemsList.add(item);
 			}
 		}
-
 		// 如果没有扫描到媒体文件，itemsList的size为0，因为上面new过了
 		return itemsList;
 	}
 
 	@Override
-	public void deliverResult(List<MusicItem> data) {
+	public void deliverResult(List<FolderInfo> data) {
 		Log.i(TAG, "deliverResult");
 		if (isReset()) {
 			// An async query came in while the loader is stopped. We
@@ -93,8 +95,8 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
 				onReleaseResources(data);
 			}
 		}
-		List<MusicItem> oldList = data;
-		mMusicItemList = data;
+		List<FolderInfo> oldList = data;
+		mArtistInfoList = data;
 
 		if (isStarted()) {
 			// If the Loader is currently started, we can immediately
@@ -110,7 +112,7 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
 		}
 	}
 
-	protected void onReleaseResources(List<MusicItem> data) {
+	protected void onReleaseResources(List<FolderInfo> data) {
 		Log.i(TAG, "onReleaseResources");
 		// For a simple List<> there is nothing to do. For something
 		// like a Cursor, we would close it here.
@@ -119,10 +121,10 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
 	@Override
 	protected void onStartLoading() {
 		Log.i(TAG, "onStartLoading");
-		if (mMusicItemList != null) {
+		if (mArtistInfoList != null) {
 			// If we currently have a result available, deliver it
 			// immediately.
-			deliverResult(mMusicItemList);
+			deliverResult(mArtistInfoList);
 		}
 		// If the data has changed since the last time it was loaded
 		// or is not currently available, start a load.
@@ -138,7 +140,7 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
 	}
 
 	@Override
-	public void onCanceled(List<MusicItem> data) {
+	public void onCanceled(List<FolderInfo> data) {
 		super.onCanceled(data);
 		Log.i(TAG, "onCanceled");
 		// At this point we can release the resources associated with 'data'
@@ -155,15 +157,14 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
 
 		// At this point we can release the resources associated with 'data'
 		// if needed.
-		if (mMusicItemList != null) {
-			onReleaseResources(mMusicItemList);
-			mMusicItemList = null;
+		if (mArtistInfoList != null) {
+			onReleaseResources(mArtistInfoList);
+			mArtistInfoList = null;
 		}
 	}
 
 	@Override
 	protected void onForceLoad() {
-		// TODO Auto-generated method stub
 		super.onForceLoad();
 	}
 

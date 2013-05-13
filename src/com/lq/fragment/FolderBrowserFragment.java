@@ -1,11 +1,11 @@
 package com.lq.fragment;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.provider.MediaStore.Audio.Media;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
@@ -21,19 +21,19 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
-import com.lq.adapter.ArtistAdapter;
-import com.lq.entity.ArtistInfo;
-import com.lq.loader.ArtistInfoRetrieveLoader;
+import com.lq.adapter.FolderAdapter;
+import com.lq.entity.FolderInfo;
+import com.lq.loader.FolderInfoRetreiveLoader;
+import com.lq.util.CharHelper;
 
-public class ArtistBrowserFragment extends Fragment implements
-		LoaderCallbacks<List<ArtistInfo>> {
-	private static final String TAG = ArtistBrowserFragment.class
+public class FolderBrowserFragment extends Fragment implements
+		LoaderCallbacks<List<FolderInfo>> {
+	private static final String TAG = FolderBrowserFragment.class
 			.getSimpleName();
-	private final int ARTIST_RETRIEVE_LOADER = 0;
+	private final int FOLDER_RETRIEVE_LOADER = 0;
 
 	private ImageView mView_MenuNavigation = null;
 	private ImageView mView_MoreFunctions = null;
@@ -42,10 +42,9 @@ public class ArtistBrowserFragment extends Fragment implements
 	private ListView mView_ListView = null;
 	private PopupMenu mOverflowPopupMenu = null;
 
-	private ArtistAdapter mAdapter = null;
+	private FolderAdapter mAdapter = null;
 	private MainContentActivity mActivity = null;
-	private String mSortOrder = MediaStore.Audio.Artists.NUMBER_OF_TRACKS
-			+ " desc";
+	private String mSortOrder = null;
 
 	@Override
 	public void onAttach(Activity activity) {
@@ -59,18 +58,17 @@ public class ArtistBrowserFragment extends Fragment implements
 		Log.i(TAG, "onCreateView");
 
 		View rootView = inflater
-				.inflate(R.layout.artist_list, container, false);
-		mView_ListView = (ListView) rootView.findViewById(R.id.listview_artist);
+				.inflate(R.layout.folder_list, container, false);
+		mView_ListView = (ListView) rootView.findViewById(R.id.listview_folder);
 		mView_MenuNavigation = (ImageView) rootView
 				.findViewById(R.id.menu_navigation);
-		mView_Title = (TextView) rootView
-				.findViewById(R.id.title_of_artist);
+		mView_Title = (TextView) rootView.findViewById(R.id.title_of_folder);
 		mView_MoreFunctions = (ImageView) rootView
 				.findViewById(R.id.more_functions);
 		mView_GoToPlayer = (ImageView) rootView
 				.findViewById(R.id.switch_to_player);
 		mOverflowPopupMenu = new PopupMenu(getActivity(), mView_MoreFunctions);
-		mOverflowPopupMenu.getMenuInflater().inflate(R.menu.popup_artist_list,
+		mOverflowPopupMenu.getMenuInflater().inflate(R.menu.popup_folder_list,
 				mOverflowPopupMenu.getMenu());
 
 		return rootView;
@@ -80,9 +78,10 @@ public class ArtistBrowserFragment extends Fragment implements
 	public void onActivityCreated(Bundle savedInstanceState) {
 		Log.i(TAG, "onActivityCreated");
 		super.onActivityCreated(savedInstanceState);
+
 		initViewsSetting();
 
-		getLoaderManager().initLoader(ARTIST_RETRIEVE_LOADER, null, this);
+		getLoaderManager().initLoader(FOLDER_RETRIEVE_LOADER, null, this);
 
 	}
 
@@ -93,7 +92,7 @@ public class ArtistBrowserFragment extends Fragment implements
 	}
 
 	private void initViewsSetting() {
-		mAdapter = new ArtistAdapter(getActivity());
+		mAdapter = new FolderAdapter(getActivity());
 		mView_ListView.setAdapter(mAdapter);
 		mView_ListView.setOnItemClickListener(new OnItemClickListener() {
 
@@ -121,18 +120,15 @@ public class ArtistBrowserFragment extends Fragment implements
 				.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
 					public boolean onMenuItemClick(MenuItem item) {
 						switch (item.getItemId()) {
-						case R.id.sort_by_music_count:
-							mSortOrder = MediaStore.Audio.Artists.NUMBER_OF_TRACKS
-									+ " desc";
-							getLoaderManager().restartLoader(
-									ARTIST_RETRIEVE_LOADER, null,
-									ArtistBrowserFragment.this);
+						case R.id.sort_by_folder_name:
+							Collections.sort(mAdapter.getData(),
+									mFolderNameComparator);
+							mAdapter.notifyDataSetChanged();
 							break;
-						case R.id.sort_by_artist:
-							mSortOrder = Media.ARTIST_KEY;
-							getLoaderManager().restartLoader(
-									ARTIST_RETRIEVE_LOADER, null,
-									ArtistBrowserFragment.this);
+						case R.id.sort_by_folder_music_count:
+							Collections.sort(mAdapter.getData(),
+									mFolderSongCountComparator);
+							mAdapter.notifyDataSetChanged();
 							break;
 
 						default:
@@ -158,36 +154,74 @@ public class ArtistBrowserFragment extends Fragment implements
 	}
 
 	@Override
-	public Loader<List<ArtistInfo>> onCreateLoader(int id, Bundle args) {
+	public Loader<List<FolderInfo>> onCreateLoader(int id, Bundle args) {
 		Log.i(TAG, "onCreateLoader");
 
 		// 创建并返回一个Loader
-		return new ArtistInfoRetrieveLoader(getActivity(), null, null,
-				mSortOrder);
+		return new FolderInfoRetreiveLoader(getActivity(), mSortOrder);
 	}
 
 	@Override
-	public void onLoadFinished(Loader<List<ArtistInfo>> loader,
-			List<ArtistInfo> data) {
+	public void onLoadFinished(Loader<List<FolderInfo>> loader,
+			List<FolderInfo> data) {
 		Log.i(TAG, "onLoadFinished");
 
 		// TODO SD卡拔出时，没有处理
 
 		// 载入完成，更新列表数据
+		Collections.sort(data, mFolderSongCountComparator);
 		mAdapter.setData(data);
 
 		// 在标题栏上显示艺术家数目
 		if (data != null && data.size() != 0) {
 			mView_Title.setText(getResources().getString(
-					R.string.classify_by_artist)
+					R.string.classify_by_folder)
 					+ "(" + data.size() + ")");
 		}
 
 	}
 
 	@Override
-	public void onLoaderReset(Loader<List<ArtistInfo>> loader) {
+	public void onLoaderReset(Loader<List<FolderInfo>> loader) {
 		Log.i(TAG, "onLoaderReset");
 		mAdapter.setData(null);
 	}
+
+	// 按歌曲数量倒序排序
+	private Comparator<FolderInfo> mFolderSongCountComparator = new Comparator<FolderInfo>() {
+		@Override
+		public int compare(FolderInfo lhs, FolderInfo rhs) {
+			if (lhs.getNumOfTracks() > rhs.getNumOfTracks()) {
+				return -1;
+			} else if (lhs.getNumOfTracks() < rhs.getNumOfTracks()) {
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+	};
+
+	// 按歌曲名称顺序排序
+	private Comparator<FolderInfo> mFolderNameComparator = new Comparator<FolderInfo>() {
+		char first_l, first_r;
+
+		@Override
+		public int compare(FolderInfo lhs, FolderInfo rhs) {
+			first_l = lhs.getFolderName().charAt(0);
+			first_r = rhs.getFolderName().charAt(0);
+			if (CharHelper.checkType(first_l) == CharHelper.CharType.CHINESE) {
+				first_l = CharHelper.getPinyinFirstLetter(first_l);
+			}
+			if (CharHelper.checkType(first_r) == CharHelper.CharType.CHINESE) {
+				first_r = CharHelper.getPinyinFirstLetter(first_r);
+			}
+			if (first_l > first_r) {
+				return 1;
+			} else if (first_l < first_r) {
+				return -1;
+			} else {
+				return 0;
+			}
+		}
+	};
 }

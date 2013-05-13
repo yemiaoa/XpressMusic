@@ -1,9 +1,8 @@
-package com.lq.fragment;
+package com.lq.activity;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -12,20 +11,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.lq.activity.MainContentActivity;
-import com.lq.activity.R;
 import com.lq.adapter.LyricAdapter;
 import com.lq.entity.LyricSentence;
 import com.lq.entity.MusicItem;
@@ -38,12 +32,10 @@ import com.lq.util.GlobalConstant;
 import com.lq.util.LyricLoadHelper.LyricListener;
 import com.lq.util.TimeHelper;
 
-public class MusicPlayFragment extends Fragment {
-	public static final String TAG = MusicPlayFragment.class.getSimpleName();
+public class PlayerActivity extends FragmentActivity {
+	public static final String TAG = PlayerActivity.class.getSimpleName();
 
 	public static final int MSG_SET_LYRIC_INDEX = 1;
-
-	private MainContentActivity mActivity = null;
 
 	private ImageButton mView_ib_back = null;
 	private ImageButton mView_ib_favorite = null;
@@ -71,21 +63,20 @@ public class MusicPlayFragment extends Fragment {
 	/** 处理来自服务端的消息 */
 	private static class ClientIncomingHandler extends Handler {
 		// 使用弱引用，避免Handler造成的内存泄露(Message持有Handler的引用，内部定义的Handler类持有外部类的引用)
-		WeakReference<MusicPlayFragment> mFragmentWeakReference = null;
-		MusicPlayFragment mFragment = null;
+		WeakReference<PlayerActivity> mFragmentWeakReference = null;
+		PlayerActivity mActivity = null;
 
-		public ClientIncomingHandler(MusicPlayFragment fragment) {
-			mFragmentWeakReference = new WeakReference<MusicPlayFragment>(
-					fragment);
-			mFragment = mFragmentWeakReference.get();
+		public ClientIncomingHandler(PlayerActivity fragment) {
+			mFragmentWeakReference = new WeakReference<PlayerActivity>(fragment);
+			mActivity = mFragmentWeakReference.get();
 		}
 
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 			case MSG_SET_LYRIC_INDEX:
-				mFragment.mView_lv_lyricshow.smoothScrollToPositionFromTop(
-						msg.arg1, mFragment.mView_lv_lyricshow.getHeight() / 2);
+				mActivity.mView_lv_lyricshow.setSelectionFromTop(msg.arg1,
+						mActivity.mView_lv_lyricshow.getHeight() / 2);
 				break;
 			default:
 				super.handleMessage(msg);
@@ -123,51 +114,11 @@ public class MusicPlayFragment extends Fragment {
 		}
 	};
 
-	public void onAttach(Activity activity) {
-		Log.i(TAG, "onAttach");
-		super.onAttach(activity);
-		mActivity = (MainContentActivity) activity;
-	};
-
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
-		Log.i(TAG, "onCreateView");
-		View rootView = inflater.inflate(R.layout.layout_musicplay, container,
-				false);
-		mView_ib_back = (ImageButton) rootView
-				.findViewById(R.id.play_button_back);
-		mView_ib_favorite = (ImageButton) rootView
-				.findViewById(R.id.play_favorite);
-		mView_ib_list = (ImageButton) rootView.findViewById(R.id.play_list);
-		mView_ib_play_mode = (ImageButton) rootView
-				.findViewById(R.id.play_mode);
-		mView_ib_play_next = (ImageButton) rootView
-				.findViewById(R.id.play_playnext);
-		mView_ib_play_previous = (ImageButton) rootView
-				.findViewById(R.id.play_playprevious);
-		mView_ib_play_or_pause = (ImageButton) rootView
-				.findViewById(R.id.play_playbutton);
-		mView_sb_song_progress = (SeekBar) rootView
-				.findViewById(R.id.play_progress);
-		mView_tv_current_time = (TextView) rootView
-				.findViewById(R.id.play_current_time);
-		mView_tv_total_time = (TextView) rootView
-				.findViewById(R.id.play_song_total_time);
-		mView_tv_songtitle = (TextView) rootView
-				.findViewById(R.id.play_song_title);
-		mView_lv_lyricshow = (ListView) rootView.findViewById(R.id.lyricshow);
-		mView_tv_lyric_empty = (TextView) rootView
-				.findViewById(R.id.lyric_empty);
-		return rootView;
-	}
-
-	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
-		Log.i(TAG, "onActivityCreated");
-		super.onActivityCreated(savedInstanceState);
+	protected void onCreate(android.os.Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		findViews();
 		initViews();
-	}
+	};
 
 	@Override
 	public void onStart() {
@@ -175,8 +126,7 @@ public class MusicPlayFragment extends Fragment {
 		super.onStart();
 
 		// 本Activity界面显示时绑定服务，服务发送消息给本Activity以更新UI
-		getActivity().bindService(
-				new Intent(getActivity(), MusicService.class),
+		bindService(new Intent(PlayerActivity.this, MusicService.class),
 				mServiceConnection, Context.BIND_AUTO_CREATE);
 	}
 
@@ -186,7 +136,7 @@ public class MusicPlayFragment extends Fragment {
 		super.onStop();
 
 		// 本界面不可见时取消绑定服务，服务端无需发送消息过来，不可见时无需更新界面
-		getActivity().unbindService(mServiceConnection);
+		unbindService(mServiceConnection);
 		if (mMusicServiceBinder != null) {
 			mMusicServiceBinder
 					.unregisterOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
@@ -194,34 +144,19 @@ public class MusicPlayFragment extends Fragment {
 	}
 
 	@Override
-	public void onDetach() {
-		Log.i(TAG, "onDetach");
-		super.onDetach();
-		mActivity = null;
-	}
-
-	/** 由包含本实例的Activity调用此方法 */
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		switch (keyCode) {
-		case KeyEvent.KEYCODE_MENU:
-			mActivity.switchToSlidingMenu();
-			break;
-		case KeyEvent.KEYCODE_BACK:
-			mActivity.switchToMain();
-			break;
-		default:
-			break;
+	public void onBackPressed() {
+		if (!getSupportFragmentManager().popBackStackImmediate()) {
+			switchToMain();
 		}
-		return true;
 	}
 
 	/** 对各个控件设置相关参数、监听器等 */
 	private void initViews() {
-		mLyricAdapter = new LyricAdapter(getActivity());
+		mLyricAdapter = new LyricAdapter(this);
 		mView_lv_lyricshow.setAdapter(mLyricAdapter);
 		mView_lv_lyricshow.setEmptyView(mView_tv_lyric_empty);
-		mView_lv_lyricshow.startAnimation(AnimationUtils.loadAnimation(
-				getActivity(), R.anim.fade_in));
+		mView_lv_lyricshow.startAnimation(AnimationUtils.loadAnimation(this,
+				android.R.anim.fade_in));
 
 		mView_tv_current_time.setText(TimeHelper
 				.milliSecondsToFormatTimeString(0));
@@ -231,7 +166,7 @@ public class MusicPlayFragment extends Fragment {
 		mView_ib_back.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				mActivity.switchToMain();
+				switchToMain();
 			}
 		});
 
@@ -247,8 +182,8 @@ public class MusicPlayFragment extends Fragment {
 		mView_ib_play_previous.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				getActivity().startService(
-						new Intent(MusicService.ACTION_PREVIOUS));
+				PlayerActivity.this.startService(new Intent(
+						MusicService.ACTION_PREVIOUS));
 			}
 		});
 
@@ -256,11 +191,11 @@ public class MusicPlayFragment extends Fragment {
 			@Override
 			public void onClick(View v) {
 				if (mIsPlay) {
-					getActivity().startService(
-							new Intent(MusicService.ACTION_PAUSE));
+					PlayerActivity.this.startService(new Intent(
+							MusicService.ACTION_PAUSE));
 				} else {
-					getActivity().startService(
-							new Intent(MusicService.ACTION_PLAY));
+					PlayerActivity.this.startService(new Intent(
+							MusicService.ACTION_PLAY));
 				}
 			}
 		});
@@ -268,8 +203,8 @@ public class MusicPlayFragment extends Fragment {
 		mView_ib_play_next.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				getActivity()
-						.startService(new Intent(MusicService.ACTION_NEXT));
+				PlayerActivity.this.startService(new Intent(
+						MusicService.ACTION_NEXT));
 			}
 		});
 
@@ -382,6 +317,31 @@ public class MusicPlayFragment extends Fragment {
 		setPlayModeImage(playMode);
 	}
 
+	private void findViews() {
+		setContentView(R.layout.layout_musicplay);
+		mView_ib_back = (ImageButton) findViewById(R.id.play_button_back);
+		mView_ib_favorite = (ImageButton) findViewById(R.id.play_favorite);
+		mView_ib_list = (ImageButton) findViewById(R.id.play_list);
+		mView_ib_play_mode = (ImageButton) findViewById(R.id.play_mode);
+		mView_ib_play_next = (ImageButton) findViewById(R.id.play_playnext);
+		mView_ib_play_previous = (ImageButton) findViewById(R.id.play_playprevious);
+		mView_ib_play_or_pause = (ImageButton) findViewById(R.id.play_playbutton);
+		mView_sb_song_progress = (SeekBar) findViewById(R.id.play_progress);
+		mView_tv_current_time = (TextView) findViewById(R.id.play_current_time);
+		mView_tv_total_time = (TextView) findViewById(R.id.play_song_total_time);
+		mView_tv_songtitle = (TextView) findViewById(R.id.play_song_title);
+		mView_lv_lyricshow = (ListView) findViewById(R.id.lyricshow);
+		mView_tv_lyric_empty = (TextView) findViewById(R.id.lyric_empty);
+	}
+
+	private void switchToMain() {
+		Intent intent = new Intent(PlayerActivity.this,
+				MainContentActivity.class);
+		startActivity(intent);
+		overridePendingTransition(R.anim.push_right_in, R.anim.push_right_out);
+		this.finish();
+	}
+
 	private OnPlaybackStateChangeListener mOnPlaybackStateChangeListener = new OnPlaybackStateChangeListener() {
 
 		@Override
@@ -466,5 +426,4 @@ public class MusicPlayFragment extends Fragment {
 							mView_lv_lyricshow.getHeight() / 2, 500);
 		}
 	};
-
 }

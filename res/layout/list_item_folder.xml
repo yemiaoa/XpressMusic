@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:paddingRight="15dp" >
+
+    <ImageView
+        android:id="@+id/folder_pic"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="3dp"
+        android:layout_marginRight="3dp"
+        android:contentDescription="@string/app_name"
+        android:scaleType="centerInside"
+        android:src="@drawable/folder_list_item_default" />
+
+    <TextView
+        android:id="@+id/song_count_of_folder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:textColor="@color/grey_dark"
+        android:textIsSelectable="false"
+        android:textSize="15sp" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_toLeftOf="@id/song_count_of_folder"
+        android:layout_toRightOf="@id/folder_pic"
+        android:gravity="center_vertical"
+        android:paddingBottom="3dp"
+        android:paddingRight="8dp"
+        android:paddingTop="3dp" >
+
+        <TextView
+            android:id="@+id/folder_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:singleLine="true"
+            android:textAppearance="@android:attr/textAppearanceMedium"
+            android:textIsSelectable="false"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/folder_path"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_below="@id/folder_name"
+            android:ellipsize="start"
+            android:singleLine="true"
+            android:textColor="@color/grey_dark"
+            android:textIsSelectable="false"
+            android:textSize="15sp" />
+    </RelativeLayout>
+
+</RelativeLayout>

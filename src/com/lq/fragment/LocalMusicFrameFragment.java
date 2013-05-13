@@ -25,9 +25,27 @@ public class LocalMusicFrameFragment extends Fragment {
 				.replace(R.id.frame_empty, new LocalMusicFragment()).commit();
 	}
 
-	public void switchContent() {
-		getChildFragmentManager().beginTransaction()
-				.replace(R.id.frame_empty, new ArtistBrowserFragment())
-				.addToBackStack(null).commit();
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+
+	}
+
+	public void switchContent(int id) {
+		switch (id) {
+		case R.id.classify_by_artist:
+			getChildFragmentManager().beginTransaction()
+					.replace(R.id.frame_empty, new ArtistBrowserFragment())
+					.addToBackStack(null).commit();
+			break;
+		case R.id.classify_by_folder:
+			getChildFragmentManager().beginTransaction()
+					.replace(R.id.frame_empty, new FolderBrowserFragment())
+					.addToBackStack(null).commit();
+			break;
+
+		default:
+			break;
+		}
+
 	}
 }

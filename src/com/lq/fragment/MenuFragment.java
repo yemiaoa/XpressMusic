@@ -40,7 +40,7 @@ public class MenuFragment extends ListFragment {
 			newContent = LocalMusicFrameFragment.class.getName();
 			break;
 		case 1:// TODO 喜爱
-			newContent = ArtistBrowserFragment.class.getName();
+			newContent = ColorFragment.class.getName();
 			break;
 		case 2:// TODO 收藏列表
 			newContent = ColorFragment.class.getName();

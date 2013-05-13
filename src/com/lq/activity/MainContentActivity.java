@@ -1,32 +1,24 @@
 package com.lq.activity;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.Fragment.SavedState;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager.OnBackStackChangedListener;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.ViewPager;
-import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnTouchListener;
 
-import com.lq.adapter.TwoPagerAdapter;
 import com.lq.fragment.LocalMusicFrameFragment;
 import com.lq.fragment.MenuFragment;
-import com.lq.fragment.MusicPlayFragment;
 import com.lq.service.MusicService;
 import com.slidingmenu.lib.SlidingMenu;
 
-public class MainContentActivity extends FragmentActivity {
+public class MainContentActivity extends FragmentActivity implements
+		OnBackStackChangedListener {
 	private static final String TAG = MainContentActivity.class.getSimpleName();
 
 	public static final int MESSAGE_SWITCH_TO_PLAY_IMAGE = 0;
@@ -35,15 +27,10 @@ public class MainContentActivity extends FragmentActivity {
 	/** 侧滑菜单控件 */
 	private SlidingMenu mSlidingMenu = null;
 
-	/** 总共就两页，第一页为主页面，可以替换掉，第二页始终为音乐播放界面 */
-	private ViewPager mViewPager = null;
-	private boolean mViewPagerSlidable = true;
-	TwoPagerAdapter mMainPagerAdapter = null;
-
 	private List<Fragment> mFragmentList = new ArrayList<Fragment>();
-	private Map<String, SavedState> mFragmentStates = new HashMap<String, Fragment.SavedState>();
+	private Fragment mCurrentFragment = null;
 
-	private MusicPlayFragment mMusicPlayFragment = null;
+	private int mBackStackEntryCount = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -51,10 +38,13 @@ public class MainContentActivity extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_content);
 
+		getSupportFragmentManager().addOnBackStackChangedListener(this);
+		mBackStackEntryCount = getSupportFragmentManager()
+				.getBackStackEntryCount();
+
 		// 初始化SlidingMenu，并为其填充Fragment
 		initSlidingMenu();
 		initPopulateFragment();
-		initViewPager();
 
 	}
 
@@ -80,65 +70,18 @@ public class MainContentActivity extends FragmentActivity {
 	/** 为SlidingMenu和Content填充Fragment */
 	private void initPopulateFragment() {
 		MenuFragment menuFragment = new MenuFragment();
-		LocalMusicFrameFragment localMusicFragment = new LocalMusicFrameFragment();
-		mMusicPlayFragment = new MusicPlayFragment();
+		mCurrentFragment = new LocalMusicFrameFragment();
 
 		FragmentTransaction fragmentTransaction = getSupportFragmentManager()
 				.beginTransaction();
-		fragmentTransaction.replace(R.id.frame_menu, menuFragment,
-				MenuFragment.class.getName());
+		fragmentTransaction.replace(R.id.frame_menu, menuFragment, menuFragment
+				.getClass().getName());
+		fragmentTransaction.replace(R.id.frame_main, mCurrentFragment,
+				mCurrentFragment.getClass().getName());
 		fragmentTransaction.commit();
 
-		mFragmentList.add(localMusicFragment);
-		mFragmentList.add(mMusicPlayFragment);
-		mMainPagerAdapter = new TwoPagerAdapter(getSupportFragmentManager(),
-				localMusicFragment, mMusicPlayFragment);
-	}
+		mFragmentList.add(mCurrentFragment);
 
-	private void initViewPager() {
-		mViewPager = (ViewPager) findViewById(R.id.viewpager_main);
-		mViewPager.setOnPageChangeListener(new OnPageChangeListener() {
-			@Override
-			public void onPageScrollStateChanged(int arg0) {
-			}
-
-			@Override
-			public void onPageScrolled(int arg0, float arg1, int arg2) {
-			}
-
-			@Override
-			public void onPageSelected(int position) {
-				switch (position) {
-				case 0:
-					getSlidingMenu().setTouchModeAbove(
-							SlidingMenu.TOUCHMODE_FULLSCREEN);
-					break;
-				default:
-					getSlidingMenu().setTouchModeAbove(
-							SlidingMenu.TOUCHMODE_NONE);
-					break;
-				}
-			}
-		});
-
-		// 拦截viewpager的触摸事件
-		mViewPager.setOnTouchListener(new OnTouchListener() {
-
-			@Override
-			public boolean onTouch(View v, MotionEvent event) {
-				// 根据自定义的变量决定viewpager是否响应Touch事件，来达到控制禁止滑动的目的
-				if (mViewPagerSlidable) {
-					// 允许滑动，返回false，会将触摸事件分发到viewpager包含的子控件中
-					return false;
-				} else {
-					// 不允许滑动，返回true，viewpager的子控件将不会接受到触摸事件
-					return true;
-				}
-			}
-		});
-
-		mViewPager.setAdapter(mMainPagerAdapter);
-		mViewPager.setCurrentItem(0);
 	}
 
 	public SlidingMenu getSlidingMenu() {
@@ -159,62 +102,46 @@ public class MainContentActivity extends FragmentActivity {
 		mFragmentList = null;
 	}
 
-	public void saveFragmentState(Fragment f, SavedState state) {
-		mFragmentStates.put(f.hashCode() + "", state);
-	}
-
-	public SavedState getFragmentState(Fragment f) {
-		return mFragmentStates.get(f.hashCode() + "");
+	public void switchToPlayer() {
+		startActivity(new Intent(MainContentActivity.this, PlayerActivity.class));
+		overridePendingTransition(R.anim.push_left_in, R.anim.push_left_out);
 	}
 
 	/**
 	 * 切换主页内容
 	 */
 	public void switchContent(String fragmentName) {
-		Fragment tFragment = null;
+		Fragment f = null;
 		boolean existed = false;
 
-		// 遍历当前已打开的Fragment集合
-		for (int i = 0; i < mFragmentList.size(); i++) {
-			// 如果要求切换至的fragment已经存在，则直接把已经存在的显示出来
-			if (mFragmentList.get(i).getClass().getName().equals(fragmentName)) {
-				existed = true;
-				mMainPagerAdapter.setFirstPage(mFragmentList.get(i));
-				break;
+		if (!mCurrentFragment.getClass().getName().equals(fragmentName)) {
+
+			// 遍历当前已打开的Fragment集合
+			for (int i = 0; i < mFragmentList.size(); i++) {
+				// 如果要求切换至的fragment已经存在，则直接把已经存在的显示出来
+				if (mFragmentList.get(i).getClass().getName()
+						.equals(fragmentName)) {
+					existed = true;
+					f = mFragmentList.get(i);
+					getSupportFragmentManager().beginTransaction()
+							.hide(mCurrentFragment).show(f).commit();
+					mCurrentFragment = f;
+					break;
+				}
 			}
-		}
-		// 如果不存在，则新建
-		if (!existed) {
-			tFragment = Fragment.instantiate(getApplicationContext(),
-					fragmentName);
-			mFragmentList.add(tFragment);
-			mMainPagerAdapter.setFirstPage(tFragment);
+
+			// 如果不存在，则新建
+			if (!existed) {
+				f = Fragment.instantiate(getApplicationContext(), fragmentName);
+				mFragmentList.add(f);
+				getSupportFragmentManager().beginTransaction()
+						.hide(mCurrentFragment).add(R.id.frame_main, f)
+						.commit();
+				mCurrentFragment = f;
+			}
 		}
 
 		mSlidingMenu.showContent();
-	}
-
-	public void switchToMain() {
-		mViewPager.setCurrentItem(0, true);
-	}
-
-	public void switchToMusicPlayer() {
-		mViewPager.setCurrentItem(1, true);
-	}
-
-	public void switchToSlidingMenu() {
-		switchToMain();
-		mSlidingMenu.toggle();
-	}
-
-	public void forbidSlide() {
-		mSlidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_NONE);
-		mViewPagerSlidable = false;
-	}
-
-	public void allowSlide() {
-		mSlidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
-		mViewPagerSlidable = true;
 	}
 
 	public void exit() {
@@ -224,18 +151,14 @@ public class MainContentActivity extends FragmentActivity {
 
 	@Override
 	public void onBackPressed() {
-		Fragment curFragment = (Fragment) getSupportFragmentManager()
-				.findFragmentByTag(
-						"android:switcher:" + mViewPager.getId() + ":"
-								+ mViewPager.getCurrentItem());
-
 		if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
 			getSupportFragmentManager().popBackStackImmediate();
-		} else if (curFragment != null
-				&& curFragment.getChildFragmentManager()
+		} else if (mCurrentFragment != null
+				&& mCurrentFragment.getChildFragmentManager()
 						.getBackStackEntryCount() > 0) {
-			if (curFragment.getView() != null) {
-				curFragment.getChildFragmentManager().popBackStackImmediate();
+			if (mCurrentFragment.getView() != null) {
+				mCurrentFragment.getChildFragmentManager()
+						.popBackStackImmediate();
 			}
 		} else {
 			// 规定在显示菜单时才可退出程序，按返回键弹出侧滑菜单
@@ -251,21 +174,27 @@ public class MainContentActivity extends FragmentActivity {
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if (mViewPager.getCurrentItem() == 0) {
-			switch (keyCode) {
-			case KeyEvent.KEYCODE_MENU:
-				if (mViewPagerSlidable) {
-					mSlidingMenu.toggle();
-				}
-				break;
-			default:
-				break;
-			}
-		} else {
-			// 分享onKeyDown事件给播放界面
-			mMusicPlayFragment.onKeyDown(keyCode, event);
+		switch (keyCode) {
+		case KeyEvent.KEYCODE_MENU:
+			mSlidingMenu.toggle();
+			break;
+		default:
+			break;
 		}
 		return super.onKeyDown(keyCode, event);
+	}
+
+	@Override
+	public void onBackStackChanged() {
+
+		// 如果后退栈条目数目增加了
+		if (mBackStackEntryCount < getSupportFragmentManager()
+				.getBackStackEntryCount()) {
+			mBackStackEntryCount++;
+
+		} else {// 如果后退栈条目数目减少了
+			mBackStackEntryCount--;
+		}
 	}
 
 }

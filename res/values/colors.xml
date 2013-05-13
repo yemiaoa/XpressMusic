@@ -28,7 +28,7 @@
     <color name="black_translucence">#dd000000</color>
     <color name="black_translucence2">#55000000</color>
     <color name="grey_dark">#ff454545</color>
-    <color name="grey_dark2">#cc666666</color>
+    <color name="grey_dark_light">#55666666</color>
     <color name="transparent">#00000000</color>
 
 </resources>

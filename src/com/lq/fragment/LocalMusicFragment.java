@@ -1,7 +1,6 @@
 package com.lq.fragment;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
@@ -26,12 +25,11 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.view.animation.AnimationUtils;
 import android.widget.AbsListView.MultiChoiceModeListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
@@ -40,11 +38,13 @@ import android.widget.Toast;
 
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
+import com.lq.adapter.TrackAdapter;
 import com.lq.entity.MusicItem;
 import com.lq.listener.OnPlaybackStateChangeListener;
 import com.lq.loader.MusicRetrieveLoader;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
+import com.lq.util.GlobalConstant;
 
 /**
  * 读取并显示设备外存上的音乐文件
@@ -63,6 +63,8 @@ public class LocalMusicFragment extends Fragment implements
 
 	private String mSortOrder = Media.DEFAULT_SORT_ORDER;
 
+	private Bundle mCurrentPlayInfo = null;
+
 	private boolean mHasNewData = false;
 
 	private MainContentActivity mActivity = null;
@@ -71,6 +73,7 @@ public class LocalMusicFragment extends Fragment implements
 	private ListView mView_ListView = null;
 
 	private ImageView mView_MenuNavigation = null;
+	private ImageView mView_GoToPlayer = null;
 	private ImageView mView_MoreFunctions = null;
 	private TextView mView_Title = null;
 	private ViewGroup mView_Top_Container = null;
@@ -78,7 +81,7 @@ public class LocalMusicFragment extends Fragment implements
 	private PopupMenu mOverflowPopupMenu = null;
 
 	/** 用来绑定数据至ListView的适配器 */
-	private MusicListAdapter mAdapter = null;
+	private TrackAdapter mAdapter = null;
 
 	private ClientIncomingHandler mHandler = new ClientIncomingHandler(
 			LocalMusicFragment.this);
@@ -112,9 +115,12 @@ public class LocalMusicFragment extends Fragment implements
 	/** 与Service连接时交互的类 */
 	private ServiceConnection mServiceConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName className, IBinder service) {
+			Log.i(TAG, "onServiceConnected");
 			mMusicServiceBinder = (MusicPlaybackLocalBinder) service;
 			mMusicServiceBinder
 					.registerOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
+			mMusicServiceBinder.getCurrentPlayInfo();
+			mCurrentPlayInfo = mMusicServiceBinder.getCurrentPlayInfo();
 		}
 
 		// 与服务端连接异常丢失时才调用，调用unBindService不调用此方法哎
@@ -154,6 +160,8 @@ public class LocalMusicFragment extends Fragment implements
 				.findViewById(R.id.title_of_local_music);
 		mView_MoreFunctions = (ImageView) rootView
 				.findViewById(R.id.more_functions);
+		mView_GoToPlayer = (ImageView) rootView
+				.findViewById(R.id.switch_to_player);
 		mView_Top_Container = (ViewGroup) rootView
 				.findViewById(R.id.top_of_local_music);
 
@@ -184,8 +192,7 @@ public class LocalMusicFragment extends Fragment implements
 	public void onStart() {
 		Log.i(TAG, "onStart");
 		super.onStart();
-
-		// 在Fragment可见时绑定服务，传递信使给服务，以使服务可以发送消息过来
+		// 在Fragment可见时绑定服务 ，以使服务可以发送消息过来
 		getActivity().bindService(
 				new Intent(getActivity(), MusicService.class),
 				mServiceConnection, Context.BIND_AUTO_CREATE);
@@ -195,6 +202,7 @@ public class LocalMusicFragment extends Fragment implements
 	public void onResume() {
 		Log.i(TAG, "onResume");
 		super.onResume();
+
 	}
 
 	@Override
@@ -225,38 +233,9 @@ public class LocalMusicFragment extends Fragment implements
 		super.onCreateContextMenu(menu, v, menuInfo);
 	}
 
-	/**
-	 * 控制是否要显示列表。不显示列表时，可以显示一个进度条以表明正在加载数据
-	 * 
-	 * @see {@link android.app.ListFragment#setListShown()}
-	 * @param shown
-	 *            是否显示ListView
-	 * @param animate
-	 *            进度条和列表切换时是否带动画
-	 * */
-	private void setListShown(boolean shown, boolean animate) {
-		if (shown) {
-			if (animate) {
-				mView_ListView.startAnimation(AnimationUtils.loadAnimation(
-						getActivity(), android.R.anim.fade_in));
-			} else {
-				mView_ListView.clearAnimation();
-			}
-			mView_ListView.setVisibility(View.VISIBLE);
-		} else {
-			if (animate) {
-				mView_ListView.startAnimation(AnimationUtils.loadAnimation(
-						getActivity(), android.R.anim.fade_out));
-			} else {
-				mView_ListView.clearAnimation();
-			}
-			mView_ListView.setVisibility(View.GONE);
-		}
-	}
-
 	private void initViewsSetting() {
 		// 创建一个空的适配器，用来显示加载的数据，适配器内容稍后由Loader填充
-		mAdapter = new MusicListAdapter();
+		mAdapter = new TrackAdapter(getActivity());
 		// 为ListView绑定数据适配器
 		mView_ListView.setAdapter(mAdapter);
 		// 为ListView的条目绑定一个点击事件监听
@@ -268,7 +247,7 @@ public class LocalMusicFragment extends Fragment implements
 					@Override
 					public boolean onCreateActionMode(ActionMode mode, Menu menu) {
 						mView_Top_Container.setVisibility(View.GONE);
-						mActivity.forbidSlide();
+						// mActivity.forbidSlide();
 						MenuInflater inflater = mActivity.getMenuInflater();
 						inflater.inflate(R.menu.main_content, menu);
 						mode.setTitle("Select Items");
@@ -297,7 +276,7 @@ public class LocalMusicFragment extends Fragment implements
 					@Override
 					public void onDestroyActionMode(ActionMode mode) {
 						mView_Top_Container.setVisibility(View.VISIBLE);
-						mActivity.allowSlide();
+						// mActivity.allowSlide();
 					}
 
 					@Override
@@ -307,6 +286,14 @@ public class LocalMusicFragment extends Fragment implements
 					}
 
 				});
+
+		mView_GoToPlayer.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				mActivity.switchToPlayer();
+			}
+		});
 		mOverflowPopupMenu
 				.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
 					public boolean onMenuItemClick(MenuItem item) {
@@ -317,14 +304,25 @@ public class LocalMusicFragment extends Fragment implements
 									MUSIC_RETRIEVE_LOADER, null,
 									LocalMusicFragment.this);
 							break;
+						case R.id.sort_by_last_modify_time:
+							mSortOrder = Media.DATE_MODIFIED;
+							getLoaderManager().restartLoader(
+									MUSIC_RETRIEVE_LOADER, null,
+									LocalMusicFragment.this);
+							break;
 						case R.id.classify_by_artist:
 							if (null != getParentFragment()
 									&& getParentFragment() instanceof LocalMusicFrameFragment) {
 								LocalMusicFrameFragment parent = (LocalMusicFrameFragment) getParentFragment();
-								parent.switchContent();
+								parent.switchContent(R.id.classify_by_artist);
 							}
 							break;
-						case R.id.classify_by_directory:
+						case R.id.classify_by_folder:
+							if (null != getParentFragment()
+									&& getParentFragment() instanceof LocalMusicFrameFragment) {
+								LocalMusicFrameFragment parent = (LocalMusicFrameFragment) getParentFragment();
+								parent.switchContent(R.id.classify_by_folder);
+							}
 							break;
 						default:
 							break;
@@ -361,7 +359,7 @@ public class LocalMusicFragment extends Fragment implements
 		intent.putExtra(REQUEST_PLAY_ID, mAdapter.getItem(position).getId());
 		intent.putExtra(FLAG_CLICK_ITEM_IN_LIST, 1);
 		mActivity.startService(intent);
-		mActivity.switchToMusicPlayer();
+		mActivity.switchToPlayer();
 	}
 
 	/** 在装载器需要被创建时执行此方法，这里只有一个装载器，所以我们不必关心装载器的ID */
@@ -369,9 +367,9 @@ public class LocalMusicFragment extends Fragment implements
 	public Loader<List<MusicItem>> onCreateLoader(int id, Bundle args) {
 		Log.i(TAG, "onCreateLoader");
 
-		// 查询语句：检索出.mp3为后缀名，时长大于两分钟，文件大小大于1MB的媒体文件
+		// 查询语句：检索出.mp3为后缀名，时长大于1分钟，文件大小大于1MB的媒体文件
 		String select = Media.DATA + " like'%.mp3' and " + Media.DURATION
-				+ " > " + 1000 * 60 * 2 + " and " + Media.SIZE + " > " + 1024;
+				+ " > " + 1000 * 60 * 1 + " and " + Media.SIZE + " > " + 1024;
 
 		// 创建并返回一个Loader
 		return new MusicRetrieveLoader(getActivity(), select, null, mSortOrder);
@@ -386,20 +384,15 @@ public class LocalMusicFragment extends Fragment implements
 		// TODO SD卡拔出时，没有处理
 		mAdapter.setData(data);
 
+		// 更新标题中的歌曲数目
 		if (data != null && data.size() != 0) {
 			mView_Title.setText(getResources().getString(R.string.local_music)
 					+ "(" + data.size() + ")");
 		}
 
-		// 数据加载完成，显示列表
-		// if (isResumed()) {
-		// // Fragment页面处于前端（Resumed状态）则显示页面变化的动画
-		// setListShown(true, true);
-		// } else {
-		// // Fragment页面不处于前端则不显示页面变化的动画
-		// setListShown(true, false);
-		// }
-
+		if (mCurrentPlayInfo != null) {
+			initCurrentPlayInfo(mCurrentPlayInfo);
+		}
 	}
 
 	/** 此方法在提供给onLoadFinished()最后的一个游标准备关闭时调用，我们要确保不再使用它 */
@@ -409,89 +402,18 @@ public class LocalMusicFragment extends Fragment implements
 		mAdapter.setData(null);
 	}
 
-	private class MusicListAdapter extends BaseAdapter {
-		/** 数据源 */
-		private List<MusicItem> mData = null;
+	/** 初始化当前播放信息 */
+	private void initCurrentPlayInfo(Bundle bundle) {
+		MusicItem playingSong = bundle
+				.getParcelable(GlobalConstant.PLAYING_MUSIC_ITEM);
 
-		/** 播放时为相应播放条目显示一个播放标记 */
-		private int mActivateItemPos = -1;
-
-		public MusicListAdapter() {
-			mData = new ArrayList<MusicItem>();
+		if (playingSong != null) {
+			mAdapter.setSpecifiedIndicator(MusicService.seekPosInListById(
+					mAdapter.getData(), playingSong.getId()));
+		} else {
+			mAdapter.setSpecifiedIndicator(-1);
 		}
 
-		public void setData(List<MusicItem> data) {
-			mData.clear();
-			if (data != null) {
-				mData.addAll(data);
-			}
-			mActivateItemPos = -1;
-			notifyDataSetChanged();
-		}
-
-		public List<MusicItem> getData() {
-			return mData;
-		}
-
-		/** 让指定位置的条目显示一个正在播放标记（活动状态标记） */
-		public void setSpecifiedIndicator(int position) {
-			mActivateItemPos = position;
-			notifyDataSetChanged();
-		}
-
-		@Override
-		public boolean isEmpty() {
-			return mData.size() == 0;
-		}
-
-		@Override
-		public int getCount() {
-			return mData.size();
-		}
-
-		@Override
-		public MusicItem getItem(int position) {
-			return mData.get((int) getItemId(position));
-		}
-
-		@Override
-		public long getItemId(int position) {
-			return position;
-		}
-
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			ViewHolder holder = null;
-			if (convertView == null) {
-				convertView = LayoutInflater.from(getActivity()).inflate(
-						R.layout.list_item_local_music, null);
-				holder = new ViewHolder();
-				holder.indicator = convertView
-						.findViewById(R.id.play_indicator);
-				holder.title = (TextView) convertView
-						.findViewById(R.id.textview_music_title);
-				holder.artist = (TextView) convertView
-						.findViewById(R.id.textview_music_singer);
-				convertView.setTag(holder);
-			} else {
-				holder = (ViewHolder) convertView.getTag();
-			}
-			if (mActivateItemPos == position) {
-				holder.indicator.setVisibility(View.VISIBLE);
-			} else {
-				holder.indicator.setVisibility(View.INVISIBLE);
-			}
-			holder.title.setText(getItem(position).getTitle());
-			holder.artist.setText(getItem(position).getArtist());
-
-			return convertView;
-		}
-	}
-
-	public static class ViewHolder {
-		TextView title;
-		TextView artist;
-		View indicator;
 	}
 
 	private OnPlaybackStateChangeListener mOnPlaybackStateChangeListener = new OnPlaybackStateChangeListener() {
