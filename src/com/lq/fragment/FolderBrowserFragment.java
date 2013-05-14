@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import android.app.Activity;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
@@ -28,6 +29,7 @@ import com.lq.adapter.FolderAdapter;
 import com.lq.entity.FolderInfo;
 import com.lq.loader.FolderInfoRetreiveLoader;
 import com.lq.util.CharHelper;
+import com.lq.util.GlobalConstant;
 
 public class FolderBrowserFragment extends Fragment implements
 		LoaderCallbacks<List<FolderInfo>> {
@@ -58,11 +60,11 @@ public class FolderBrowserFragment extends Fragment implements
 		Log.i(TAG, "onCreateView");
 
 		View rootView = inflater
-				.inflate(R.layout.folder_list, container, false);
+				.inflate(R.layout.list_folder, container, false);
 		mView_ListView = (ListView) rootView.findViewById(R.id.listview_folder);
 		mView_MenuNavigation = (ImageView) rootView
 				.findViewById(R.id.menu_navigation);
-		mView_Title = (TextView) rootView.findViewById(R.id.title_of_folder);
+		mView_Title = (TextView) rootView.findViewById(R.id.title);
 		mView_MoreFunctions = (ImageView) rootView
 				.findViewById(R.id.more_functions);
 		mView_GoToPlayer = (ImageView) rootView
@@ -99,7 +101,21 @@ public class FolderBrowserFragment extends Fragment implements
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
-
+				if (getParentFragment() instanceof LocalMusicFragment) {
+					Bundle data = new Bundle();
+					data.putParcelable(FolderInfo.class.getSimpleName(),
+							mAdapter.getData().get(position));
+					data.putString(GlobalConstant.PARENT,
+							FolderBrowserFragment.class.getSimpleName());
+					getFragmentManager()
+							.beginTransaction()
+							.replace(
+									R.id.frame_of_local_music,
+									Fragment.instantiate(getActivity(),
+											TrackBrowserFragment.class
+													.getName(), data))
+							.addToBackStack(null).commit();
+				}
 			}
 		});
 		mView_GoToPlayer.setOnClickListener(new OnClickListener() {
@@ -151,6 +167,10 @@ public class FolderBrowserFragment extends Fragment implements
 				mOverflowPopupMenu.show();
 			}
 		});
+		
+		if(getParentFragment() instanceof LocalMusicFragment){
+			setTitleLeftDrawable();
+		}
 	}
 
 	@Override
@@ -201,6 +221,17 @@ public class FolderBrowserFragment extends Fragment implements
 		}
 	};
 
+	private void setTitleLeftDrawable() {
+		mView_Title.setClickable(true);
+		Drawable title_drawable = getResources().getDrawable(
+				R.drawable.btn_titile_back);
+		title_drawable.setBounds(0, 0, title_drawable.getIntrinsicWidth(),
+				title_drawable.getIntrinsicHeight());
+		mView_Title.setCompoundDrawables(title_drawable, null, null, null);
+		mView_Title.setBackgroundResource(R.drawable.button_backround_light);
+	}
+
+	
 	// 按歌曲名称顺序排序
 	private Comparator<FolderInfo> mFolderNameComparator = new Comparator<FolderInfo>() {
 		char first_l, first_r;

@@ -87,7 +87,13 @@ public class TrackAdapter extends BaseAdapter {
 			holder.indicator.setVisibility(View.INVISIBLE);
 		}
 		holder.title.setText(getItem(position).getTitle());
-		holder.artist.setText(getItem(position).getArtist());
+
+		if (getItem(position).getArtist().equals("<unknown>")) {
+			holder.artist.setText(mContext.getResources().getString(
+					R.string.unknown_artist));
+		} else {
+			holder.artist.setText(getItem(position).getArtist());
+		}
 
 		return convertView;
 	}

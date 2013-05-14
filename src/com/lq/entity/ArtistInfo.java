@@ -1,9 +1,17 @@
 package com.lq.entity;
 
-public class ArtistInfo {
+import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class ArtistInfo implements Parcelable {
 	private String artist_name;
 	private int number_of_tracks;
 	private int number_of_albums;
+
+	public ArtistInfo() {
+
+	}
 
 	public int getNumberOfAlbums() {
 		return number_of_albums;
@@ -29,4 +37,39 @@ public class ArtistInfo {
 		this.artist_name = artist_name;
 	}
 
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	// 写数据进行保存
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		Bundle bundle = new Bundle();
+		bundle.putString("artist_name", artist_name);
+		bundle.putInt("number_of_albums", number_of_albums);
+		bundle.putInt("number_of_tracks", number_of_tracks);
+		dest.writeBundle(bundle);
+
+	}
+
+	// 用来创建自定义的Parcelable的对象
+	public static final Parcelable.Creator<ArtistInfo> CREATOR = new Parcelable.Creator<ArtistInfo>() {
+		public ArtistInfo createFromParcel(Parcel in) {
+			return new ArtistInfo(in);
+		}
+
+		public ArtistInfo[] newArray(int size) {
+			return new ArtistInfo[size];
+		}
+	};
+
+	// 读数据进行恢复
+	private ArtistInfo(Parcel in) {
+		Bundle bundle = in.readBundle();
+		artist_name = bundle.getString("artist_name");
+		number_of_albums = bundle.getInt("number_of_albums");
+		number_of_tracks = bundle.getInt("number_of_tracks");
+
+	}
 }

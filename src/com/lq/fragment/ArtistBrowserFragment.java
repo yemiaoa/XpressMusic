@@ -3,6 +3,7 @@ package com.lq.fragment;
 import java.util.List;
 
 import android.app.Activity;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Media;
@@ -21,13 +22,13 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
 import com.lq.adapter.ArtistAdapter;
 import com.lq.entity.ArtistInfo;
 import com.lq.loader.ArtistInfoRetrieveLoader;
+import com.lq.util.GlobalConstant;
 
 public class ArtistBrowserFragment extends Fragment implements
 		LoaderCallbacks<List<ArtistInfo>> {
@@ -59,12 +60,11 @@ public class ArtistBrowserFragment extends Fragment implements
 		Log.i(TAG, "onCreateView");
 
 		View rootView = inflater
-				.inflate(R.layout.artist_list, container, false);
+				.inflate(R.layout.list_artist, container, false);
 		mView_ListView = (ListView) rootView.findViewById(R.id.listview_artist);
 		mView_MenuNavigation = (ImageView) rootView
 				.findViewById(R.id.menu_navigation);
-		mView_Title = (TextView) rootView
-				.findViewById(R.id.title_of_artist);
+		mView_Title = (TextView) rootView.findViewById(R.id.title);
 		mView_MoreFunctions = (ImageView) rootView
 				.findViewById(R.id.more_functions);
 		mView_GoToPlayer = (ImageView) rootView
@@ -100,7 +100,21 @@ public class ArtistBrowserFragment extends Fragment implements
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
-
+				if (getParentFragment() instanceof LocalMusicFragment) {
+					Bundle data = new Bundle();
+					data.putParcelable(ArtistInfo.class.getSimpleName(),
+							mAdapter.getData().get(position));
+					data.putString(GlobalConstant.PARENT,
+							ArtistBrowserFragment.class.getSimpleName());
+					getFragmentManager()
+							.beginTransaction()
+							.replace(
+									R.id.frame_of_local_music,
+									Fragment.instantiate(getActivity(),
+											TrackBrowserFragment.class
+													.getName(), data))
+							.addToBackStack(null).commit();
+				}
 			}
 		});
 		mView_GoToPlayer.setOnClickListener(new OnClickListener() {
@@ -155,6 +169,10 @@ public class ArtistBrowserFragment extends Fragment implements
 				mOverflowPopupMenu.show();
 			}
 		});
+
+		if (getParentFragment() instanceof LocalMusicFragment) {
+			setTitleLeftDrawable();
+		}
 	}
 
 	@Override
@@ -189,5 +207,15 @@ public class ArtistBrowserFragment extends Fragment implements
 	public void onLoaderReset(Loader<List<ArtistInfo>> loader) {
 		Log.i(TAG, "onLoaderReset");
 		mAdapter.setData(null);
+	}
+
+	private void setTitleLeftDrawable() {
+		mView_Title.setClickable(true);
+		Drawable title_drawable = getResources().getDrawable(
+				R.drawable.btn_titile_back);
+		title_drawable.setBounds(0, 0, title_drawable.getIntrinsicWidth(),
+				title_drawable.getIntrinsicHeight());
+		mView_Title.setCompoundDrawables(title_drawable, null, null, null);
+		mView_Title.setBackgroundResource(R.drawable.button_backround_light);
 	}
 }

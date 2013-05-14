@@ -71,7 +71,12 @@ public class ArtistAdapter extends BaseAdapter {
 			holder = (ViewHolder) convertView.getTag();
 		}
 
-		holder.artist_name.setText(mData.get(position).getArtistName());
+		if (getItem(position).getArtistName().equals("<unknown>")) {
+			holder.artist_name.setText(mContext.getResources().getString(
+					R.string.unknown_artist));
+		} else {
+			holder.artist_name.setText(mData.get(position).getArtistName());
+		}
 		holder.num_of_tracks.setText(""
 				+ mData.get(position).getNumberOfTracks());
 

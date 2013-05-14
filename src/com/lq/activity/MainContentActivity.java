@@ -12,7 +12,8 @@ import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.KeyEvent;
 
-import com.lq.fragment.LocalMusicFrameFragment;
+import com.lq.entity.ExitDialogFragment;
+import com.lq.fragment.LocalMusicFragment;
 import com.lq.fragment.MenuFragment;
 import com.lq.service.MusicService;
 import com.slidingmenu.lib.SlidingMenu;
@@ -70,7 +71,7 @@ public class MainContentActivity extends FragmentActivity implements
 	/** 为SlidingMenu和Content填充Fragment */
 	private void initPopulateFragment() {
 		MenuFragment menuFragment = new MenuFragment();
-		mCurrentFragment = new LocalMusicFrameFragment();
+		mCurrentFragment = new LocalMusicFragment();
 
 		FragmentTransaction fragmentTransaction = getSupportFragmentManager()
 				.beginTransaction();
@@ -164,7 +165,8 @@ public class MainContentActivity extends FragmentActivity implements
 			// 规定在显示菜单时才可退出程序，按返回键弹出侧滑菜单
 			if (mSlidingMenu.isMenuShowing()) {
 				// 显示菜单时，按返回键退出程序
-				this.finish();
+				new ExitDialogFragment().show(getSupportFragmentManager(),
+						"exit");
 			} else {
 				// 菜单没有显示，就弹出菜单
 				mSlidingMenu.showMenu();
@@ -196,5 +198,4 @@ public class MainContentActivity extends FragmentActivity implements
 			mBackStackEntryCount--;
 		}
 	}
-
 }

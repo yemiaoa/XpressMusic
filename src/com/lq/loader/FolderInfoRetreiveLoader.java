@@ -28,10 +28,11 @@ public class FolderInfoRetreiveLoader extends AsyncTaskLoader<List<FolderInfo>> 
 	/** where子句 */
 
 	private String mSelection = FileColumns.MEDIA_TYPE + " = "
-			+ FileColumns.MEDIA_TYPE_AUDIO + " and " + FileColumns.DATA
-			+ " like'%.mp3' and " + Media.DURATION + " > " + 1000 * 60 * 1
-			+ " and " + FileColumns.SIZE + " > " + 1024 + " ) "
-			+ " group by ( " + FileColumns.PARENT;
+			+ FileColumns.MEDIA_TYPE_AUDIO + " and " + "(" + FileColumns.DATA
+			+ " like'%.mp3' or " + Media.DATA + " like'%.wma') and "
+			+ Media.DURATION + " > " + 1000 * 60 * 1 + " and "
+			+ FileColumns.SIZE + " > " + 1024 + " ) " + " group by ( "
+			+ FileColumns.PARENT;
 	private String[] mSelectionArgs = null;
 	private String mSortOrder = null;
 

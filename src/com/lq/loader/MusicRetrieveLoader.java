@@ -1,7 +1,10 @@
 package com.lq.loader;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -10,7 +13,6 @@ import android.provider.MediaStore.Audio.Media;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
-import com.lq.activity.R;
 import com.lq.entity.MusicItem;
 
 public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
@@ -30,12 +32,20 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
 
 	private List<MusicItem> mMusicItemList = null;
 
-	private Context mContext = null;
+	private Pattern mFolerPattern = null;
+
+	int index_id;
+	int index_title;
+	int index_data;
+	int index_artist;
+	int index_album;
+	int index_duration;
+	int index_size;
+	int index_displayname;
 
 	public MusicRetrieveLoader(Context context, String selection,
 			String[] selectionArgs, String sortOrder) {
 		super(context);
-		mContext = context;
 		this.mSelection = selection;
 		this.mSelectionArgs = selectionArgs;
 		this.mSortOrder = sortOrder;
@@ -47,33 +57,34 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
 		Log.i(TAG, "loadInBackground");
 		Cursor cursor = mContentResolver.query(Media.EXTERNAL_CONTENT_URI,
 				mProjection, mSelection, mSelectionArgs, mSortOrder);
-		int index_id = cursor.getColumnIndex(Media._ID);
-		int index_title = cursor.getColumnIndex(Media.TITLE);
-		int index_data = cursor.getColumnIndex(Media.DATA);
-		int index_artist = cursor.getColumnIndex(Media.ARTIST);
-		int index_album = cursor.getColumnIndex(Media.ALBUM);
-		int index_duration = cursor.getColumnIndex(Media.DURATION);
-		int index_size = cursor.getColumnIndex(Media.SIZE);
-		int index_displayname = cursor.getColumnIndex(Media.DISPLAY_NAME);
+		index_id = cursor.getColumnIndex(Media._ID);
+		index_title = cursor.getColumnIndex(Media.TITLE);
+		index_data = cursor.getColumnIndex(Media.DATA);
+		index_artist = cursor.getColumnIndex(Media.ARTIST);
+		index_album = cursor.getColumnIndex(Media.ALBUM);
+		index_duration = cursor.getColumnIndex(Media.DURATION);
+		index_size = cursor.getColumnIndex(Media.SIZE);
+		index_displayname = cursor.getColumnIndex(Media.DISPLAY_NAME);
 
 		List<MusicItem> itemsList = new ArrayList<MusicItem>();
-
+		MusicItem item = null;
 		// 将数据库查询结果保存到一个List集合中(存放在RAM)
 		if (cursor != null) {
 			while (cursor.moveToNext()) {
-				MusicItem item = new MusicItem();
-				item.setId(cursor.getLong(index_id));
-				item.setAlbum(cursor.getString(index_album));
-				item.setTitle(cursor.getString(index_title));
-				item.setData(cursor.getString(index_data));
-				item.setDuration(cursor.getLong(index_duration));
-				item.setSize(cursor.getLong(index_size));
-				item.setDisplayName(cursor.getString(index_displayname));
-				if (cursor.getString(index_artist).equals("<unknown>")) {
-					item.setArtist(mContext.getResources().getString(
-							R.string.unknown_artist));
-				} else {
-					item.setArtist(cursor.getString(index_artist));
+
+				// 如果设置了文件夹过滤
+				if (mFolerPattern != null) {
+					// 过滤出指定的文件夹下的文件，忽略子目录
+					Matcher matcher = mFolerPattern.matcher(cursor
+							.getString(index_data));
+					// 如果是以xxx.xxx结尾的路径，则就是当前目录下的文件了
+					if (matcher.find() && matcher.group().matches(".*\\..*")) {
+						item = createNewItem(cursor);
+					} else {// 是文件夹就忽略了
+						continue;
+					}
+				} else {// 正常的创建新的条目
+					item = createNewItem(cursor);
 				}
 				itemsList.add(item);
 			}
@@ -163,8 +174,26 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<MusicItem>> {
 
 	@Override
 	protected void onForceLoad() {
-		// TODO Auto-generated method stub
 		super.onForceLoad();
 	}
 
+	private MusicItem createNewItem(Cursor cursor) {
+		MusicItem item = new MusicItem();
+		item.setTitle(cursor.getString(index_title));
+		item.setArtist(cursor.getString(index_artist));
+		item.setDisplayName(cursor.getString(index_displayname));
+		item.setId(cursor.getLong(index_id));
+		item.setAlbum(cursor.getString(index_album));
+		item.setDuration(cursor.getLong(index_duration));
+		item.setSize(cursor.getLong(index_size));
+		item.setData(cursor.getString(index_data));
+		return item;
+	}
+
+	/** 设置要过滤的文件夹 */
+	public void setFolderFilterPattern(String folderpath) {
+		// 过滤出当前目录下的文件，而忽略子目录的存在
+		mFolerPattern = Pattern.compile(folderpath + File.separator + "[^"
+				+ File.separator + "]+");
+	}
 }

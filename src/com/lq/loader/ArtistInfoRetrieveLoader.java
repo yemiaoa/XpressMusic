@@ -10,7 +10,6 @@ import android.provider.MediaStore;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
-import com.lq.activity.R;
 import com.lq.entity.ArtistInfo;
 
 public class ArtistInfoRetrieveLoader extends AsyncTaskLoader<List<ArtistInfo>> {
@@ -27,8 +26,6 @@ public class ArtistInfoRetrieveLoader extends AsyncTaskLoader<List<ArtistInfo>> 
 	private String[] mSelectionArgs = null;
 	private String mSortOrder = null;
 
-	private Context mContext = null;
-
 	private ContentResolver mContentResolver = null;
 
 	private List<ArtistInfo> mArtistInfoList = null;
@@ -44,7 +41,6 @@ public class ArtistInfoRetrieveLoader extends AsyncTaskLoader<List<ArtistInfo>> 
 					+ " desc";
 		}
 		this.mSortOrder = sortOrder;
-		mContext = context;
 		mContentResolver = context.getContentResolver();
 	}
 
@@ -67,12 +63,7 @@ public class ArtistInfoRetrieveLoader extends AsyncTaskLoader<List<ArtistInfo>> 
 		if (cursor != null) {
 			while (cursor.moveToNext()) {
 				ArtistInfo item = new ArtistInfo();
-				if (cursor.getString(index_artist).equals("<unknown>")) {
-					item.setArtistName(mContext.getResources().getString(
-							R.string.unknown_artist));
-				} else {
-					item.setArtistName(cursor.getString(index_artist));
-				}
+				item.setArtistName(cursor.getString(index_artist));
 				item.setNumberOfTracks(cursor.getInt(index_number_of_tracks));
 				item.setNumberOfAlbums(cursor.getInt(index_number_of_albums));
 				itemsList.add(item);

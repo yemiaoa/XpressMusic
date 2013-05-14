@@ -24,5 +24,9 @@
     <string name="sort_by_folder_music_count">按歌曲数量排序</string>
     <string name="sort_by_folder_name">按文件夹名称排序</string>
     <string name="sort_by_last_modify_time">按上次修改时间排序</string>
+    <string name="sort_by_play_frequency">按播放次数排序</string>
+    <string name="are_you_sure_to_exit">您确定退出吗？</string>
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
 
 </resources>

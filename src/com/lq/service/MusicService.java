@@ -52,7 +52,6 @@ import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
 import com.lq.entity.LyricSentence;
 import com.lq.entity.MusicItem;
-import com.lq.fragment.LocalMusicFragment;
 import com.lq.listener.OnPlaybackStateChangeListener;
 import com.lq.receiver.MediaButtonReceiver;
 import com.lq.util.AudioFocusHelper;
@@ -226,6 +225,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	private boolean mHasLyric = false;
 
 	private int mPlayingSongPos = 0;
+	private long mPlayingPlayId = -1;
 	private int mRequestPlayPos = -1;
 	private long mRequsetPlayId = -1;
 
@@ -339,13 +339,14 @@ public class MusicService extends Service implements OnCompletionListener,
 		if (action.equals(ACTION_PLAY)) {
 			if (mHasPlayList) {
 				// 如果是列表中点击的
-				if (1 == intent.getIntExtra(
-						LocalMusicFragment.FLAG_CLICK_ITEM_IN_LIST, 0)) {
+				if (1 == intent.getIntExtra(GlobalConstant.CLICK_ITEM_IN_LIST,
+						0)) {
 					// 获取到点击的歌曲的ID
 					mRequsetPlayId = intent.getLongExtra(
-							LocalMusicFragment.REQUEST_PLAY_ID, 0);
+							GlobalConstant.REQUEST_PLAY_ID, 0);
 					mRequestPlayPos = seekPosInListById(mPlayList,
 							mRequsetPlayId);
+					Log.i("test", mRequestPlayPos + "");
 				}
 				if (mRequestPlayPos != -1) {
 					processPlayRequest();
@@ -492,14 +493,10 @@ public class MusicService extends Service implements OnCompletionListener,
 		// 如果处于“停止”状态，直接播放下一首歌曲
 		// 如果处于“播放”或者“暂停”状态，并且请求播放的歌曲与当前播放的歌曲不同，则播放请求的歌曲
 		if (mState == State.Stopped
-				|| ((mState == State.Paused || mState == State.Playing) && mPlayList
-						.get(mPlayingSongPos).getId() != mPlayList.get(
-						mRequestPlayPos).getId())) {
+				|| ((mState == State.Paused || mState == State.Playing) && mPlayingPlayId != mRequsetPlayId)) {
 			mPlayingSongPos = mRequestPlayPos;
 			playSong();
-		} else if (mState == State.Paused
-				&& mPlayList.get(mPlayingSongPos).getId() == mPlayList.get(
-						mRequestPlayPos).getId()) {
+		} else if (mState == State.Paused && mPlayingPlayId == mRequsetPlayId) {
 			// 如果处于“暂停”状态，则继续播放，并且恢复“前台服务”的状态
 			mState = State.Playing;
 			setUpAsForeground(mPlayList.get(mPlayingSongPos).getTitle()
@@ -630,6 +627,9 @@ public class MusicService extends Service implements OnCompletionListener,
 		if (mState == State.Playing || mState == State.Paused || force) {
 			mState = State.Stopped;
 			mRequsetPlayId = -1;
+			mPlayingPlayId = -1;
+			mPlayingSongPos = 0;
+			mRequestPlayPos = 0;
 			// 释放所有持有的资源
 			relaxResources(true);
 			mAudioFocusHelper.giveUpAudioFocus();
@@ -691,6 +691,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	 * 播放mPlayingSongPos指定的歌曲.
 	 */
 	void playSong() {
+		mPlayingPlayId = mPlayList.get(mPlayingSongPos).getId();
 		mState = State.Stopped;
 		relaxResources(false); // 除了MediaPlayer，释放所有资源
 
