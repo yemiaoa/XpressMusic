@@ -101,16 +101,16 @@ public class FolderBrowserFragment extends Fragment implements
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
-				if (getParentFragment() instanceof LocalMusicFragment) {
+				if (getParentFragment() instanceof FrameLocalMusicFragment) {
 					Bundle data = new Bundle();
 					data.putParcelable(FolderInfo.class.getSimpleName(),
 							mAdapter.getData().get(position));
-					data.putString(GlobalConstant.PARENT,
-							FolderBrowserFragment.class.getSimpleName());
+					data.putInt(GlobalConstant.PARENT,
+							TrackBrowserFragment.START_FROM_FOLER);
 					getFragmentManager()
 							.beginTransaction()
 							.replace(
-									R.id.frame_of_local_music,
+									R.id.frame_for_nested_fragment,
 									Fragment.instantiate(getActivity(),
 											TrackBrowserFragment.class
 													.getName(), data))
@@ -168,7 +168,7 @@ public class FolderBrowserFragment extends Fragment implements
 			}
 		});
 		
-		if(getParentFragment() instanceof LocalMusicFragment){
+		if(getParentFragment() instanceof FrameLocalMusicFragment){
 			setTitleLeftDrawable();
 		}
 	}

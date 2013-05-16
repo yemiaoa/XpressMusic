@@ -1,4 +1,4 @@
-package com.lq.entity;
+package com.lq.fragment;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -12,10 +12,34 @@ import android.view.ContextThemeWrapper;
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
 
-public class ExitDialogFragment extends DialogFragment {
+public class PromptDialogFragment extends DialogFragment {
 	private final String TAG = this.getClass().getSimpleName();
-
+	private static final String TITLE = "title";
 	MainContentActivity mMainActivity = null;
+	DialogInterface.OnClickListener mListener = null;
+
+	/**
+	 * 生成PromptDialogFragment的实例
+	 * 
+	 * @param title
+	 *            提示对话框的标题
+	 * @param positiveButtonClickListener
+	 *            确认按钮的监听器
+	 */
+	public static PromptDialogFragment newInstance(String title,
+			DialogInterface.OnClickListener positiveButtonClickListener) {
+		PromptDialogFragment f = new PromptDialogFragment();
+		f.setOnPositiveButtonClickedListener(positiveButtonClickListener);
+		Bundle args = new Bundle();
+		args.putString(TITLE, title);
+		f.setArguments(args);
+		return f;
+	}
+
+	public void setOnPositiveButtonClickedListener(
+			DialogInterface.OnClickListener positiveButtonClickListener) {
+		mListener = positiveButtonClickListener;
+	}
 
 	@Override
 	public void onAttach(Activity activity) {
@@ -35,20 +59,15 @@ public class ExitDialogFragment extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		Log.i(TAG, "onCreateDialog");
+		String title = "";
+		if (getArguments() != null) {
+			title = getArguments().getString(TITLE);
+		}
 		ContextThemeWrapper context = new ContextThemeWrapper(getActivity(),
-				android.R.style.Theme_Holo_Dialog_NoActionBar);
+				android.R.style.Theme_Dialog);
 		return new AlertDialog.Builder(context)
-				.setIconAttribute(android.R.attr.alertDialogIcon)
-				.setTitle(R.string.are_you_sure_to_exit)
-				.setPositiveButton(R.string.confirm,
-						new DialogInterface.OnClickListener() {
-							public void onClick(DialogInterface dialog,
-									int whichButton) {
-								if (mMainActivity != null) {
-									mMainActivity.exit();
-								}
-							}
-						})
+				.setTitle(title)
+				.setPositiveButton(R.string.confirm, mListener)
 				.setNegativeButton(R.string.cancel,
 						new DialogInterface.OnClickListener() {
 							public void onClick(DialogInterface dialog,
@@ -62,5 +81,6 @@ public class ExitDialogFragment extends DialogFragment {
 	public void onDestroy() {
 		Log.i(TAG, "onDestroy");
 		super.onDestroy();
+		mListener = null;
 	}
 }

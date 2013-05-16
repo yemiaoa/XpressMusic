@@ -4,7 +4,7 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class MusicItem implements Parcelable {
+public class TrackInfo implements Parcelable {
 
 	/** 在MedieStore存储的主键 */
 	private long id;
@@ -30,7 +30,7 @@ public class MusicItem implements Parcelable {
 	/** 时长 */
 	private long duration;
 
-	public MusicItem() {
+	public TrackInfo() {
 
 	}
 
@@ -124,18 +124,18 @@ public class MusicItem implements Parcelable {
 	}
 
 	// 用来创建自定义的Parcelable的对象
-	public static final Parcelable.Creator<MusicItem> CREATOR = new Parcelable.Creator<MusicItem>() {
-		public MusicItem createFromParcel(Parcel in) {
-			return new MusicItem(in);
+	public static final Parcelable.Creator<TrackInfo> CREATOR = new Parcelable.Creator<TrackInfo>() {
+		public TrackInfo createFromParcel(Parcel in) {
+			return new TrackInfo(in);
 		}
 
-		public MusicItem[] newArray(int size) {
-			return new MusicItem[size];
+		public TrackInfo[] newArray(int size) {
+			return new TrackInfo[size];
 		}
 	};
 
 	// 读数据进行恢复
-	private MusicItem(Parcel in) {
+	private TrackInfo(Parcel in) {
 		Bundle bundle = in.readBundle();
 		id = bundle.getLong("id");
 		title = bundle.getString("title");

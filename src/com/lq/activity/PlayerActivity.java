@@ -22,7 +22,7 @@ import android.widget.TextView;
 
 import com.lq.adapter.LyricAdapter;
 import com.lq.entity.LyricSentence;
-import com.lq.entity.MusicItem;
+import com.lq.entity.TrackInfo;
 import com.lq.listener.OnPlaybackStateChangeListener;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
@@ -54,7 +54,7 @@ public class PlayerActivity extends FragmentActivity {
 	private LyricAdapter mLyricAdapter = null;
 
 	private boolean mIsPlay = false;
-	private MusicItem mPlaySong = null;
+	private TrackInfo mPlaySong = null;
 
 	private MusicPlaybackLocalBinder mMusicServiceBinder = null;
 
@@ -287,7 +287,7 @@ public class PlayerActivity extends FragmentActivity {
 		int currentPlayerState = bundle.getInt(GlobalConstant.PLAYING_STATE);
 		int currenPlayPosition = bundle.getInt(
 				GlobalConstant.CURRENT_PLAY_POSITION, 0);
-		MusicItem playingSong = bundle
+		TrackInfo playingSong = bundle
 				.getParcelable(GlobalConstant.PLAYING_MUSIC_ITEM);
 
 		// 根据播放状态，设置播放按钮的图片
@@ -373,7 +373,7 @@ public class PlayerActivity extends FragmentActivity {
 		}
 
 		@Override
-		public void onPlayNewSong(MusicItem playingSong) {
+		public void onPlayNewSong(TrackInfo playingSong) {
 			// 播放新的歌曲时，更新显示的歌曲信息
 			mPlaySong = playingSong;
 			if (playingSong != null) {

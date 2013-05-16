@@ -9,12 +9,12 @@ import android.view.ViewGroup;
 import com.lq.activity.R;
 import com.lq.util.GlobalConstant;
 
-public class LocalMusicFragment extends Fragment {
-	
+public class FrameLocalMusicFragment extends Fragment {
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		View rootView = inflater.inflate(R.layout.frame_of_local_music,
+		View rootView = inflater.inflate(R.layout.frame_for_nested_fragment,
 				container, false);
 		return rootView;
 	}
@@ -22,14 +22,14 @@ public class LocalMusicFragment extends Fragment {
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		
-		Bundle args=new Bundle();
-		args.putString(GlobalConstant.PARENT, this.getClass().getSimpleName());
-		
+
+		Bundle args = new Bundle();
+		args.putInt(GlobalConstant.PARENT, TrackBrowserFragment.START_FROM_LOCAL_MUSIC);
+
 		getChildFragmentManager()
 				.beginTransaction()
 				.replace(
-						R.id.frame_of_local_music,
+						R.id.frame_for_nested_fragment,
 						Fragment.instantiate(getActivity(),
 								TrackBrowserFragment.class.getName(), args))
 				.commit();

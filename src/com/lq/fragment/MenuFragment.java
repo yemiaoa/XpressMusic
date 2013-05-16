@@ -37,13 +37,13 @@ public class MenuFragment extends ListFragment {
 		switch (position) {
 		// 对应res/array.xml中选项的顺序
 		case 0:// TODO 本地音乐
-			newContent = LocalMusicFragment.class.getName();
+			newContent = FrameLocalMusicFragment.class.getName();
 			break;
 		case 1:// TODO 喜爱
 			newContent = ColorFragment.class.getName();
 			break;
 		case 2:// TODO 收藏列表
-			newContent = ColorFragment.class.getName();
+			newContent = FramePlaylistFragment.class.getName();
 			break;
 		case 3:// TODO 最近播放
 			newContent = ColorFragment.class.getName();

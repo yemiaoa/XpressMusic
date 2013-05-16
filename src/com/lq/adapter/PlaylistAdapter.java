@@ -1,0 +1,84 @@
+package com.lq.adapter;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.TextView;
+
+import com.lq.activity.R;
+import com.lq.entity.PlaylistInfo;
+
+public class PlaylistAdapter extends BaseAdapter {
+	private List<PlaylistInfo> mData = null;
+	private Context mContext = null;
+
+	public PlaylistAdapter(Context c) {
+		mContext = c;
+		mData = new ArrayList<PlaylistInfo>();
+	}
+
+	public void setData(List<PlaylistInfo> data) {
+		mData.clear();
+		if (data != null) {
+			mData.addAll(data);
+		}
+		notifyDataSetChanged();
+	}
+
+	public List<PlaylistInfo> getData() {
+		return mData;
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return mData.size() == 0;
+	}
+
+	@Override
+	public int getCount() {
+		return mData.size();
+	}
+
+	@Override
+	public PlaylistInfo getItem(int position) {
+		return mData.get(position);
+	}
+
+	@Override
+	public long getItemId(int position) {
+		return position;
+	}
+
+	@Override
+	public View getView(int position, View convertView, ViewGroup parent) {
+		ViewHolder holder = null;
+		if (convertView == null) {
+			holder = new ViewHolder();
+			convertView = LayoutInflater.from(mContext).inflate(
+					R.layout.list_item_playlist, null);
+			holder.playlist_name = (TextView) convertView
+					.findViewById(R.id.playlist_name);
+			holder.playlist_members_count = (TextView) convertView
+					.findViewById(R.id.song_count_of_playlist);
+			convertView.setTag(holder);
+		} else {
+			holder = (ViewHolder) convertView.getTag();
+		}
+
+		holder.playlist_name.setText(mData.get(position).getName());
+		holder.playlist_members_count.setText(""
+				+ mData.get(position).getNumOfMembers());
+		return convertView;
+	}
+
+	static class ViewHolder {
+		TextView playlist_name;
+		TextView playlist_members_count;
+	}
+
+}

@@ -51,14 +51,14 @@ public class FolderInfoRetreiveLoader extends AsyncTaskLoader<List<FolderInfo>> 
 		Cursor cursor = mContentResolver.query(
 				MediaStore.Files.getContentUri("external"), mProjection,
 				mSelection, mSelectionArgs, mSortOrder);
-		int index_data = cursor
-				.getColumnIndex(MediaStore.Files.FileColumns.DATA);
-		int index_num_of_songs = cursor.getColumnIndex(num_of_songs);
 
 		List<FolderInfo> itemsList = new ArrayList<FolderInfo>();
 
 		// 将数据库查询结果保存到一个List集合中(存放在RAM)
 		if (cursor != null) {
+			int index_data = cursor
+					.getColumnIndex(MediaStore.Files.FileColumns.DATA);
+			int index_num_of_songs = cursor.getColumnIndex(num_of_songs);
 			while (cursor.moveToNext()) {
 				FolderInfo item = new FolderInfo();
 
@@ -81,6 +81,7 @@ public class FolderInfoRetreiveLoader extends AsyncTaskLoader<List<FolderInfo>> 
 
 				itemsList.add(item);
 			}
+			cursor.close();
 		}
 		// 如果没有扫描到媒体文件，itemsList的size为0，因为上面new过了
 		return itemsList;

@@ -1,5 +1,7 @@
 package com.lq.util;
 
+import java.text.DecimalFormat;
+
 import net.sourceforge.pinyin4j.PinyinHelper;
 import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
 import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
@@ -97,5 +99,11 @@ public class CharHelper {
 
 		// 只取一个发音，如果是多音字，仅取第一个发音
 		return pinyin[0].charAt(0);
+	}
+
+	public static String bytesToMB(long bytes) {
+		float size = (float) (bytes*1.0 / 1024 / 1024);
+		String result = new DecimalFormat("###.00").format(size) + "MB";
+		return result;
 	}
 }

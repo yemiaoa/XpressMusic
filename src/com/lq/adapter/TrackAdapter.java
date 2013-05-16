@@ -11,22 +11,22 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.lq.activity.R;
-import com.lq.entity.MusicItem;
+import com.lq.entity.TrackInfo;
 
 public class TrackAdapter extends BaseAdapter {
 	private Context mContext = null;
 	/** 数据源 */
-	private List<MusicItem> mData = null;
+	private List<TrackInfo> mData = null;
 
 	/** 播放时为相应播放条目显示一个播放标记 */
 	private int mActivateItemPos = -1;
 
 	public TrackAdapter(Context context) {
 		mContext = context;
-		mData = new ArrayList<MusicItem>();
+		mData = new ArrayList<TrackInfo>();
 	}
 
-	public void setData(List<MusicItem> data) {
+	public void setData(List<TrackInfo> data) {
 		mData.clear();
 		if (data != null) {
 			mData.addAll(data);
@@ -35,7 +35,7 @@ public class TrackAdapter extends BaseAdapter {
 		notifyDataSetChanged();
 	}
 
-	public List<MusicItem> getData() {
+	public List<TrackInfo> getData() {
 		return mData;
 	}
 
@@ -56,7 +56,7 @@ public class TrackAdapter extends BaseAdapter {
 	}
 
 	@Override
-	public MusicItem getItem(int position) {
+	public TrackInfo getItem(int position) {
 		return mData.get((int) getItemId(position));
 	}
 

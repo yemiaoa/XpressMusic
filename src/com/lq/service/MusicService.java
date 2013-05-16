@@ -51,7 +51,7 @@ import android.widget.Toast;
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
 import com.lq.entity.LyricSentence;
-import com.lq.entity.MusicItem;
+import com.lq.entity.TrackInfo;
 import com.lq.listener.OnPlaybackStateChangeListener;
 import com.lq.receiver.MediaButtonReceiver;
 import com.lq.util.AudioFocusHelper;
@@ -125,7 +125,7 @@ public class MusicService extends Service implements OnCompletionListener,
 		 * @param list
 		 *            播放列表,每项包含每首歌曲的详细信息
 		 * */
-		public void setCurrentPlayList(List<MusicItem> list) {
+		public void setCurrentPlayList(List<TrackInfo> list) {
 			mPlayList.clear();
 			mPlayList.addAll(list);
 			mHasPlayList = true;
@@ -134,11 +134,11 @@ public class MusicService extends Service implements OnCompletionListener,
 
 		public Bundle getCurrentPlayInfo() {
 			Bundle bundle = new Bundle();
-			MusicItem item = null;
+			TrackInfo item = null;
 			int currentPlayPos = 0;
 
 			if (mState == State.Playing || mState == State.Paused) {
-				item = mPlayList.get(mPlayingSongPos);
+				item = mPlayingSong;
 				currentPlayPos = mMediaPlayer.getCurrentPosition();
 			}
 			bundle.putParcelable(GlobalConstant.PLAYING_MUSIC_ITEM, item);
@@ -148,7 +148,7 @@ public class MusicService extends Service implements OnCompletionListener,
 
 			// 如果当前正在播放歌曲，通知LyricListener载入歌词
 			if (mState == State.Playing || mState == State.Paused) {
-				loadLyric(mPlayList.get(mPlayingSongPos).getData());
+				loadLyric(mPlayingSong.getData());
 				mLyricLoadHelper.notifyTime(mMediaPlayer.getCurrentPosition());
 			}
 
@@ -207,7 +207,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	private LyricListener mLyricListener = null;
 
 	// 当前播放列表
-	private List<MusicItem> mPlayList = new ArrayList<MusicItem>();
+	private List<TrackInfo> mPlayList = new ArrayList<TrackInfo>();
 
 	// 丢失音频焦点，我们为媒体播放设置一个低音量(1.0f为最大)，而不是停止播放
 	private static final float DUCK_VOLUME = 0.1f;
@@ -224,8 +224,8 @@ public class MusicService extends Service implements OnCompletionListener,
 	private boolean mHasPlayList = false;
 	private boolean mHasLyric = false;
 
+	private TrackInfo mPlayingSong = null;
 	private int mPlayingSongPos = 0;
-	private long mPlayingPlayId = -1;
 	private int mRequestPlayPos = -1;
 	private long mRequsetPlayId = -1;
 
@@ -400,7 +400,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	public void onPrepared(MediaPlayer player) {
 		// 准备完成了，可以播放歌曲了
 		mState = State.Playing;
-		updateNotification(mPlayList.get(mPlayingSongPos).getTitle()
+		updateNotification(mPlayingSong.getTitle()
 				+ " (playing)");
 		configAndStartMediaPlayer();
 		if (!mServiceHandler.hasMessages(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS)) {
@@ -493,13 +493,15 @@ public class MusicService extends Service implements OnCompletionListener,
 		// 如果处于“停止”状态，直接播放下一首歌曲
 		// 如果处于“播放”或者“暂停”状态，并且请求播放的歌曲与当前播放的歌曲不同，则播放请求的歌曲
 		if (mState == State.Stopped
-				|| ((mState == State.Paused || mState == State.Playing) && mPlayingPlayId != mRequsetPlayId)) {
+				|| ((mState == State.Paused || mState == State.Playing) && mPlayingSong
+						.getId() != mRequsetPlayId)) {
 			mPlayingSongPos = mRequestPlayPos;
 			playSong();
-		} else if (mState == State.Paused && mPlayingPlayId == mRequsetPlayId) {
+		} else if (mState == State.Paused
+				&& mPlayingSong.getId() == mRequsetPlayId) {
 			// 如果处于“暂停”状态，则继续播放，并且恢复“前台服务”的状态
 			mState = State.Playing;
-			setUpAsForeground(mPlayList.get(mPlayingSongPos).getTitle()
+			setUpAsForeground(mPlayingSong.getTitle()
 					+ " (playing)");
 			configAndStartMediaPlayer();
 		} else if (mMediaPlayer.isLooping()) {
@@ -627,7 +629,6 @@ public class MusicService extends Service implements OnCompletionListener,
 		if (mState == State.Playing || mState == State.Paused || force) {
 			mState = State.Stopped;
 			mRequsetPlayId = -1;
-			mPlayingPlayId = -1;
 			mPlayingSongPos = 0;
 			mRequestPlayPos = 0;
 			// 释放所有持有的资源
@@ -691,7 +692,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	 * 播放mPlayingSongPos指定的歌曲.
 	 */
 	void playSong() {
-		mPlayingPlayId = mPlayList.get(mPlayingSongPos).getId();
+		mPlayingSong = mPlayList.get(mPlayingSongPos);
 		mState = State.Stopped;
 		relaxResources(false); // 除了MediaPlayer，释放所有资源
 
@@ -700,8 +701,7 @@ public class MusicService extends Service implements OnCompletionListener,
 				createMediaPlayerIfNeeded();
 				mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 				mMediaPlayer.setDataSource(getApplicationContext(), ContentUris
-						.withAppendedId(Media.EXTERNAL_CONTENT_URI, mPlayList
-								.get(mPlayingSongPos).getId()));
+						.withAppendedId(Media.EXTERNAL_CONTENT_URI, mPlayingSong.getId()));
 			} else {
 				processStopRequest(true);
 				return;
@@ -709,9 +709,9 @@ public class MusicService extends Service implements OnCompletionListener,
 
 			mState = State.Preparing;
 
-			loadLyric(mPlayList.get(mPlayingSongPos).getData());
+			loadLyric(mPlayingSong.getData());
 
-			setUpAsForeground(mPlayList.get(mPlayingSongPos).getTitle()
+			setUpAsForeground(mPlayingSong.getTitle()
 					+ " (loading)");
 
 			// 在后台准备MediaPlayer，准备完成后会调用OnPreparedListener的onPrepared()方法。
@@ -733,7 +733,7 @@ public class MusicService extends Service implements OnCompletionListener,
 		// 每次播放新的歌曲的时候，把当前播放的歌曲信息传递给播放观察者
 		for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
 			mOnPlaybackStateChangeListeners.get(i).onPlayNewSong(
-					mPlayList.get(mPlayingSongPos));
+					mPlayingSong);
 		}
 	}
 
@@ -800,8 +800,8 @@ public class MusicService extends Service implements OnCompletionListener,
 		// + "lrc";
 		String lyricFilePath = Environment.getExternalStorageDirectory()
 				+ "/MIUI/music/lyric/"
-				+ mPlayList.get(mPlayingSongPos).getTitle() + "_"
-				+ mPlayList.get(mPlayingSongPos).getArtist() + ".lrc";
+				+ mPlayingSong.getTitle() + "_"
+				+ mPlayingSong.getArtist() + ".lrc";
 		mHasLyric = mLyricLoadHelper.loadLyric(lyricFilePath);
 	}
 
@@ -814,7 +814,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	 *            歌曲ID
 	 * @return 返回-1表示未找到
 	 */
-	public static int seekPosInListById(List<MusicItem> list, long songId) {
+	public static int seekPosInListById(List<TrackInfo> list, long songId) {
 		int result = -1;
 		if (list != null) {
 

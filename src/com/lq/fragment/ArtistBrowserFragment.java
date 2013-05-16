@@ -51,7 +51,9 @@ public class ArtistBrowserFragment extends Fragment implements
 	@Override
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
-		mActivity = (MainContentActivity) activity;
+		if (activity instanceof MainContentActivity) {
+			mActivity = (MainContentActivity) activity;
+		}
 	}
 
 	@Override
@@ -100,16 +102,16 @@ public class ArtistBrowserFragment extends Fragment implements
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
-				if (getParentFragment() instanceof LocalMusicFragment) {
+				if (getParentFragment() instanceof FrameLocalMusicFragment) {
 					Bundle data = new Bundle();
 					data.putParcelable(ArtistInfo.class.getSimpleName(),
 							mAdapter.getData().get(position));
-					data.putString(GlobalConstant.PARENT,
-							ArtistBrowserFragment.class.getSimpleName());
+					data.putInt(GlobalConstant.PARENT,
+							TrackBrowserFragment.START_FROM_ARTIST);
 					getFragmentManager()
 							.beginTransaction()
 							.replace(
-									R.id.frame_of_local_music,
+									R.id.frame_for_nested_fragment,
 									Fragment.instantiate(getActivity(),
 											TrackBrowserFragment.class
 													.getName(), data))
@@ -170,7 +172,7 @@ public class ArtistBrowserFragment extends Fragment implements
 			}
 		});
 
-		if (getParentFragment() instanceof LocalMusicFragment) {
+		if (getParentFragment() instanceof FrameLocalMusicFragment) {
 			setTitleLeftDrawable();
 		}
 	}

@@ -10,19 +10,24 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.provider.MediaStore.Audio.Media;
+import android.provider.MediaStore.Audio.Playlists;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
 import com.lq.entity.TrackInfo;
 
-public class MusicRetrieveLoader extends AsyncTaskLoader<List<TrackInfo>> {
-	private final String TAG = MusicRetrieveLoader.class.getSimpleName();
+public class PlaylistMemberRetrieveLoader extends
+		AsyncTaskLoader<List<TrackInfo>> {
+	private final String TAG = PlaylistMemberRetrieveLoader.class
+			.getSimpleName();
 
 	/** 要从MediaStore检索的列 */
-	private final String[] mProjection = new String[] { Media._ID, Media.TITLE,
-			Media.ALBUM, Media.ARTIST, Media.DATA, Media.SIZE, Media.DURATION,
-			Media.DISPLAY_NAME };
-
+	private final String[] mMemberProjection = new String[] {
+			Playlists.Members._ID, Playlists.Members.PLAYLIST_ID,
+			Playlists.Members.AUDIO_ID, Playlists.Members.PLAY_ORDER };
+	private final String[] mTrackProjection = new String[] { Media._ID,
+			Media.TITLE, Media.ALBUM, Media.ARTIST, Media.DATA, Media.SIZE,
+			Media.DURATION, Media.DISPLAY_NAME };
 	// 数据库查询相关参数
 	private String mSelection = null;
 	private String[] mSelectionArgs = null;
@@ -43,7 +48,7 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<TrackInfo>> {
 	int index_size;
 	int index_displayname;
 
-	public MusicRetrieveLoader(Context context, String selection,
+	public PlaylistMemberRetrieveLoader(Context context, String selection,
 			String[] selectionArgs, String sortOrder) {
 		super(context);
 		this.mSelection = selection;
@@ -55,22 +60,21 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<TrackInfo>> {
 	@Override
 	public List<TrackInfo> loadInBackground() {
 		Log.i(TAG, "loadInBackground");
+		Cursor cursor = mContentResolver.query(Media.EXTERNAL_CONTENT_URI,
+				mTrackProjection, mSelection, mSelectionArgs, mSortOrder);
+		index_id = cursor.getColumnIndex(Media._ID);
+		index_title = cursor.getColumnIndex(Media.TITLE);
+		index_data = cursor.getColumnIndex(Media.DATA);
+		index_artist = cursor.getColumnIndex(Media.ARTIST);
+		index_album = cursor.getColumnIndex(Media.ALBUM);
+		index_duration = cursor.getColumnIndex(Media.DURATION);
+		index_size = cursor.getColumnIndex(Media.SIZE);
+		index_displayname = cursor.getColumnIndex(Media.DISPLAY_NAME);
+
 		List<TrackInfo> itemsList = new ArrayList<TrackInfo>();
 		TrackInfo item = null;
-		
-		Cursor cursor = mContentResolver.query(Media.EXTERNAL_CONTENT_URI,
-				mProjection, mSelection, mSelectionArgs, mSortOrder);
-		
 		// 将数据库查询结果保存到一个List集合中(存放在RAM)
 		if (cursor != null) {
-			index_id = cursor.getColumnIndex(Media._ID);
-			index_title = cursor.getColumnIndex(Media.TITLE);
-			index_data = cursor.getColumnIndex(Media.DATA);
-			index_artist = cursor.getColumnIndex(Media.ARTIST);
-			index_album = cursor.getColumnIndex(Media.ALBUM);
-			index_duration = cursor.getColumnIndex(Media.DURATION);
-			index_size = cursor.getColumnIndex(Media.SIZE);
-			index_displayname = cursor.getColumnIndex(Media.DISPLAY_NAME);
 			while (cursor.moveToNext()) {
 
 				// 如果设置了文件夹过滤

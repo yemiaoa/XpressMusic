@@ -6,20 +6,20 @@ import java.util.List;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
-import android.provider.MediaStore;
+import android.provider.MediaStore.Audio.Playlists;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
-import com.lq.entity.ArtistInfo;
+import com.lq.dao.PlaylistDAO;
+import com.lq.entity.PlaylistInfo;
 
-public class ArtistInfoRetrieveLoader extends AsyncTaskLoader<List<ArtistInfo>> {
-	private final String TAG = ArtistInfoRetrieveLoader.class.getSimpleName();
+public class PlaylistInfoRetrieveLoader extends
+		AsyncTaskLoader<List<PlaylistInfo>> {
+	private final String TAG = PlaylistInfoRetrieveLoader.class.getSimpleName();
 
 	/** 要从MediaStore检索的列 */
-	private final String[] mProjection = new String[] {
-			MediaStore.Audio.Artists.ARTIST,
-			MediaStore.Audio.Artists.NUMBER_OF_TRACKS,
-			MediaStore.Audio.Artists.NUMBER_OF_ALBUMS };
+	private final String[] mProjection = new String[] { Playlists._ID,
+			Playlists.NAME, Playlists.DATE_ADDED, Playlists.DATE_MODIFIED };
 
 	// 数据库查询相关参数
 	private String mSelection = null;
@@ -28,54 +28,56 @@ public class ArtistInfoRetrieveLoader extends AsyncTaskLoader<List<ArtistInfo>> 
 
 	private ContentResolver mContentResolver = null;
 
-	private List<ArtistInfo> mArtistInfoList = null;
+	private List<PlaylistInfo> mPlaylistInfoList = null;
 
-	public ArtistInfoRetrieveLoader(Context context, String selection,
+	public PlaylistInfoRetrieveLoader(Context context, String selection,
 			String[] selectionArgs, String sortOrder) {
 		super(context);
 		this.mSelection = selection;
 		this.mSelectionArgs = selectionArgs;
-		if (sortOrder == null) {
-			// 默认按艺术家名称排序
-			this.mSortOrder = MediaStore.Audio.Artists.NUMBER_OF_TRACKS
-					+ " desc";
-		}
 		this.mSortOrder = sortOrder;
 		mContentResolver = context.getContentResolver();
 	}
 
 	@Override
-	public List<ArtistInfo> loadInBackground() {
+	public List<PlaylistInfo> loadInBackground() {
 		Log.i(TAG, "loadInBackground");
-		Cursor cursor = mContentResolver.query(
-				MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI, mProjection,
-				mSelection, mSelectionArgs, mSortOrder);
+		int playlistId;
+		Cursor cursor_playlist = mContentResolver.query(
+				Playlists.EXTERNAL_CONTENT_URI, mProjection, mSelection,
+				mSelectionArgs, mSortOrder);
 
-		List<ArtistInfo> itemsList = new ArrayList<ArtistInfo>();
+		List<PlaylistInfo> itemsList = new ArrayList<PlaylistInfo>();
 
 		// 将数据库查询结果保存到一个List集合中(存放在RAM)
-		if (cursor != null) {
-			int index_artist = cursor
-					.getColumnIndex(MediaStore.Audio.Artists.ARTIST);
-			int index_number_of_tracks = cursor
-					.getColumnIndex(MediaStore.Audio.Artists.NUMBER_OF_TRACKS);
-			int index_number_of_albums = cursor
-					.getColumnIndex(MediaStore.Audio.Artists.NUMBER_OF_ALBUMS);
-			while (cursor.moveToNext()) {
-				ArtistInfo item = new ArtistInfo();
-				item.setArtistName(cursor.getString(index_artist));
-				item.setNumberOfTracks(cursor.getInt(index_number_of_tracks));
-				item.setNumberOfAlbums(cursor.getInt(index_number_of_albums));
+		if (cursor_playlist != null) {
+			int index_id = cursor_playlist.getColumnIndex(Playlists._ID);
+			int index_name = cursor_playlist.getColumnIndex(Playlists.NAME);
+			int index_date_added = cursor_playlist
+					.getColumnIndex(Playlists.DATE_ADDED);
+			int index_date_modified = cursor_playlist
+					.getColumnIndex(Playlists.DATE_MODIFIED);
+			while (cursor_playlist.moveToNext()) {
+				PlaylistInfo item = new PlaylistInfo();
+				playlistId = Integer.valueOf(cursor_playlist
+						.getString(index_id));
+				item.setId(playlistId);
+				item.setNumOfMembers(PlaylistDAO.getPlaylistMemberCount(
+						mContentResolver, playlistId));
+				item.setName(cursor_playlist.getString(index_name));
+				item.setDateAdded(cursor_playlist.getInt(index_date_added));
+				item.setDateModified(cursor_playlist
+						.getInt(index_date_modified));
 				itemsList.add(item);
 			}
-			cursor.close();
+			cursor_playlist.close();
 		}
 		// 如果没有扫描到媒体文件，itemsList的size为0，因为上面new过了
 		return itemsList;
 	}
 
 	@Override
-	public void deliverResult(List<ArtistInfo> data) {
+	public void deliverResult(List<PlaylistInfo> data) {
 		Log.i(TAG, "deliverResult");
 		if (isReset()) {
 			// An async query came in while the loader is stopped. We
@@ -84,8 +86,8 @@ public class ArtistInfoRetrieveLoader extends AsyncTaskLoader<List<ArtistInfo>> 
 				onReleaseResources(data);
 			}
 		}
-		List<ArtistInfo> oldList = data;
-		mArtistInfoList = data;
+		List<PlaylistInfo> oldList = data;
+		mPlaylistInfoList = data;
 
 		if (isStarted()) {
 			// If the Loader is currently started, we can immediately
@@ -101,7 +103,7 @@ public class ArtistInfoRetrieveLoader extends AsyncTaskLoader<List<ArtistInfo>> 
 		}
 	}
 
-	protected void onReleaseResources(List<ArtistInfo> data) {
+	protected void onReleaseResources(List<PlaylistInfo> data) {
 		Log.i(TAG, "onReleaseResources");
 		// For a simple List<> there is nothing to do. For something
 		// like a Cursor, we would close it here.
@@ -110,10 +112,10 @@ public class ArtistInfoRetrieveLoader extends AsyncTaskLoader<List<ArtistInfo>> 
 	@Override
 	protected void onStartLoading() {
 		Log.i(TAG, "onStartLoading");
-		if (mArtistInfoList != null) {
+		if (mPlaylistInfoList != null) {
 			// If we currently have a result available, deliver it
 			// immediately.
-			deliverResult(mArtistInfoList);
+			deliverResult(mPlaylistInfoList);
 		}
 		// If the data has changed since the last time it was loaded
 		// or is not currently available, start a load.
@@ -129,7 +131,7 @@ public class ArtistInfoRetrieveLoader extends AsyncTaskLoader<List<ArtistInfo>> 
 	}
 
 	@Override
-	public void onCanceled(List<ArtistInfo> data) {
+	public void onCanceled(List<PlaylistInfo> data) {
 		super.onCanceled(data);
 		Log.i(TAG, "onCanceled");
 		// At this point we can release the resources associated with 'data'
@@ -146,9 +148,9 @@ public class ArtistInfoRetrieveLoader extends AsyncTaskLoader<List<ArtistInfo>> 
 
 		// At this point we can release the resources associated with 'data'
 		// if needed.
-		if (mArtistInfoList != null) {
-			onReleaseResources(mArtistInfoList);
-			mArtistInfoList = null;
+		if (mPlaylistInfoList != null) {
+			onReleaseResources(mPlaylistInfoList);
+			mPlaylistInfoList = null;
 		}
 	}
 
