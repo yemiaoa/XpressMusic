@@ -117,34 +117,83 @@ public class PlaylistDAO {
 	 *            Context的ContentResolver实例
 	 * @param playlistId
 	 *            播放列表的ID
-	 * @param audioId
-	 *            添加的音频ID
+	 * @param audioIds
+	 *            添加的音频ID们
 	 * @return true表示该歌曲已经存在指定列表中，false表示添加成功
 	 */
 	public static boolean addTrackToPlaylist(ContentResolver resolver,
-			long playlistId, long audioId) {
+			long playlistId, long[] audioIds) {
+		boolean hasExistedItems = false;
+		long[] existedIds = null;
+
+		// 将audioIds变为(2,3,4,5)的形式，作数据库查询条件用
+		StringBuffer audioIdsstring = new StringBuffer("(");
+		for (int i = 0; i < audioIds.length; i++) {
+			audioIdsstring.append(audioIds[i] + ",");
+		}
+		audioIdsstring.setCharAt(audioIdsstring.length() - 1, ')');
 
 		// 先查询该播放列表中有无该歌曲，有则不做插入
 		Cursor cursor = resolver.query(
 				Playlists.Members.getContentUri("external", playlistId),
 				new String[] { Playlists.Members.AUDIO_ID },
-				Playlists.Members.AUDIO_ID + " = " + audioId, null, null);
+				Playlists.Members.AUDIO_ID + " in " + audioIdsstring, null,
+				null);
 		if (cursor != null) {
-			if (cursor.getCount() > 0) {
+
+			if (cursor.getCount() == audioIds.length) {
+				// 如果Members表中已经拥有所有要添加的歌曲，直接返回已经存在
 				cursor.close();
 				Log.i(TAG,
-						"add to playlist member failed:member of the same name already existed");
+						"add to playlist member failed:members of the same name already existed");
+				return true;
+			}
+			Log.d(TAG, "cursor数目：" + cursor.getCount());
+			Log.d(TAG, "audioIds数目：" + audioIds.length);
+			hasExistedItems = !(cursor.getCount() == 0);
+			if (hasExistedItems) {
+				existedIds = new long[cursor.getCount()];
+				int index_id = cursor
+						.getColumnIndex(Playlists.Members.AUDIO_ID);
+				int i = 0;
+				while (cursor.moveToNext()) {
+					existedIds[i] = cursor.getLong(index_id);
+					i++;
+				}
+			}
+		}
+
+		// 列表中无指定的歌曲，则向Members表中插入记录
+		Uri uri = Playlists.Members.getContentUri("external", playlistId);
+		ContentValues values = null;
+		if (hasExistedItems) {
+			for (int i = 0; i < audioIds.length; i++) {
+				if (!isIdInTheIntArray(audioIds[i], existedIds)) {
+					values = new ContentValues();
+					values.put(Playlists.Members.PLAY_ORDER, audioIds[i]);
+					values.put(Playlists.Members.AUDIO_ID, audioIds[i]);
+					Uri newInsertUri = resolver.insert(uri, values);
+					Log.i(TAG, "The new uri added to Members:" + newInsertUri);
+				}
+			}
+		} else {
+			for (int i = 0; i < audioIds.length; i++) {
+				values = new ContentValues();
+				values.put(Playlists.Members.PLAY_ORDER, audioIds[i]);
+				values.put(Playlists.Members.AUDIO_ID, audioIds[i]);
+				Uri newInsertUri = resolver.insert(uri, values);
+				Log.i(TAG, "The new uri added to Members:" + newInsertUri);
+			}
+		}
+		return false;
+	}
+
+	private static boolean isIdInTheIntArray(long id, long a[]) {
+		for (int i = 0; i < a.length; i++) {
+			if (a[i] == id) {
 				return true;
 			}
 		}
-		// 列表中无指定的歌曲，则向Members表中插入记录
-		Uri uri = Playlists.Members.getContentUri("external", playlistId);
-		ContentValues values = new ContentValues();
-		values.put(Playlists.Members.PLAY_ORDER, audioId);
-		values.put(Playlists.Members.AUDIO_ID, audioId);
-		Uri newInsertUri = resolver.insert(uri, values);
-		Log.i(TAG, "The new uri added to Members:" + newInsertUri);
-
 		return false;
 	}
 

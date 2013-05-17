@@ -5,14 +5,17 @@ import java.lang.reflect.Field;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.lq.activity.MutipleEditActivity;
 import com.lq.activity.R;
 import com.lq.dao.PlaylistDAO;
 
@@ -23,7 +26,7 @@ public class AddTrackToNewPlaylistDialogFragment extends DialogFragment {
 
 	private static final String AUDIO_ID = "audio_id";
 
-	private long mAudioId = -1;
+	private long mAudioIds[] = null;
 
 	private EditText mView_et_PlaylistName = null;
 
@@ -41,10 +44,10 @@ public class AddTrackToNewPlaylistDialogFragment extends DialogFragment {
 	 * @param listner
 	 *            OnMyDialogInputListener实例，以接受输入事件的变化
 	 * */
-	public static AddTrackToNewPlaylistDialogFragment newInstance(long audioId) {
+	public static AddTrackToNewPlaylistDialogFragment newInstance(long[] audioId) {
 		AddTrackToNewPlaylistDialogFragment f = new AddTrackToNewPlaylistDialogFragment();
 		Bundle args = new Bundle();
-		args.putLong(AUDIO_ID, audioId);
+		args.putLongArray(AUDIO_ID, audioId);
 		f.setArguments(args);
 		return f;
 	}
@@ -65,7 +68,7 @@ public class AddTrackToNewPlaylistDialogFragment extends DialogFragment {
 		mView_et_PlaylistName.setHint(hint);
 
 		if (getArguments() != null) {
-			mAudioId = getArguments().getLong(AUDIO_ID);
+			mAudioIds = getArguments().getLongArray(AUDIO_ID);
 		}
 
 		mAlertDialog = new AlertDialog.Builder(getActivity()).setTitle(title)
@@ -96,13 +99,16 @@ public class AddTrackToNewPlaylistDialogFragment extends DialogFragment {
 			setWindowShownWhenClickedButton(true);
 		} else {
 			// 无重名，则添加歌曲到新建的播放列表中
-			if (mAudioId != -1) {
+			if (mAudioIds != null) {
 				PlaylistDAO.addTrackToPlaylist(getActivity()
-						.getContentResolver(), newListId, mAudioId);
+						.getContentResolver(), newListId, mAudioIds);
 				// 提示添加成功
 				Toast.makeText(getActivity(),
 						getActivity().getString(R.string.add_success),
 						Toast.LENGTH_SHORT).show();
+				// 如果是从多选界面打开本界面的，则关闭多选界面
+				LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(
+						new Intent(MutipleEditActivity.ACTION_FINISH));
 			}
 			setWindowShownWhenClickedButton(false);
 			dismiss();

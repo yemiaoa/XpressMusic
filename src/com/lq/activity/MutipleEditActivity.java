@@ -1,9 +1,18 @@
 package com.lq.activity;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -14,12 +23,18 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.lq.adapter.TrackMutipleChooseAdapter;
 import com.lq.entity.TrackInfo;
+import com.lq.fragment.SelectPlaylistDialogFragment;
 import com.lq.util.GlobalConstant;
 
-public class MutipleEditActivity extends FragmentActivity {
+public class MutipleEditActivity extends FragmentActivity implements
+		View.OnClickListener {
+	public static String ACTION_FINISH = MutipleEditActivity.class.getName()
+			+ ".ACTION_FINISH";
+
 	private final String TAG = MutipleEditActivity.class.getSimpleName();
 
 	private ImageView mView_Close = null;
@@ -33,6 +48,13 @@ public class MutipleEditActivity extends FragmentActivity {
 	private ArrayList<TrackInfo> mDataList = null;
 	private TrackMutipleChooseAdapter mAdapter = null;
 	private String mTitle = null;
+	private int mFirstVisiblePosition = 0;
+
+	private LocalBroadcastManager mLocalBroadcastManager;
+
+	// 用于关闭本页面的广播接收器
+	// 如果在其他界面操作成功，会向发送一个关闭本页面的广播，本接收器会接受到该广播并处理请求
+	private BroadcastReceiver mReceiver;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -40,36 +62,74 @@ public class MutipleEditActivity extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.mutiple_choose);
 
+		// 获取Intent中传递过来的数据
 		Bundle args = getIntent().getExtras();
 		mDataList = args.getParcelableArrayList(GlobalConstant.DATA_LIST);
 		mTitle = args.getString(GlobalConstant.TITLE) + "(" + mDataList.size()
 				+ ")";
-
+		mFirstVisiblePosition = args
+				.getInt(GlobalConstant.FIRST_VISIBLE_POSITION);
 		findViews();
 		initViewsSetting();
+		initBroadcastReceiver();
+
 	}
 
+	@Override
+	protected void onDestroy() {
+		Log.i(TAG, "onDestroy");
+		super.onDestroy();
+		mDataList = null;
+		mAdapter = null;
+		mLocalBroadcastManager.unregisterReceiver(mReceiver);
+	}
+
+	/** 配置广播接收器 */
+	private void initBroadcastReceiver() {
+		mLocalBroadcastManager = LocalBroadcastManager.getInstance(this);
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(ACTION_FINISH);
+		mReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				if (intent.getAction().equals(ACTION_FINISH)) {
+					// 接受到关闭本页面的请求，则关闭本页面 
+					// 延时关闭(等本Activity弹出的对话框都消失再关闭)
+					mHandler.sendEmptyMessageDelayed(0, 500);
+				}
+			}
+		};
+		mLocalBroadcastManager.registerReceiver(mReceiver, filter);
+	}
+
+	/** 获取布局中的各个View对象 */
 	private void findViews() {
 		mView_Close = (ImageView) findViewById(R.id.close_mutiple_edit);
 		mView_Title = (TextView) findViewById(R.id.title_mutiple_edit);
 		mView_NumOfSelect = (TextView) findViewById(R.id.num_of_select);
 		mView_PlayListLater = (View) findViewById(R.id.play_list_later);
 		mView_AddToPlaylist = (View) findViewById(R.id.add_to_playlist);
-		mView_Delete = (View) findViewById(R.id.delete_item);
+		mView_Delete = (View) findViewById(R.id.delete_selected_item);
 		mView_SelectAll = (CheckBox) findViewById(R.id.select_all_cb);
 		mView_ListView = (ListView) findViewById(R.id.listview_mutiple);
 	}
 
+	/** 初始化各个View的设置 */
 	private void initViewsSetting() {
+		// ListView的设置--------------------------------------------------------
 		mAdapter = new TrackMutipleChooseAdapter(this, mDataList);
 		mView_ListView.setAdapter(mAdapter);
+		mView_ListView.setSelection(mFirstVisiblePosition);
 		mView_ListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 		mView_ListView.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
+				// 更新条目勾选状态
 				mAdapter.toggleCheckedState(position);
+
+				// 每次选择条目后，更新已选择的数目
 				mView_NumOfSelect.setText(getResources().getString(
 						R.string.has_selected)
 						+ mAdapter.getCheckedItemPositions().length
@@ -78,26 +138,35 @@ public class MutipleEditActivity extends FragmentActivity {
 			}
 		});
 
+		// 关闭按钮的设置--------------------------------------------------------
 		mView_Close.setOnClickListener(new View.OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
+				// 点击关闭按钮，关闭本Activity
 				MutipleEditActivity.this.finish();
 			}
 		});
 
+		// 标题设置--------------------------------------------------------
 		mView_Title.setText(mTitle);
+
+		// 已选歌曲数量的设置-----------------------------------------------------
 		mView_NumOfSelect.setText(getResources().getString(
 				R.string.has_selected)
 				+ 0 + getResources().getString(R.string.a_piece_of_song));
 
+		// 全选按钮的设置-----------------------------------------------------
 		mView_SelectAll
 				.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 
 					@Override
 					public void onCheckedChanged(CompoundButton buttonView,
 							boolean isChecked) {
+						// 根据全选按钮状态，全选或全不选所有条目
 						mAdapter.selectAllItem(isChecked);
+
+						// 更新已选择的数目
 						mView_NumOfSelect.setText(getResources().getString(
 								R.string.has_selected)
 								+ mAdapter.getCheckedItemPositions().length
@@ -106,6 +175,74 @@ public class MutipleEditActivity extends FragmentActivity {
 					}
 				});
 
+		// 三个批量操作按钮的设置-----------------------------------------------------
+		mView_AddToPlaylist.setOnClickListener(MutipleEditActivity.this);
+		mView_PlayListLater.setOnClickListener(MutipleEditActivity.this);
+		mView_Delete.setOnClickListener(MutipleEditActivity.this);
+
 	}
 
+	// 处理歌曲的批量操作
+	@Override
+	public void onClick(View v) {
+		Log.i(TAG, "onClick");
+		switch (v.getId()) {
+		case R.id.add_to_playlist:
+			if (mAdapter.getCheckedItemPositions().length == 0) {
+				// 如果尚未选择任何条目,提示一下
+				Toast.makeText(MutipleEditActivity.this,
+						R.string.please_select_add_song_first,
+						Toast.LENGTH_SHORT).show();
+			} else {
+				// 弹出选择播放列表的窗口
+				int[] checkedPostions = mAdapter.getCheckedItemPositions();
+				long[] selectedAudioIds = new long[checkedPostions.length];
+				for (int i = 0; i < checkedPostions.length; i++) {
+					selectedAudioIds[i] = mAdapter.getItem(checkedPostions[i])
+							.getId();
+				}
+				DialogFragment df = SelectPlaylistDialogFragment
+						.newInstance(selectedAudioIds);
+				df.show(getSupportFragmentManager(), null);
+			}
+			break;
+		case R.id.play_list_later:
+			if (mAdapter.getCheckedItemPositions().length == 0) {
+				// 如果尚未选择任何条目,提示一下
+				Toast.makeText(MutipleEditActivity.this,
+						R.string.please_select_play_song_first,
+						Toast.LENGTH_SHORT).show();
+			}
+			break;
+		case R.id.delete_selected_item:
+			if (mAdapter.getCheckedItemPositions().length == 0) {
+				// 如果尚未选择任何条目,提示一下
+				Toast.makeText(MutipleEditActivity.this,
+						R.string.please_select_delete_song_first,
+						Toast.LENGTH_SHORT).show();
+			}
+			break;
+
+		default:
+			break;
+		}
+
+	}
+
+	private MyHandler mHandler = new MyHandler(MutipleEditActivity.this);
+
+	private static class MyHandler extends Handler {
+		// 使用弱引用，避免Handler造成的内存泄露(Message持有Handler的引用，内部定义的Handler类持有外部类的引用)
+		WeakReference<MutipleEditActivity> mWeakReference = null;
+		MutipleEditActivity mActivity = null;
+
+		public MyHandler(MutipleEditActivity a) {
+			mWeakReference = new WeakReference<MutipleEditActivity>(a);
+			mActivity = mWeakReference.get();
+		}
+
+		public void handleMessage(Message msg) {
+			mActivity.finish();
+		}
+	}
 }

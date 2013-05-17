@@ -5,11 +5,13 @@ import java.util.List;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.provider.MediaStore.Audio.Media;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +22,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.lq.activity.MutipleEditActivity;
 import com.lq.activity.R;
 import com.lq.adapter.PlaylistAdapter;
 import com.lq.dao.PlaylistDAO;
@@ -39,12 +42,12 @@ public class SelectPlaylistDialogFragment extends DialogFragment implements
 
 	private PlaylistAdapter mAdapter = null;
 
-	private long mAudioId = -1;
+	private long mAudioId[] = null;
 
-	public static SelectPlaylistDialogFragment newInstance(long audioId) {
+	public static SelectPlaylistDialogFragment newInstance(long[] audioId) {
 		SelectPlaylistDialogFragment f = new SelectPlaylistDialogFragment();
 		Bundle args = new Bundle();
-		args.putLong(Media._ID, audioId);
+		args.putLongArray(Media._ID, audioId);
 		f.setArguments(args);
 		return f;
 	}
@@ -54,7 +57,7 @@ public class SelectPlaylistDialogFragment extends DialogFragment implements
 		Log.i(TAG, "onCreate");
 		super.onCreate(savedInstanceState);
 		if (getArguments() != null) {
-			mAudioId = getArguments().getLong(Media._ID);
+			mAudioId = getArguments().getLongArray(Media._ID);
 		}
 		initViewsSetting();
 
@@ -161,6 +164,10 @@ public class SelectPlaylistDialogFragment extends DialogFragment implements
 			Toast.makeText(getActivity(),
 					getResources().getString(R.string.add_success),
 					Toast.LENGTH_SHORT).show();
+
+			// 如果是从多选界面打开本界面的，则关闭多选界面
+			LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(
+					new Intent(MutipleEditActivity.ACTION_FINISH));
 			dismiss();
 		}
 	}

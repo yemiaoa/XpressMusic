@@ -62,5 +62,8 @@
     <string name="has_selected">已选</string>
     <string name="a_piece_of_song">首歌</string>
     <string name="play_later">稍后播</string>
+    <string name="please_select_play_song_first">请先选择要播放的歌曲</string>
+    <string name="please_select_delete_song_first">请先选择要删除的歌曲</string>
+    <string name="please_select_add_song_first">请先选择要添加的歌曲</string>
 
 </resources>

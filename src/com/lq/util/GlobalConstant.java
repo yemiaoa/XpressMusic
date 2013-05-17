@@ -10,4 +10,5 @@ public final class GlobalConstant {
 	public static final String PARENT = "parent";
 	public static final String DATA_LIST = "data_list";
 	public static final String TITLE = "title";
+	public static final String FIRST_VISIBLE_POSITION = "first_visible_position";
 }

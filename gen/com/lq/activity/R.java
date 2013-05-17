@@ -254,7 +254,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int container_artist_list=0x7f06001a;
         public static final int container_folder_list=0x7f06001d;
         public static final int container_local_music=0x7f060035;
-        public static final int delete_item=0x7f060044;
+        public static final int delete_selected_item=0x7f060044;
         public static final int edit_playlist_name=0x7f060005;
         public static final int folder_name=0x7f060023;
         public static final int folder_path=0x7f060024;
@@ -410,6 +410,9 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int playmode_repeat_single=0x7f09000a;
         public static final int playmode_sequential=0x7f09000c;
         public static final int playmode_shuffle=0x7f09000b;
+        public static final int please_select_add_song_first=0x7f09003f;
+        public static final int please_select_delete_song_first=0x7f09003e;
+        public static final int please_select_play_song_first=0x7f09003d;
         public static final int question_mark=0x7f09002b;
         public static final int remove=0x7f090026;
         public static final int remove_success=0x7f090037;

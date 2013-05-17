@@ -15,21 +15,34 @@ import com.lq.activity.R;
 import com.lq.entity.TrackInfo;
 
 public class TrackMutipleChooseAdapter extends BaseAdapter {
+	
+	/** 数据源 */
 	private ArrayList<TrackInfo> mData = null;
-	private SparseBooleanArray mCheckedStates = null;
+
+	/** 上下文对象 */
 	private Context mContext = null;
+
+	/** 存储每个条目勾选的状态 */
+	private SparseBooleanArray mCheckedStates = null;
 
 	public TrackMutipleChooseAdapter(Context c, ArrayList<TrackInfo> list) {
 		mData = list;
 		mContext = c;
 		mCheckedStates = new SparseBooleanArray();
 		if (mData != null) {
+			// 初始状态时所有条目都不勾选
 			for (int i = 0; i < mData.size(); i++) {
 				mCheckedStates.put(i, false);
 			}
 		}
 	}
 
+	/**
+	 * 全选或全不选
+	 * 
+	 * @param selectAll
+	 *            true表示全选,false表示全不选
+	 */
 	public void selectAllItem(boolean selectAll) {
 		if (selectAll) {
 			for (int i = 0; i < mData.size(); i++) {
@@ -43,6 +56,11 @@ public class TrackMutipleChooseAdapter extends BaseAdapter {
 		notifyDataSetChanged();
 	}
 
+	/**
+	 * 获得已选择的条目们在列表中的位置
+	 * 
+	 * @return 所有已选择的条目在列表中的位置
+	 */
 	public int[] getCheckedItemPositions() {
 		int count = 0;
 		for (int i = 0; i < mCheckedStates.size(); i++) {
@@ -60,6 +78,12 @@ public class TrackMutipleChooseAdapter extends BaseAdapter {
 		return checkedPostions;
 	}
 
+	/**
+	 * 改变指定位置条目的选择状态，如果已经处于勾选状态则取消勾选，如果处于没有勾选则勾选
+	 * 
+	 * @param position
+	 *            要改变的条目选择状态的位置
+	 */
 	public void toggleCheckedState(int position) {
 		if (position >= 0 && position < mCheckedStates.size()) {
 			if (mCheckedStates.get(position)) {
