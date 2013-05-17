@@ -2,9 +2,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="center_vertical"
-    android:paddingBottom="5dp"
-    android:paddingTop="5dp" >
+    android:descendantFocusability="blocksDescendants"
+    android:gravity="center_vertical" >
 
     <ImageView
         android:id="@+id/playlist_pic"
@@ -18,13 +17,24 @@
         android:scaleType="centerInside"
         android:src="@drawable/icon_playlist" />
 
+    <ImageButton
+        android:id="@+id/playlist_popup_menu"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:alpha="0.6"
+        android:background="@drawable/button_backround_light"
+        android:contentDescription="@string/app_name"
+        android:scaleType="centerInside"
+        android:src="@drawable/icon_popupmenu_holo_light" />
+
     <TextView
         android:id="@+id/song_count_of_playlist"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
-        android:layout_marginRight="20dp"
+        android:layout_toLeftOf="@id/playlist_popup_menu"
         android:textColor="@color/grey_dark"
         android:textIsSelectable="false"
         android:textSize="15sp" />
@@ -36,6 +46,7 @@
         android:layout_centerVertical="true"
         android:layout_toLeftOf="@id/song_count_of_playlist"
         android:layout_toRightOf="@id/playlist_pic"
+        android:singleLine="true"
         android:textIsSelectable="false"
         android:textSize="20sp" />
 

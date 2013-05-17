@@ -66,7 +66,7 @@ public class ArtistBrowserFragment extends Fragment implements
 		mView_ListView = (ListView) rootView.findViewById(R.id.listview_artist);
 		mView_MenuNavigation = (ImageView) rootView
 				.findViewById(R.id.menu_navigation);
-		mView_Title = (TextView) rootView.findViewById(R.id.title);
+		mView_Title = (TextView) rootView.findViewById(R.id.title_of_top);
 		mView_MoreFunctions = (ImageView) rootView
 				.findViewById(R.id.more_functions);
 		mView_GoToPlayer = (ImageView) rootView

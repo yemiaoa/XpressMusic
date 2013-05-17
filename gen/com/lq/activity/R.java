@@ -133,45 +133,46 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int viewBehind=0x7f010002;
     }
     public static final class color {
-        public static final int black=0x7f07000d;
-        public static final int black_translucence=0x7f07000e;
-        public static final int black_translucence2=0x7f07000f;
-        public static final int grey_dark=0x7f070010;
-        public static final int grey_dark_light=0x7f070011;
+        public static final int black=0x7f07000e;
+        public static final int black_translucence=0x7f07000f;
+        public static final int black_translucence2=0x7f070010;
+        public static final int grey_dark=0x7f070011;
+        public static final int grey_dark_light=0x7f070012;
         /**  A really bright Holo shade of blue 
          */
-        public static final int holo_blue_bright=0x7f070009;
+        public static final int holo_blue_bright=0x7f07000a;
         /**  A dark Holo shade of blue 
          */
         public static final int holo_blue_dark=0x7f070003;
+        public static final int holo_blue_dark_translucence=0x7f070004;
         /**  A light Holo shade of blue 
          */
         public static final int holo_blue_light=0x7f070000;
         /**  A dark Holo shade of green 
          */
-        public static final int holo_green_dark=0x7f070004;
+        public static final int holo_green_dark=0x7f070005;
         /**  A light Holo shade of green 
          */
         public static final int holo_green_light=0x7f070001;
         /**  A dark Holo shade of orange 
          */
-        public static final int holo_orange_dark=0x7f070008;
+        public static final int holo_orange_dark=0x7f070009;
         /**  A light Holo shade of orange 
          */
-        public static final int holo_orange_light=0x7f070007;
+        public static final int holo_orange_light=0x7f070008;
         /**  A Holo shade of purple 
          */
-        public static final int holo_purple=0x7f070006;
+        public static final int holo_purple=0x7f070007;
         /**  A dark Holo shade of red 
          */
-        public static final int holo_red_dark=0x7f070005;
+        public static final int holo_red_dark=0x7f070006;
         /**  A light Holo shade of red 
          */
         public static final int holo_red_light=0x7f070002;
-        public static final int transparent=0x7f070012;
-        public static final int white=0x7f07000a;
-        public static final int white_translucence=0x7f07000b;
-        public static final int white_translucence2=0x7f07000c;
+        public static final int transparent=0x7f070013;
+        public static final int white=0x7f07000b;
+        public static final int white_translucence=0x7f07000c;
+        public static final int white_translucence2=0x7f07000d;
     }
     public static final class dimen {
         /**  Default screen margins, per the Android Design guidelines. 
@@ -187,59 +188,73 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int slidingmenu_offset=0x7f080002;
     }
     public static final class drawable {
-        public static final int audio_list_item_rightmenu_delete_default=0x7f020000;
-        public static final int audio_list_item_rightmenu_rename_default=0x7f020001;
-        public static final int bg=0x7f020002;
-        public static final int bottom_play_panel=0x7f020003;
-        public static final int btn_titile_back=0x7f020004;
-        public static final int button_back=0x7f020005;
-        public static final int button_backround_deep=0x7f020006;
-        public static final int button_backround_light=0x7f020007;
-        public static final int button_favorite=0x7f020008;
-        public static final int button_favorite_on=0x7f020009;
-        public static final int button_grey_backgound_when_pressed=0x7f02000a;
-        public static final int button_items=0x7f02000b;
-        public static final int button_menu_navigation=0x7f02000c;
-        public static final int button_menu_navigation_pressed=0x7f02000d;
-        public static final int button_next=0x7f02000e;
-        public static final int button_pause=0x7f02000f;
-        public static final int button_play=0x7f020010;
-        public static final int button_playmode_repeat=0x7f020011;
-        public static final int button_playmode_repeat_single=0x7f020012;
-        public static final int button_playmode_sequential=0x7f020013;
-        public static final int button_playmode_shuffle=0x7f020014;
-        public static final int button_previous=0x7f020015;
-        public static final int default_album=0x7f020016;
-        public static final int folder_list_item_default=0x7f020017;
-        public static final int go_to_play=0x7f020018;
-        public static final int ic_launcher=0x7f020019;
-        public static final int ic_stat_playing=0x7f02001a;
-        public static final int icon_playlist=0x7f02001b;
-        public static final int icon_playlist__create=0x7f02001c;
-        public static final int icon_pop_window=0x7f02001d;
-        public static final int logo_bg=0x7f02001e;
-        public static final int overflow_dark=0x7f02001f;
-        public static final int overflow_dark_pressed=0x7f020020;
-        public static final int overflow_white=0x7f020021;
-        public static final int playback_backround=0x7f020022;
-        public static final int playback_playingbar_seekbar_style=0x7f020023;
-        public static final int playback_playingbar_seekbar_thumb=0x7f020024;
-        public static final int playback_playingbar_seekbar_thumb_default=0x7f020025;
-        public static final int playback_playingbar_seekbar_thumb_pressed=0x7f020026;
-        public static final int player_bg=0x7f020027;
-        public static final int playlist_local=0x7f020028;
-        public static final int shadow=0x7f020029;
+        public static final int audio_list_item_addto_default=0x7f020000;
+        public static final int audio_list_item_delete_default=0x7f020001;
+        public static final int audio_list_item_info_default=0x7f020002;
+        public static final int audio_list_item_playlater_default=0x7f020003;
+        public static final int audio_list_item_rename_default=0x7f020004;
+        public static final int bg=0x7f020005;
+        public static final int bottom_play_panel=0x7f020006;
+        public static final int btn_check_off_default=0x7f020007;
+        public static final int btn_check_on_default=0x7f020008;
+        public static final int btn_check_on_pressed=0x7f020009;
+        public static final int btn_titile_back=0x7f02000a;
+        public static final int btn_title_back_close=0x7f02000b;
+        public static final int button_back=0x7f02000c;
+        public static final int button_backround_deep=0x7f02000d;
+        public static final int button_backround_light=0x7f02000e;
+        public static final int button_favorite=0x7f02000f;
+        public static final int button_favorite_on=0x7f020010;
+        public static final int button_grey_backgound_when_pressed=0x7f020011;
+        public static final int button_items=0x7f020012;
+        public static final int button_menu_navigation=0x7f020013;
+        public static final int button_menu_navigation_pressed=0x7f020014;
+        public static final int button_next=0x7f020015;
+        public static final int button_pause=0x7f020016;
+        public static final int button_play=0x7f020017;
+        public static final int button_playmode_repeat=0x7f020018;
+        public static final int button_playmode_repeat_single=0x7f020019;
+        public static final int button_playmode_sequential=0x7f02001a;
+        public static final int button_playmode_shuffle=0x7f02001b;
+        public static final int button_previous=0x7f02001c;
+        public static final int checkbox_state=0x7f02001d;
+        public static final int default_album=0x7f02001e;
+        public static final int folder_list_item_default=0x7f02001f;
+        public static final int go_to_play=0x7f020020;
+        public static final int ic_launcher=0x7f020021;
+        public static final int ic_stat_playing=0x7f020022;
+        public static final int icon_playlist=0x7f020023;
+        public static final int icon_playlist__create=0x7f020024;
+        public static final int icon_pop_window=0x7f020025;
+        public static final int icon_popupmenu_holo_light=0x7f020026;
+        public static final int logo_bg=0x7f020027;
+        public static final int overflow_dark=0x7f020028;
+        public static final int overflow_dark_pressed=0x7f020029;
+        public static final int overflow_white=0x7f02002a;
+        public static final int playback_backround=0x7f02002b;
+        public static final int playback_playingbar_seekbar_style=0x7f02002c;
+        public static final int playback_playingbar_seekbar_thumb=0x7f02002d;
+        public static final int playback_playingbar_seekbar_thumb_default=0x7f02002e;
+        public static final int playback_playingbar_seekbar_thumb_pressed=0x7f02002f;
+        public static final int player_bg=0x7f020030;
+        public static final int playlist_local=0x7f020031;
+        public static final int shadow=0x7f020032;
     }
     public static final class id {
-        public static final int add_playlist=0x7f060030;
+        public static final int add_playlist=0x7f060033;
+        public static final int add_to_playlist=0x7f060043;
         public static final int artist_name=0x7f060020;
-        public static final int background_mask=0x7f060043;
-        public static final int background_picture=0x7f060042;
-        public static final int classify_by_artist=0x7f06004b;
-        public static final int classify_by_folder=0x7f06004c;
+        public static final int background_mask=0x7f060051;
+        public static final int background_picture=0x7f060050;
+        public static final int bottom_mutiple=0x7f060041;
+        public static final int cb_track_mutiple=0x7f060031;
+        public static final int classify_by_artist=0x7f06005a;
+        public static final int classify_by_folder=0x7f06005b;
+        public static final int close_mutiple_edit=0x7f06003a;
         public static final int container_artist_list=0x7f06001a;
         public static final int container_folder_list=0x7f06001d;
-        public static final int container_local_music=0x7f060032;
+        public static final int container_local_music=0x7f060035;
+        public static final int delete_item=0x7f060044;
         public static final int edit_playlist_name=0x7f060005;
         public static final int folder_name=0x7f060023;
         public static final int folder_path=0x7f060024;
@@ -248,28 +263,31 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int frame_main=0x7f060007;
         public static final int frame_menu=0x7f060008;
         public static final int fullscreen=0x7f060003;
-        public static final int go_to_play=0x7f060044;
+        public static final int go_to_play=0x7f060052;
         public static final int left=0x7f060000;
-        public static final int list_item_section=0x7f06002e;
-        public static final int list_item_section_text=0x7f06002f;
+        public static final int list_item_section=0x7f06002a;
+        public static final int list_item_section_text=0x7f06002b;
         public static final int listview_artist=0x7f06001c;
         public static final int listview_folder=0x7f06001e;
-        public static final int listview_local_music=0x7f060033;
-        public static final int listview_playlist=0x7f060031;
+        public static final int listview_local_music=0x7f060036;
+        public static final int listview_mutiple=0x7f060045;
+        public static final int listview_playlist=0x7f060034;
         public static final int lyric_empty=0x7f060010;
-        public static final int lyric_line_text=0x7f060035;
+        public static final int lyric_line_text=0x7f060038;
         public static final int lyricshow=0x7f06000f;
         public static final int margin=0x7f060002;
-        public static final int menu_navigation=0x7f060037;
-        public static final int menu_title=0x7f06002a;
-        public static final int more_functions=0x7f06003a;
-        public static final int music_item=0x7f060029;
+        public static final int menu_navigation=0x7f060047;
+        public static final int menu_title=0x7f060025;
+        public static final int more_functions=0x7f060049;
+        public static final int mutiple_choose=0x7f060057;
+        public static final int num_of_select=0x7f06003e;
         public static final int num_of_tracks=0x7f06001f;
         public static final int play_button_back=0x7f06000b;
         public static final int play_current_time=0x7f060013;
         public static final int play_favorite=0x7f06000d;
-        public static final int play_indicator=0x7f060025;
+        public static final int play_indicator=0x7f06002c;
         public static final int play_list=0x7f060019;
+        public static final int play_list_later=0x7f060042;
         public static final int play_mode=0x7f060015;
         public static final int play_playbutton=0x7f060017;
         public static final int play_playnext=0x7f060018;
@@ -281,34 +299,42 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int player_container=0x7f060009;
         public static final int player_frame_content=0x7f06000e;
         public static final int player_top=0x7f06000a;
-        public static final int playlist_name=0x7f06002d;
-        public static final int playlist_pic=0x7f06002b;
+        public static final int playlist_name=0x7f060029;
+        public static final int playlist_pic=0x7f060026;
+        public static final int playlist_popup_menu=0x7f060027;
         public static final int right=0x7f060001;
         public static final int section_line_horizental=0x7f06003c;
-        public static final int section_line_vertical=0x7f060038;
+        public static final int select_all_cb=0x7f06003f;
+        public static final int select_all_tv=0x7f060040;
+        public static final int select_info=0x7f06003d;
         public static final int selected_view=0x7f060004;
         public static final int song_count_of_folder=0x7f060022;
-        public static final int song_count_of_playlist=0x7f06002c;
-        public static final int song_info=0x7f060026;
-        public static final int sort_by_artist=0x7f060046;
-        public static final int sort_by_folder_music_count=0x7f060047;
-        public static final int sort_by_folder_name=0x7f060048;
-        public static final int sort_by_last_modify_time=0x7f06004a;
-        public static final int sort_by_music_count=0x7f060045;
-        public static final int sort_by_music_name=0x7f060049;
-        public static final int sort_by_play_frequency=0x7f06004d;
-        public static final int switch_to_player=0x7f060039;
-        public static final int textview_local_music_empty=0x7f060034;
-        public static final int textview_music_singer=0x7f060028;
-        public static final int textview_music_title=0x7f060027;
-        public static final int title=0x7f06003b;
+        public static final int song_count_of_playlist=0x7f060028;
+        public static final int song_info=0x7f06002e;
+        public static final int sort_by_artist=0x7f060054;
+        public static final int sort_by_folder_music_count=0x7f060055;
+        public static final int sort_by_folder_name=0x7f060056;
+        public static final int sort_by_last_modify_time=0x7f060059;
+        public static final int sort_by_music_count=0x7f060053;
+        public static final int sort_by_music_name=0x7f060058;
+        public static final int switch_to_player=0x7f060048;
+        public static final int textview_local_music_empty=0x7f060037;
+        public static final int textview_music_singer=0x7f060030;
+        public static final int textview_music_title=0x7f06002f;
+        public static final int title_mutiple_edit=0x7f06003b;
+        public static final int title_of_top=0x7f06004a;
         public static final int top=0x7f06001b;
-        public static final int top_of_local_music=0x7f060036;
-        public static final int track_detail_artist=0x7f06003e;
-        public static final int track_detail_file_path=0x7f060041;
-        public static final int track_detail_file_size=0x7f060040;
-        public static final int track_detail_name=0x7f06003d;
-        public static final int track_detail_song_duration=0x7f06003f;
+        public static final int top_of_local_music=0x7f060046;
+        public static final int top_of_mutiple=0x7f060039;
+        public static final int track_addto=0x7f06005c;
+        public static final int track_delete=0x7f06005d;
+        public static final int track_detail_artist=0x7f06004c;
+        public static final int track_detail_file_path=0x7f06004f;
+        public static final int track_detail_file_size=0x7f06004e;
+        public static final int track_detail_name=0x7f06004b;
+        public static final int track_detail_song_duration=0x7f06004d;
+        public static final int track_info=0x7f060032;
+        public static final int track_popup_menu=0x7f06002d;
     }
     public static final class layout {
         public static final int edittext_dialog=0x7f030000;
@@ -320,17 +346,19 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int list_folder=0x7f030006;
         public static final int list_item_artist=0x7f030007;
         public static final int list_item_folder=0x7f030008;
-        public static final int list_item_local_music=0x7f030009;
-        public static final int list_item_menu=0x7f03000a;
-        public static final int list_item_playlist=0x7f03000b;
-        public static final int list_item_section=0x7f03000c;
-        public static final int list_playlist=0x7f03000d;
-        public static final int list_track=0x7f03000e;
-        public static final int lyric_line=0x7f03000f;
-        public static final int select_playlist=0x7f030010;
-        public static final int top_of_local_music=0x7f030011;
-        public static final int track_detail_dialog=0x7f030012;
-        public static final int welcome=0x7f030013;
+        public static final int list_item_menu=0x7f030009;
+        public static final int list_item_playlist=0x7f03000a;
+        public static final int list_item_section=0x7f03000b;
+        public static final int list_item_track=0x7f03000c;
+        public static final int list_item_track_mutiple=0x7f03000d;
+        public static final int list_playlist=0x7f03000e;
+        public static final int list_track=0x7f03000f;
+        public static final int lyric_line=0x7f030010;
+        public static final int mutiple_choose=0x7f030011;
+        public static final int select_playlist=0x7f030012;
+        public static final int top_of_local_music=0x7f030013;
+        public static final int track_detail_dialog=0x7f030014;
+        public static final int welcome=0x7f030015;
     }
     public static final class menu {
         public static final int main_content=0x7f0b0000;
@@ -338,61 +366,70 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int popup_folder_list=0x7f0b0002;
         public static final int popup_local_music_list=0x7f0b0003;
         public static final int popup_track_list=0x7f0b0004;
+        public static final int track_operation=0x7f0b0005;
     }
     public static final class string {
+        public static final int a_piece_of_song=0x7f09003b;
         public static final int action_settings=0x7f090001;
-        public static final int add_success=0x7f090022;
-        public static final int add_to=0x7f090031;
-        public static final int add_to_playlist=0x7f09001c;
+        public static final int add_success=0x7f090024;
+        public static final int add_to=0x7f090034;
+        public static final int add_to_playlist=0x7f09001d;
         public static final int albumpicture=0x7f090003;
         public static final int app_name=0x7f090000;
-        public static final int are_you_sure_to_delete=0x7f090027;
-        public static final int are_you_sure_to_exit=0x7f090018;
-        public static final int artist=0x7f09002b;
-        public static final int cancel=0x7f09001a;
-        public static final int check_detail=0x7f09001d;
-        public static final int classify_by_artist=0x7f090010;
-        public static final int classify_by_folder=0x7f090011;
-        public static final int close=0x7f090030;
-        public static final int confirm=0x7f090019;
-        public static final int confirm_delete_song_file=0x7f090032;
-        public static final int confirm_remove_song_from_playlist=0x7f090033;
-        public static final int create_playlist=0x7f09001b;
-        public static final int delete=0x7f090023;
-        public static final int delete_failed=0x7f090025;
-        public static final int delete_success=0x7f090024;
-        public static final int file_format=0x7f09002c;
-        public static final int file_path=0x7f09002e;
-        public static final int file_size=0x7f09002d;
-        public static final int go_to_play=0x7f090007;
+        public static final int are_you_sure_to_delete=0x7f09002a;
+        public static final int are_you_sure_to_exit=0x7f090019;
+        public static final int artist=0x7f09002e;
+        public static final int cancel=0x7f09001b;
+        public static final int check_detail=0x7f09001f;
+        public static final int classify_by_artist=0x7f090011;
+        public static final int classify_by_folder=0x7f090012;
+        public static final int close=0x7f090033;
+        public static final int collect=0x7f09001e;
+        public static final int confirm=0x7f09001a;
+        public static final int confirm_delete_song_file=0x7f090035;
+        public static final int confirm_remove_song_from_playlist=0x7f090036;
+        public static final int create_playlist=0x7f09001c;
+        public static final int delete=0x7f090025;
+        public static final int delete_failed=0x7f090028;
+        public static final int delete_success=0x7f090027;
+        public static final int file_format=0x7f09002f;
+        public static final int file_path=0x7f090031;
+        public static final int file_size=0x7f090030;
+        public static final int go_to_play=0x7f090008;
+        public static final int has_selected=0x7f09003a;
         public static final int hello_world=0x7f090002;
-        public static final int input_playlist_name=0x7f09001f;
-        public static final int local_music=0x7f090012;
-        public static final int local_playlist=0x7f09001e;
+        public static final int input_playlist_name=0x7f090021;
+        public static final int local_music=0x7f090013;
+        public static final int local_playlist=0x7f090020;
+        public static final int mutiple_choose=0x7f090039;
         public static final int my_music=0x7f090004;
         public static final int other_settings=0x7f090005;
-        public static final int playlist_has_already_existed=0x7f090020;
-        public static final int playmode_repeat=0x7f090008;
-        public static final int playmode_repeat_single=0x7f090009;
-        public static final int playmode_sequential=0x7f09000b;
-        public static final int playmode_shuffle=0x7f09000a;
-        public static final int question_mark=0x7f090028;
-        public static final int remove_success=0x7f090034;
-        public static final int rename=0x7f090026;
-        public static final int song_duration=0x7f09002f;
-        public static final int song_has_already_existed=0x7f090021;
-        public static final int song_infomation=0x7f090029;
-        public static final int song_name=0x7f09002a;
-        public static final int sort_by_artist=0x7f09000e;
-        public static final int sort_by_folder_music_count=0x7f090014;
-        public static final int sort_by_folder_name=0x7f090015;
-        public static final int sort_by_last_modify_time=0x7f090016;
-        public static final int sort_by_music_count=0x7f09000f;
-        public static final int sort_by_music_name=0x7f09000d;
-        public static final int sort_by_play_frequency=0x7f090017;
-        public static final int there_is_no_lyric_yet=0x7f09000c;
-        public static final int there_is_no_song_yet=0x7f090006;
-        public static final int unknown_artist=0x7f090013;
+        public static final int play_later=0x7f09003c;
+        public static final int playlist_has_already_existed=0x7f090022;
+        public static final int playmode_repeat=0x7f090009;
+        public static final int playmode_repeat_single=0x7f09000a;
+        public static final int playmode_sequential=0x7f09000c;
+        public static final int playmode_shuffle=0x7f09000b;
+        public static final int question_mark=0x7f09002b;
+        public static final int remove=0x7f090026;
+        public static final int remove_success=0x7f090037;
+        public static final int rename=0x7f090029;
+        public static final int sdcard_cannot_use=0x7f090038;
+        public static final int select_all=0x7f090006;
+        public static final int song_duration=0x7f090032;
+        public static final int song_has_already_existed=0x7f090023;
+        public static final int song_infomation=0x7f09002c;
+        public static final int song_name=0x7f09002d;
+        public static final int sort_by_artist=0x7f09000f;
+        public static final int sort_by_folder_music_count=0x7f090015;
+        public static final int sort_by_folder_name=0x7f090016;
+        public static final int sort_by_last_modify_time=0x7f090017;
+        public static final int sort_by_music_count=0x7f090010;
+        public static final int sort_by_music_name=0x7f09000e;
+        public static final int sort_by_play_frequency=0x7f090018;
+        public static final int there_is_no_lyric_yet=0x7f09000d;
+        public static final int there_is_no_song_yet=0x7f090007;
+        public static final int unknown_artist=0x7f090014;
     }
     public static final class style {
         /** 

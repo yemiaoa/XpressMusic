@@ -2,10 +2,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <item
+        android:id="@+id/mutiple_choose"
+        android:title="@string/mutiple_choose"/>
+    <item
         android:id="@+id/sort_by_music_name"
         android:title="@string/sort_by_music_name"/>
     <item
-        android:id="@+id/sort_by_play_frequency"
+        android:id="@+id/sort_by_last_modify_time"
         android:title="@string/sort_by_last_modify_time"/>
 
 </menu>

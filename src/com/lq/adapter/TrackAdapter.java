@@ -6,17 +6,19 @@ import java.util.List;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.lq.activity.R;
 import com.lq.entity.TrackInfo;
 
-public class TrackAdapter extends BaseAdapter {
+public class TrackAdapter extends BaseAdapter implements OnClickListener {
 	private Context mContext = null;
 	/** 数据源 */
-	private List<TrackInfo> mData = null;
+	private ArrayList<TrackInfo> mData = null;
 
 	/** 播放时为相应播放条目显示一个播放标记 */
 	private int mActivateItemPos = -1;
@@ -35,7 +37,7 @@ public class TrackAdapter extends BaseAdapter {
 		notifyDataSetChanged();
 	}
 
-	public List<TrackInfo> getData() {
+	public ArrayList<TrackInfo> getData() {
 		return mData;
 	}
 
@@ -70,13 +72,15 @@ public class TrackAdapter extends BaseAdapter {
 		ViewHolder holder = null;
 		if (convertView == null) {
 			convertView = LayoutInflater.from(mContext).inflate(
-					R.layout.list_item_local_music, null);
+					R.layout.list_item_track, parent, false);
 			holder = new ViewHolder();
 			holder.indicator = convertView.findViewById(R.id.play_indicator);
 			holder.title = (TextView) convertView
 					.findViewById(R.id.textview_music_title);
 			holder.artist = (TextView) convertView
 					.findViewById(R.id.textview_music_singer);
+			holder.popup_menu = (ImageButton) convertView
+					.findViewById(R.id.track_popup_menu);
 			convertView.setTag(holder);
 		} else {
 			holder = (ViewHolder) convertView.getTag();
@@ -94,7 +98,7 @@ public class TrackAdapter extends BaseAdapter {
 		} else {
 			holder.artist.setText(getItem(position).getArtist());
 		}
-
+		holder.popup_menu.setOnClickListener(TrackAdapter.this);
 		return convertView;
 	}
 
@@ -102,5 +106,11 @@ public class TrackAdapter extends BaseAdapter {
 		TextView title;
 		TextView artist;
 		View indicator;
+		ImageButton popup_menu;
+	}
+
+	@Override
+	public void onClick(View v) {
+		v.showContextMenu();
 	}
 }

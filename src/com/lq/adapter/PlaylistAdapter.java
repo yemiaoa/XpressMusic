@@ -7,15 +7,17 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.View.OnClickListener;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.lq.activity.R;
 import com.lq.entity.PlaylistInfo;
 
-public class PlaylistAdapter extends BaseAdapter {
+public class PlaylistAdapter extends BaseAdapter implements OnClickListener {
 	private List<PlaylistInfo> mData = null;
 	private Context mContext = null;
+	private boolean mMenuVisible = true;
 
 	public PlaylistAdapter(Context c) {
 		mContext = c;
@@ -32,6 +34,11 @@ public class PlaylistAdapter extends BaseAdapter {
 
 	public List<PlaylistInfo> getData() {
 		return mData;
+	}
+
+	public void setPopupMenuVisible(boolean visible) {
+		mMenuVisible = visible;
+		notifyDataSetChanged();
 	}
 
 	@Override
@@ -65,20 +72,34 @@ public class PlaylistAdapter extends BaseAdapter {
 					.findViewById(R.id.playlist_name);
 			holder.playlist_members_count = (TextView) convertView
 					.findViewById(R.id.song_count_of_playlist);
+			holder.popup_menu = convertView
+					.findViewById(R.id.playlist_popup_menu);
 			convertView.setTag(holder);
 		} else {
 			holder = (ViewHolder) convertView.getTag();
 		}
 
-		holder.playlist_name.setText(mData.get(position).getName());
+		holder.playlist_name.setText(mData.get(position).getPlaylistName());
 		holder.playlist_members_count.setText(""
 				+ mData.get(position).getNumOfMembers());
+		if (mMenuVisible) {
+			holder.popup_menu.setVisibility(View.VISIBLE);
+			holder.popup_menu.setOnClickListener(PlaylistAdapter.this);
+		} else {
+			holder.popup_menu.setVisibility(View.INVISIBLE);
+		}
 		return convertView;
 	}
 
 	static class ViewHolder {
 		TextView playlist_name;
 		TextView playlist_members_count;
+		View popup_menu;
+	}
+
+	@Override
+	public void onClick(View v) {
+		v.showContextMenu();
 	}
 
 }

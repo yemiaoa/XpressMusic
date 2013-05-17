@@ -6,7 +6,7 @@ import android.os.Parcelable;
 
 public class PlaylistInfo implements Parcelable {
 	private int id;
-	private String name;
+	private String playlist_name;
 	private long date_added;
 	private long date_modified;
 	private int num_of_members;
@@ -31,12 +31,12 @@ public class PlaylistInfo implements Parcelable {
 		this.num_of_members = num_of_members;
 	}
 
-	public String getName() {
-		return name;
+	public String getPlaylistName() {
+		return playlist_name;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setPlaylistName(String name) {
+		this.playlist_name = name;
 	}
 
 	public long getDateAdded() {
@@ -65,7 +65,7 @@ public class PlaylistInfo implements Parcelable {
 	public void writeToParcel(Parcel dest, int flags) {
 		Bundle bundle = new Bundle();
 		bundle.putInt("id", id);
-		bundle.putString("name", name);
+		bundle.putString("name", playlist_name);
 		bundle.putLong("date_added", date_added);
 		bundle.putLong("date_modified", date_modified);
 		bundle.putInt("num_of_members", num_of_members);
@@ -88,7 +88,7 @@ public class PlaylistInfo implements Parcelable {
 	private PlaylistInfo(Parcel in) {
 		Bundle bundle = in.readBundle();
 		id = bundle.getInt("id");
-		name = bundle.getString("name");
+		playlist_name = bundle.getString("name");
 		date_added = bundle.getLong("date_added");
 		date_modified = bundle.getLong("date_modified");
 		num_of_members = bundle.getInt("num_of_members");

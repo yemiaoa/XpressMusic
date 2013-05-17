@@ -1,0 +1,183 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:id="@+id/top_of_mutiple"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dip"
+            android:divider="@color/grey_dark_light"
+            android:dividerPadding="5dp"
+            android:orientation="horizontal"
+            android:showDividers="middle" >
+
+            <ImageView
+                android:id="@+id/close_mutiple_edit"
+                android:layout_width="48dip"
+                android:layout_height="match_parent"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:clickable="true"
+                android:contentDescription="@string/app_name"
+                android:scaleType="centerInside"
+                android:src="@drawable/btn_title_back_close" />
+
+            <TextView
+                android:id="@+id/title_mutiple_edit"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="left|center_vertical"
+                android:paddingLeft="10dp"
+                android:singleLine="true"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textIsSelectable="false" />
+        </LinearLayout>
+
+        <View
+            android:id="@+id/section_line_horizental"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/holo_blue_dark_translucence" >
+        </View>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:divider="@color/holo_blue_dark_translucence"
+        android:dividerPadding="10dp"
+        android:orientation="vertical"
+        android:showDividers="middle" >
+
+        <RelativeLayout
+            android:id="@+id/select_info"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:gravity="center_vertical" >
+
+            <TextView
+                android:id="@+id/num_of_select"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentLeft="true"
+                android:layout_marginLeft="20dp"
+                android:gravity="center_vertical"
+                android:textIsSelectable="false" >
+            </TextView>
+
+            <CheckBox
+                android:id="@+id/select_all_cb"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_marginRight="15dp"
+                android:button="@drawable/checkbox_state"
+                android:checked="false" />
+
+            <TextView
+                android:id="@+id/select_all_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignTop="@id/select_all_cb"
+                android:layout_centerVertical="true"
+                android:layout_toLeftOf="@id/select_all_cb"
+                android:gravity="center_vertical"
+                android:text="@string/select_all"
+                android:textIsSelectable="false" >
+            </TextView>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+
+            <LinearLayout
+                android:id="@+id/bottom_mutiple"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:layout_alignParentBottom="true"
+                android:background="@color/grey_dark"
+                android:baselineAligned="false"
+                android:divider="@color/white_translucence"
+                android:dividerPadding="5dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:showDividers="middle" >
+
+                <LinearLayout
+                    android:id="@+id/play_list_later"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/button_backround_light"
+                    android:clickable="true"
+                    android:gravity="center" >
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:drawableLeft="@drawable/audio_list_item_playlater_default"
+                        android:gravity="center"
+                        android:text="@string/play_later"
+                        android:textColor="@color/white"
+                        android:textIsSelectable="false"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/add_to_playlist"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/button_backround_light"
+                    android:clickable="true"
+                    android:gravity="center" >
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:drawableLeft="@drawable/audio_list_item_addto_default"
+                        android:gravity="center_vertical"
+                        android:text="@string/collect"
+                        android:textColor="@color/white"
+                        android:textIsSelectable="false"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/delete_item"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/button_backround_light"
+                    android:clickable="true"
+                    android:gravity="center" >
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:drawableLeft="@drawable/audio_list_item_delete_default"
+                        android:gravity="center_vertical"
+                        android:text="@string/delete"
+                        android:textColor="@color/white"
+                        android:textIsSelectable="false"
+                        android:textSize="15sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <ListView
+                android:id="@+id/listview_mutiple"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_above="@id/bottom_mutiple"
+                android:layout_alignParentTop="true" >
+            </ListView>
+        </RelativeLayout>
+    </LinearLayout>
+
+</LinearLayout>

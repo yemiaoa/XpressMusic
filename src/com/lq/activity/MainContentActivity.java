@@ -48,7 +48,6 @@ public class MainContentActivity extends FragmentActivity implements
 		// 初始化SlidingMenu，并为其填充Fragment
 		initSlidingMenu();
 		initPopulateFragment();
-
 	}
 
 	/** 设置SlidingMenu */
@@ -145,6 +144,14 @@ public class MainContentActivity extends FragmentActivity implements
 		}
 
 		mSlidingMenu.showContent();
+	}
+
+	public void setSlideEnable(boolean slidable) {
+		if (slidable) {
+			mSlidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
+		} else {
+			mSlidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_NONE);
+		}
 	}
 
 	public void exit() {

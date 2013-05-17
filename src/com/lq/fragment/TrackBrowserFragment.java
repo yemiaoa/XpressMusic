@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.provider.MediaStore.Audio.Media;
 import android.provider.MediaStore.Audio.Playlists;
@@ -37,6 +38,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lq.activity.MainContentActivity;
+import com.lq.activity.MutipleEditActivity;
 import com.lq.activity.R;
 import com.lq.adapter.TrackAdapter;
 import com.lq.dao.PlaylistDAO;
@@ -85,7 +87,7 @@ public class TrackBrowserFragment extends Fragment implements
 	private ImageView mView_GoToPlayer = null;
 	private ImageView mView_MoreFunctions = null;
 	private TextView mView_Title = null;
-
+	private ViewGroup mView_Top_Container = null;
 	private PopupMenu mOverflowPopupMenu = null;
 
 	/** 用来绑定数据至ListView的适配器 */
@@ -139,14 +141,13 @@ public class TrackBrowserFragment extends Fragment implements
 				.findViewById(R.id.listview_local_music);
 		mView_MenuNavigation = (ImageView) rootView
 				.findViewById(R.id.menu_navigation);
-		mView_Title = (TextView) rootView.findViewById(R.id.title);
+		mView_Title = (TextView) rootView.findViewById(R.id.title_of_top);
 		mView_MoreFunctions = (ImageView) rootView
 				.findViewById(R.id.more_functions);
 		mView_GoToPlayer = (ImageView) rootView
 				.findViewById(R.id.switch_to_player);
-
+		mView_Top_Container = (ViewGroup) rootView.findViewById(R.id.top);
 		mOverflowPopupMenu = new PopupMenu(getActivity(), mView_MoreFunctions);
-
 		Bundle args = getArguments();
 		if (args != null) {
 			switch (args.getInt(GlobalConstant.PARENT)) {
@@ -174,8 +175,17 @@ public class TrackBrowserFragment extends Fragment implements
 
 		handleArguments();
 
-		// 初始化一个装载器，根据第一个参数，要么连接一个已存在的装载器，要么以此ID创建一个新的装载器
-		getLoaderManager().initLoader(MUSIC_RETRIEVE_LOADER, null, this);
+		if (Environment.getExternalStorageState().equals(
+				Environment.MEDIA_MOUNTED)) {
+			// sd card 可用
+			// 初始化一个装载器，根据第一个参数，要么连接一个已存在的装载器，要么以此ID创建一个新的装载器
+			getLoaderManager().initLoader(MUSIC_RETRIEVE_LOADER, null, this);
+		} else {
+			// 当前不可用
+			Toast.makeText(getActivity(),
+					getResources().getString(R.string.sdcard_cannot_use),
+					Toast.LENGTH_SHORT).show();
+		}
 
 	}
 
@@ -232,51 +242,6 @@ public class TrackBrowserFragment extends Fragment implements
 		registerForContextMenu(mView_ListView);
 		// 为ListView的条目绑定一个点击事件监听
 		mView_ListView.setOnItemClickListener(this);
-		// mView_ListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
-		// mView_ListView
-		// .setMultiChoiceModeListener(new MultiChoiceModeListener() {
-		//
-		// @Override
-		// public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-		// mView_Top_Container.setVisibility(View.GONE);
-		// // mActivity.forbidSlide();
-		// MenuInflater inflater = mActivity.getMenuInflater();
-		// inflater.inflate(R.menu.main_content, menu);
-		// mode.setTitle("Select Items");
-		// return true;
-		// }
-		//
-		// @Override
-		// public boolean onPrepareActionMode(ActionMode mode,
-		// Menu menu) {
-		// return true;
-		// }
-		//
-		// @Override
-		// public boolean onActionItemClicked(ActionMode mode,
-		// MenuItem item) {
-		// switch (item.getItemId()) {
-		// case R.id.go_to_play:
-		// Toast.makeText(mActivity, "Clicked Action Item",
-		// Toast.LENGTH_SHORT).show();
-		// mode.finish();
-		// break;
-		// }
-		// return true;
-		// }
-		//
-		// @Override
-		// public void onDestroyActionMode(ActionMode mode) {
-		// mView_Top_Container.setVisibility(View.VISIBLE);
-		// }
-		//
-		// @Override
-		// public void onItemCheckedStateChanged(ActionMode mode,
-		// int position, long id, boolean checked) {
-		//
-		// }
-		//
-		// });
 
 		mView_Title.setOnClickListener(new OnClickListener() {
 			@Override
@@ -338,7 +303,40 @@ public class TrackBrowserFragment extends Fragment implements
 										.addToBackStack(null).commit();
 							}
 							break;
-						case R.id.sort_by_play_frequency:
+						case R.id.mutiple_choose:
+							// TODO 处理多选
+							Intent intent = new Intent(getActivity(),
+									MutipleEditActivity.class);
+							Bundle data = new Bundle();
+
+							switch (getArguments()
+									.getInt(GlobalConstant.PARENT)) {
+							case START_FROM_LOCAL_MUSIC:
+								data.putString(
+										GlobalConstant.TITLE,
+										getResources().getString(
+												R.string.local_music));
+								break;
+							case START_FROM_ARTIST:
+								data.putString(GlobalConstant.TITLE,
+										mArtistInfo.getArtistName());
+								break;
+							case START_FROM_FOLER:
+								data.putString(GlobalConstant.TITLE,
+										mFolderInfo.getFolderName());
+								break;
+							case START_FROM_PLAYLIST:
+								data.putString(GlobalConstant.TITLE,
+										mPlaylistInfo.getPlaylistName());
+								break;
+							default:
+								break;
+							}
+							data.putParcelableArrayList(
+									GlobalConstant.DATA_LIST,
+									mAdapter.getData());
+							intent.putExtras(data);
+							startActivity(intent);
 							break;
 						default:
 							break;
@@ -383,10 +381,21 @@ public class TrackBrowserFragment extends Fragment implements
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
+		final AdapterContextMenuInfo mInfo = (AdapterContextMenuInfo) menuInfo;
+		menu.setHeaderTitle(mAdapter.getItem(mInfo.position).getTitle());
 		menu.add(0, CONTEXT_MENU_ADD_TO_PLAYLIST, Menu.NONE,
 				R.string.add_to_playlist);
 		menu.add(0, CONTEXT_MENU_CHECK_DETAIL, Menu.NONE, R.string.check_detail);
-		menu.add(0, CONTEXT_MENU_DELETE, Menu.NONE, R.string.delete);
+
+		switch (getArguments().getInt(GlobalConstant.PARENT)) {
+		case START_FROM_PLAYLIST:
+			menu.add(0, CONTEXT_MENU_DELETE, Menu.NONE, R.string.remove);
+			break;
+		default:
+			menu.add(0, CONTEXT_MENU_DELETE, Menu.NONE, R.string.delete);
+			break;
+		}
+
 	}
 
 	@Override
@@ -394,6 +403,7 @@ public class TrackBrowserFragment extends Fragment implements
 		DialogFragment df = null;
 		final AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item
 				.getMenuInfo();
+		Log.i(TAG, "menuInfo:" + menuInfo);
 		switch (item.getItemId()) {
 		case CONTEXT_MENU_ADD_TO_PLAYLIST:
 			// 弹出选择播放列表的窗口
@@ -405,7 +415,6 @@ public class TrackBrowserFragment extends Fragment implements
 			// 弹出歌曲详细信息的窗口
 			df = TrackDetailDialogFragment.newInstance(mAdapter
 					.getItem(menuInfo.position));
-			// TODO
 			df.show(getFragmentManager(), null);
 			break;
 		case CONTEXT_MENU_DELETE:
@@ -497,8 +506,8 @@ public class TrackBrowserFragment extends Fragment implements
 						+ data.size() + ")");
 				break;
 			case START_FROM_PLAYLIST:
-				mView_Title.setText(mPlaylistInfo.getName() + "(" + data.size()
-						+ ")");
+				mView_Title.setText(mPlaylistInfo.getPlaylistName() + "("
+						+ data.size() + ")");
 				break;
 			default:
 				break;
@@ -570,7 +579,7 @@ public class TrackBrowserFragment extends Fragment implements
 						.getSimpleName());
 				if (mPlaylistInfo != null) {
 					// 更新标题
-					mView_Title.setText(mPlaylistInfo.getName() + "("
+					mView_Title.setText(mPlaylistInfo.getPlaylistName() + "("
 							+ mPlaylistInfo.getNumOfMembers() + ")");
 					setTitleLeftDrawable();
 				}

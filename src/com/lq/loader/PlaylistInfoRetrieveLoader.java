@@ -64,7 +64,7 @@ public class PlaylistInfoRetrieveLoader extends
 				item.setId(playlistId);
 				item.setNumOfMembers(PlaylistDAO.getPlaylistMemberCount(
 						mContentResolver, playlistId));
-				item.setName(cursor_playlist.getString(index_name));
+				item.setPlaylistName(cursor_playlist.getString(index_name));
 				item.setDateAdded(cursor_playlist.getInt(index_date_added));
 				item.setDateModified(cursor_playlist
 						.getInt(index_date_modified));

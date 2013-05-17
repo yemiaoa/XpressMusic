@@ -7,6 +7,7 @@
     <string name="albumpicture"> 专辑照片</string>
     <string name="my_music">我的音乐</string>
     <string name="other_settings">其他功能</string>
+    <string name="select_all">全选</string>
     <string name="there_is_no_song_yet">没有歌曲</string>
     <string name="go_to_play">进入播放界面</string>
     <string name="playmode_repeat">循环播放</string>
@@ -29,7 +30,8 @@
     <string name="confirm">确定</string>
     <string name="cancel">取消</string>
     <string name="create_playlist">新建列表</string>
-    <string name="add_to_playlist">收藏</string>
+    <string name="add_to_playlist">添加到播放列表</string>
+    <string name="collect">收藏</string>
     <string name="check_detail">查看信息</string>
     <string name="local_playlist">本地播放列表</string>
     <string name="input_playlist_name">请输入列表名称</string>
@@ -37,6 +39,7 @@
     <string name="song_has_already_existed">歌曲已经存在</string>
     <string name="add_success">添加成功</string>
     <string name="delete">删除</string>
+    <string name="remove">移除</string>
     <string name="delete_success">删除成功</string>
     <string name="delete_failed">删除失败</string>
     <string name="rename">重命名</string>
@@ -54,5 +57,10 @@
     <string name="confirm_delete_song_file">您确定要从外存上删除歌曲吗？</string>
     <string name="confirm_remove_song_from_playlist">您确定移除(不会删除文件)?</string>
     <string name="remove_success">移除成功</string>
+    <string name="sdcard_cannot_use">SD卡暂时不可用</string>
+    <string name="mutiple_choose">多选</string>
+    <string name="has_selected">已选</string>
+    <string name="a_piece_of_song">首歌</string>
+    <string name="play_later">稍后播</string>
 
 </resources>

@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
@@ -83,7 +84,7 @@ public class PlaylistBrowserFragment extends Fragment implements
 				.findViewById(R.id.listview_playlist);
 		mView_MenuNavigation = (ImageView) rootView
 				.findViewById(R.id.menu_navigation);
-		mView_Title = (TextView) rootView.findViewById(R.id.title);
+		mView_Title = (TextView) rootView.findViewById(R.id.title_of_top);
 		mView_GoToPlayer = (ImageView) rootView
 				.findViewById(R.id.switch_to_player);
 		mView_CreatePlaylist = (View) rootView.findViewById(R.id.add_playlist);
@@ -99,7 +100,17 @@ public class PlaylistBrowserFragment extends Fragment implements
 		super.onActivityCreated(savedInstanceState);
 		initViewsSetting();
 
-		getLoaderManager().initLoader(PLAYLIST_RETRIEVE_LOADER, null, this);
+		if (Environment.getExternalStorageState().equals(
+				Environment.MEDIA_MOUNTED)) {
+			// sd card 可用
+			// 加载数据
+			getLoaderManager().initLoader(PLAYLIST_RETRIEVE_LOADER, null, this);
+		} else {
+			// 当前不可用
+			Toast.makeText(getActivity(),
+					getResources().getString(R.string.sdcard_cannot_use),
+					Toast.LENGTH_SHORT).show();
+		}
 
 	}
 
@@ -142,7 +153,7 @@ public class PlaylistBrowserFragment extends Fragment implements
 			// 弹出重命名的对话框
 			mEditTextDialogFragment = EditTextDialogFragment.newInstance(
 					getResources().getString(R.string.rename), mAdapter
-							.getItem(menuInfo.position).getName(), null,
+							.getItem(menuInfo.position).getPlaylistName(), null,
 					mUpdatePlaylistListener);
 			mEditTextDialogFragment.show(getFragmentManager(), null);
 			break;
@@ -151,7 +162,7 @@ public class PlaylistBrowserFragment extends Fragment implements
 			String title = getResources().getString(
 					R.string.are_you_sure_to_delete)
 					+ "\""
-					+ mAdapter.getItem(menuInfo.position).getName()
+					+ mAdapter.getItem(menuInfo.position).getPlaylistName()
 					+ "\"" + getResources().getString(R.string.question_mark);
 			dialogF = PromptDialogFragment.newInstance(title,
 					mDeletePromptListener);

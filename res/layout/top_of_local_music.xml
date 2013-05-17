@@ -3,69 +3,68 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/top_of_local_music"
         android:layout_width="fill_parent"
         android:layout_height="48dip"
         android:clickable="true"
-        android:gravity="center_vertical" >
+        android:divider="@color/grey_dark_light"
+        android:dividerPadding="5dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:showDividers="middle" >
 
         <ImageView
             android:id="@+id/menu_navigation"
-            android:layout_width="48dip"
+            android:layout_width="45dip"
             android:layout_height="match_parent"
-            android:layout_alignParentLeft="true"
             android:background="@drawable/button_grey_backgound_when_pressed"
             android:clickable="true"
             android:contentDescription="@string/app_name"
             android:scaleType="centerInside"
             android:src="@drawable/button_menu_navigation" />
 
-        <View
-            android:id="@+id/section_line_vertical"
-            android:layout_width="1dp"
-            android:layout_height="match_parent"
-            android:layout_marginBottom="2dp"
-            android:layout_marginTop="2dp"
-            android:layout_toRightOf="@id/menu_navigation"
-            android:background="#ccffffff" />
-
-        <ImageView
-            android:id="@+id/switch_to_player"
-            android:layout_width="48dip"
-            android:layout_height="match_parent"
-            android:layout_alignParentRight="true"
-            android:background="@drawable/button_grey_backgound_when_pressed"
-            android:clickable="true"
-            android:contentDescription="@string/app_name"
-            android:scaleType="centerInside"
-            android:src="@drawable/go_to_play" />
-
-        <ImageView
-            android:id="@+id/more_functions"
-            android:layout_width="48dip"
-            android:layout_height="match_parent"
-            android:layout_toLeftOf="@id/switch_to_player"
-            android:background="@drawable/button_grey_backgound_when_pressed"
-            android:clickable="true"
-            android:contentDescription="@string/app_name"
-            android:scaleType="centerInside"
-            android:src="@drawable/overflow_dark" />
-
-        <TextView
-            android:id="@+id/title"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginLeft="5dp"
-            android:layout_toLeftOf="@id/more_functions"
-            android:layout_toRightOf="@id/section_line_vertical"
-            android:ellipsize="marquee"
-            android:focusable="true"
-            android:gravity="left|center_vertical"
-            android:singleLine="true"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textIsSelectable="false" />
-    </RelativeLayout>
+            android:layout_height="48dip" >
+
+            <ImageView
+                android:id="@+id/switch_to_player"
+                android:layout_width="48dip"
+                android:layout_height="match_parent"
+                android:layout_alignParentRight="true"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:clickable="true"
+                android:contentDescription="@string/app_name"
+                android:scaleType="centerInside"
+                android:src="@drawable/go_to_play" />
+
+            <ImageView
+                android:id="@+id/more_functions"
+                android:layout_width="48dip"
+                android:layout_height="match_parent"
+                android:layout_toLeftOf="@id/switch_to_player"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:clickable="true"
+                android:contentDescription="@string/app_name"
+                android:scaleType="centerInside"
+                android:src="@drawable/overflow_dark" />
+
+            <TextView
+                android:id="@+id/title_of_top"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_alignParentLeft="true"
+                android:layout_toLeftOf="@id/more_functions"
+                android:ellipsize="marquee"
+                android:focusable="true"
+                android:gravity="left|center_vertical"
+                android:paddingLeft="5dp"
+                android:singleLine="true"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textIsSelectable="false" />
+        </RelativeLayout>
+    </LinearLayout>
 
     <View
         android:id="@+id/section_line_horizental"

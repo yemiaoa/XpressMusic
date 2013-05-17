@@ -121,6 +121,7 @@ public class SelectPlaylistDialogFragment extends DialogFragment implements
 				.findViewById(R.id.add_playlist);
 
 		mAdapter = new PlaylistAdapter(getActivity());
+		mAdapter.setPopupMenuVisible(false);
 		mView_playlist.setAdapter(mAdapter);
 		mView_playlist.setOnItemClickListener(new OnItemClickListener() {
 

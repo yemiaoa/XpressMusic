@@ -66,8 +66,8 @@ public class PlayerActivity extends FragmentActivity {
 		WeakReference<PlayerActivity> mFragmentWeakReference = null;
 		PlayerActivity mActivity = null;
 
-		public ClientIncomingHandler(PlayerActivity fragment) {
-			mFragmentWeakReference = new WeakReference<PlayerActivity>(fragment);
+		public ClientIncomingHandler(PlayerActivity a) {
+			mFragmentWeakReference = new WeakReference<PlayerActivity>(a);
 			mActivity = mFragmentWeakReference.get();
 		}
 
