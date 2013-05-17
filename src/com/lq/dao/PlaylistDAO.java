@@ -204,18 +204,31 @@ public class PlaylistDAO {
 	 *            Context的ContentResolver实例
 	 * @param playlistId
 	 *            播放列表的ID
-	 * @param audioId
+	 * @param audioIds
 	 *            要移除的音频ID
 	 * @return 删除成功返回true,否则返回false
 	 */
 
 	public static boolean removeTrackFromPlaylist(ContentResolver resolver,
-			long playlistId, long audioId) {
+			long playlistId, long[] audioIds) {
+		if (audioIds == null) {
+			return false;
+		}
 		boolean isRemoved = false;
+		int deleteRowCount = 0;
+
+		// 将整型数组变成(1,2,3,4,5)的格式，作为稍后的数据库删除的where子句
+		StringBuffer toDeletIds = new StringBuffer("(");
+		for (int i = 0; i < audioIds.length; i++) {
+			toDeletIds.append(audioIds[i] + ",");
+		}
+		toDeletIds.setCharAt(toDeletIds.length() - 1, ')');
+		Log.i(TAG, "toDeletIds in Members:" + toDeletIds);
+
 		// 从Members表中移除记录
 		Uri uri = Playlists.Members.getContentUri("external", playlistId);
-		int deleteRowCount = resolver.delete(uri, Playlists.Members.AUDIO_ID
-				+ " = " + audioId, null);
+		deleteRowCount = resolver.delete(uri, Playlists.Members.AUDIO_ID
+				+ " in " + toDeletIds, null);
 		if (deleteRowCount > 0) {
 			isRemoved = true;
 		}
@@ -260,11 +273,48 @@ public class PlaylistDAO {
 		return isDeleted;
 	}
 
+	/**
+	 * 批量删除指定文件
+	 * 
+	 * @param 要删除的文件路径数组
+	 * @return 路径数组不为空即返回true
+	 */
+	public static boolean deleteFiles(String[] paths) {
+		if (paths == null) {
+			return false;
+		}
+		for (int i = 0; i < paths.length; i++) {
+			if (!deleteFile(paths[i])) {
+				Log.i(TAG, "delete file failed:<" + paths[i] + ">");
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * 从数据库中移除指定的音频
+	 * 
+	 * @return 移除成功返回true, 删除失败false.
+	 */
 	public static boolean removeTrackFromDatabase(ContentResolver resolver,
-			long audioId) {
+			long[] audioIds) {
+		if (audioIds == null) {
+			return false;
+		}
+
 		boolean isRemoved = false;
+
+		// 将整型数组变成(1,2,3,4,5)的格式，作为稍后的数据库删除的where子句
+		StringBuffer toRemoveIds = new StringBuffer("(");
+		for (int i = 0; i < audioIds.length; i++) {
+			toRemoveIds.append(audioIds[i] + ",");
+		}
+		toRemoveIds.setCharAt(toRemoveIds.length() - 1, ')');
+		Log.i(TAG, "toRemoveIds from database:" + toRemoveIds);
+
+		// 从数据库中移除音频记录
 		int deleteRowCount = resolver.delete(Media.EXTERNAL_CONTENT_URI,
-				Media._ID + " = " + audioId, null);
+				Media._ID + " in " + toRemoveIds, null);
 		if (deleteRowCount > 0) {
 			isRemoved = true;
 		}

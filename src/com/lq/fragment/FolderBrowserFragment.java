@@ -106,7 +106,7 @@ public class FolderBrowserFragment extends Fragment implements
 					data.putParcelable(FolderInfo.class.getSimpleName(),
 							mAdapter.getData().get(position));
 					data.putInt(GlobalConstant.PARENT,
-							TrackBrowserFragment.START_FROM_FOLER);
+							GlobalConstant.START_FROM_FOLER);
 					getFragmentManager()
 							.beginTransaction()
 							.replace(

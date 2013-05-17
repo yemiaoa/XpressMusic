@@ -24,7 +24,7 @@ public class FrameLocalMusicFragment extends Fragment {
 		super.onActivityCreated(savedInstanceState);
 
 		Bundle args = new Bundle();
-		args.putInt(GlobalConstant.PARENT, TrackBrowserFragment.START_FROM_LOCAL_MUSIC);
+		args.putInt(GlobalConstant.PARENT, GlobalConstant.START_FROM_LOCAL_MUSIC);
 
 		getChildFragmentManager()
 				.beginTransaction()

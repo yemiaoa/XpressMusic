@@ -107,7 +107,7 @@ public class ArtistBrowserFragment extends Fragment implements
 					data.putParcelable(ArtistInfo.class.getSimpleName(),
 							mAdapter.getData().get(position));
 					data.putInt(GlobalConstant.PARENT,
-							TrackBrowserFragment.START_FROM_ARTIST);
+							GlobalConstant.START_FROM_ARTIST);
 					getFragmentManager()
 							.beginTransaction()
 							.replace(

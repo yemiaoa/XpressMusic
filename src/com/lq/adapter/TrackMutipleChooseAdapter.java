@@ -15,7 +15,7 @@ import com.lq.activity.R;
 import com.lq.entity.TrackInfo;
 
 public class TrackMutipleChooseAdapter extends BaseAdapter {
-	
+
 	/** 数据源 */
 	private ArrayList<TrackInfo> mData = null;
 
@@ -56,12 +56,30 @@ public class TrackMutipleChooseAdapter extends BaseAdapter {
 		notifyDataSetChanged();
 	}
 
+	public long[] getSelectedAudioIds() {
+		int[] checkedPostions = getSelectedItemPositions();
+		long[] selectedAudioIds = new long[checkedPostions.length];
+		for (int i = 0; i < checkedPostions.length; i++) {
+			selectedAudioIds[i] = getItem(checkedPostions[i]).getId();
+		}
+		return selectedAudioIds;
+	}
+
+	public String[] getSelectedAudioPaths() {
+		int[] checkedPostions = getSelectedItemPositions();
+		String[] selectedAudioPaths = new String[checkedPostions.length];
+		for (int i = 0; i < checkedPostions.length; i++) {
+			selectedAudioPaths[i] = getItem(checkedPostions[i]).getData();
+		}
+		return selectedAudioPaths;
+	}
+
 	/**
 	 * 获得已选择的条目们在列表中的位置
 	 * 
 	 * @return 所有已选择的条目在列表中的位置
 	 */
-	public int[] getCheckedItemPositions() {
+	public int[] getSelectedItemPositions() {
 		int count = 0;
 		for (int i = 0; i < mCheckedStates.size(); i++) {
 			if (mCheckedStates.get(i)) {

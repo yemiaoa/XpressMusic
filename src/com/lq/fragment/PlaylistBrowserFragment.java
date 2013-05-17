@@ -138,6 +138,8 @@ public class PlaylistBrowserFragment extends Fragment implements
 	public void onCreateContextMenu(ContextMenu menu, View v,
 			ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
+		final AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+		menu.setHeaderTitle(mAdapter.getItem(info.position).getPlaylistName());
 		menu.add(0, CONTEXT_MENU_RENAME, Menu.NONE, R.string.rename);
 		menu.add(0, CONTEXT_MENU_DELETE, Menu.NONE, R.string.delete);
 	}
@@ -153,8 +155,8 @@ public class PlaylistBrowserFragment extends Fragment implements
 			// 弹出重命名的对话框
 			mEditTextDialogFragment = EditTextDialogFragment.newInstance(
 					getResources().getString(R.string.rename), mAdapter
-							.getItem(menuInfo.position).getPlaylistName(), null,
-					mUpdatePlaylistListener);
+							.getItem(menuInfo.position).getPlaylistName(),
+					null, mUpdatePlaylistListener);
 			mEditTextDialogFragment.show(getFragmentManager(), null);
 			break;
 		case CONTEXT_MENU_DELETE:
@@ -188,7 +190,7 @@ public class PlaylistBrowserFragment extends Fragment implements
 				if (getParentFragment() instanceof FramePlaylistFragment) {
 					Bundle args = new Bundle();
 					args.putInt(GlobalConstant.PARENT,
-							TrackBrowserFragment.START_FROM_PLAYLIST);
+							GlobalConstant.START_FROM_PLAYLIST);
 					args.putParcelable(PlaylistInfo.class.getSimpleName(),
 							mAdapter.getItem(position));
 					getFragmentManager()

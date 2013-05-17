@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
@@ -26,7 +27,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lq.adapter.TrackMutipleChooseAdapter;
+import com.lq.dao.PlaylistDAO;
 import com.lq.entity.TrackInfo;
+import com.lq.fragment.PromptDialogFragment;
 import com.lq.fragment.SelectPlaylistDialogFragment;
 import com.lq.util.GlobalConstant;
 
@@ -45,13 +48,18 @@ public class MutipleEditActivity extends FragmentActivity implements
 	private View mView_PlayListLater = null;
 	private View mView_AddToPlaylist = null;
 	private View mView_Delete = null;
-	private ArrayList<TrackInfo> mDataList = null;
 	private TrackMutipleChooseAdapter mAdapter = null;
+
+	// Arguments
+	private ArrayList<TrackInfo> mDataList = null;
 	private String mTitle = null;
 	private int mFirstVisiblePosition = 0;
+	private int mParent = -1;
+	private int mPlaylistId = -1;
+
+	private int mCloseDelayTime = 500;
 
 	private LocalBroadcastManager mLocalBroadcastManager;
-
 	// 用于关闭本页面的广播接收器
 	// 如果在其他界面操作成功，会向发送一个关闭本页面的广播，本接收器会接受到该广播并处理请求
 	private BroadcastReceiver mReceiver;
@@ -62,13 +70,7 @@ public class MutipleEditActivity extends FragmentActivity implements
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.mutiple_choose);
 
-		// 获取Intent中传递过来的数据
-		Bundle args = getIntent().getExtras();
-		mDataList = args.getParcelableArrayList(GlobalConstant.DATA_LIST);
-		mTitle = args.getString(GlobalConstant.TITLE) + "(" + mDataList.size()
-				+ ")";
-		mFirstVisiblePosition = args
-				.getInt(GlobalConstant.FIRST_VISIBLE_POSITION);
+		handleArguments();
 		findViews();
 		initViewsSetting();
 		initBroadcastReceiver();
@@ -84,6 +86,19 @@ public class MutipleEditActivity extends FragmentActivity implements
 		mLocalBroadcastManager.unregisterReceiver(mReceiver);
 	}
 
+	private void handleArguments() {
+		// 获取Intent中传递过来的数据
+		Bundle args = getIntent().getExtras();
+		mDataList = args.getParcelableArrayList(GlobalConstant.DATA_LIST);
+		mTitle = args.getString(GlobalConstant.TITLE) + "(" + mDataList.size()
+				+ ")";
+		mFirstVisiblePosition = args.getInt(
+				GlobalConstant.FIRST_VISIBLE_POSITION, 0);
+		mParent = args.getInt(GlobalConstant.PARENT, -1);
+		mPlaylistId = args.getInt(GlobalConstant.PLAYLIST_ID, -1);
+
+	}
+
 	/** 配置广播接收器 */
 	private void initBroadcastReceiver() {
 		mLocalBroadcastManager = LocalBroadcastManager.getInstance(this);
@@ -93,9 +108,9 @@ public class MutipleEditActivity extends FragmentActivity implements
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				if (intent.getAction().equals(ACTION_FINISH)) {
-					// 接受到关闭本页面的请求，则关闭本页面 
+					// 接受到关闭本页面的请求，则关闭本页面
 					// 延时关闭(等本Activity弹出的对话框都消失再关闭)
-					mHandler.sendEmptyMessageDelayed(0, 500);
+					mHandler.sendEmptyMessageDelayed(0, mCloseDelayTime);
 				}
 			}
 		};
@@ -132,7 +147,7 @@ public class MutipleEditActivity extends FragmentActivity implements
 				// 每次选择条目后，更新已选择的数目
 				mView_NumOfSelect.setText(getResources().getString(
 						R.string.has_selected)
-						+ mAdapter.getCheckedItemPositions().length
+						+ mAdapter.getSelectedItemPositions().length
 						+ getResources().getString(R.string.a_piece_of_song));
 
 			}
@@ -169,7 +184,7 @@ public class MutipleEditActivity extends FragmentActivity implements
 						// 更新已选择的数目
 						mView_NumOfSelect.setText(getResources().getString(
 								R.string.has_selected)
-								+ mAdapter.getCheckedItemPositions().length
+								+ mAdapter.getSelectedItemPositions().length
 								+ getResources().getString(
 										R.string.a_piece_of_song));
 					}
@@ -188,26 +203,21 @@ public class MutipleEditActivity extends FragmentActivity implements
 		Log.i(TAG, "onClick");
 		switch (v.getId()) {
 		case R.id.add_to_playlist:
-			if (mAdapter.getCheckedItemPositions().length == 0) {
+			if (mAdapter.getSelectedItemPositions().length == 0) {
 				// 如果尚未选择任何条目,提示一下
 				Toast.makeText(MutipleEditActivity.this,
 						R.string.please_select_add_song_first,
 						Toast.LENGTH_SHORT).show();
 			} else {
 				// 弹出选择播放列表的窗口
-				int[] checkedPostions = mAdapter.getCheckedItemPositions();
-				long[] selectedAudioIds = new long[checkedPostions.length];
-				for (int i = 0; i < checkedPostions.length; i++) {
-					selectedAudioIds[i] = mAdapter.getItem(checkedPostions[i])
-							.getId();
-				}
+				long[] selectedAudioIds = mAdapter.getSelectedAudioIds();
 				DialogFragment df = SelectPlaylistDialogFragment
 						.newInstance(selectedAudioIds);
 				df.show(getSupportFragmentManager(), null);
 			}
 			break;
 		case R.id.play_list_later:
-			if (mAdapter.getCheckedItemPositions().length == 0) {
+			if (mAdapter.getSelectedItemPositions().length == 0) {
 				// 如果尚未选择任何条目,提示一下
 				Toast.makeText(MutipleEditActivity.this,
 						R.string.please_select_play_song_first,
@@ -215,11 +225,27 @@ public class MutipleEditActivity extends FragmentActivity implements
 			}
 			break;
 		case R.id.delete_selected_item:
-			if (mAdapter.getCheckedItemPositions().length == 0) {
+			if (mAdapter.getSelectedItemPositions().length == 0) {
 				// 如果尚未选择任何条目,提示一下
 				Toast.makeText(MutipleEditActivity.this,
 						R.string.please_select_delete_song_first,
 						Toast.LENGTH_SHORT).show();
+			} else {
+				DialogFragment df;
+				if (mParent == GlobalConstant.START_FROM_PLAYLIST) {
+					df = PromptDialogFragment
+							.newInstance(
+									getResources()
+											.getString(
+													R.string.confirm_remove_song_from_playlist),
+									mDeletePromptListener);
+				} else {
+					df = PromptDialogFragment.newInstance(getResources()
+							.getString(R.string.confirm_delete_song_file),
+							mDeletePromptListener);
+
+				}
+				df.show(getSupportFragmentManager(), null);
 			}
 			break;
 
@@ -242,7 +268,53 @@ public class MutipleEditActivity extends FragmentActivity implements
 		}
 
 		public void handleMessage(Message msg) {
+			// 关闭本页面
 			mActivity.finish();
 		}
 	}
+
+	private DialogInterface.OnClickListener mDeletePromptListener = new DialogInterface.OnClickListener() {
+
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			boolean isDeleted = false;
+			switch (mParent) {
+			case GlobalConstant.START_FROM_PLAYLIST:
+				// 从播放列表移除歌曲，不会删除文件
+				isDeleted = PlaylistDAO.removeTrackFromPlaylist(
+						getContentResolver(), mPlaylistId,
+						mAdapter.getSelectedAudioIds());
+				if (isDeleted) {
+					// 提示移除成功
+					Toast.makeText(MutipleEditActivity.this,
+							getResources().getString(R.string.remove_success),
+							Toast.LENGTH_SHORT).show();
+				}
+				break;
+
+			default:
+				// 删除指定的歌曲,在存储器上的文件和数据库里的记录都要删除
+				PlaylistDAO.removeTrackFromDatabase(getContentResolver(),
+						mAdapter.getSelectedAudioIds());
+				isDeleted = PlaylistDAO.deleteFiles(mAdapter
+						.getSelectedAudioPaths());
+				if (isDeleted) {
+					// 提示删除成功
+					Toast.makeText(MutipleEditActivity.this,
+							getResources().getString(R.string.delete_success),
+							Toast.LENGTH_SHORT).show();
+				}
+				break;
+			}
+
+			if (!isDeleted) {
+				// 删除失败，提示失败信息
+				Toast.makeText(MutipleEditActivity.this,
+						getResources().getString(R.string.delete_failed),
+						Toast.LENGTH_SHORT).show();
+			} else {
+				mHandler.sendEmptyMessageDelayed(0, mCloseDelayTime);
+			}
+		}
+	};
 }
