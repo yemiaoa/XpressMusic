@@ -47,6 +47,7 @@
         android:layout_toLeftOf="@id/song_count_of_playlist"
         android:layout_toRightOf="@id/playlist_pic"
         android:singleLine="true"
+        android:textColor="@color/black"
         android:textIsSelectable="false"
         android:textSize="20sp" />
 

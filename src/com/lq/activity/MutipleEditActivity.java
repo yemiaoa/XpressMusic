@@ -4,12 +4,15 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
@@ -31,6 +34,8 @@ import com.lq.dao.PlaylistDAO;
 import com.lq.entity.TrackInfo;
 import com.lq.fragment.PromptDialogFragment;
 import com.lq.fragment.SelectPlaylistDialogFragment;
+import com.lq.service.MusicService;
+import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.util.GlobalConstant;
 
 public class MutipleEditActivity extends FragmentActivity implements
@@ -64,6 +69,8 @@ public class MutipleEditActivity extends FragmentActivity implements
 	// 如果在其他界面操作成功，会向发送一个关闭本页面的广播，本接收器会接受到该广播并处理请求
 	private BroadcastReceiver mReceiver;
 
+	private MusicPlaybackLocalBinder mMusicServiceBinder = null;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		Log.i(TAG, "onCreate");
@@ -78,11 +85,29 @@ public class MutipleEditActivity extends FragmentActivity implements
 	}
 
 	@Override
+	protected void onStart() {
+		Log.i(TAG, "onStart");
+		super.onStart();
+		// 本Activity界面显示时绑定服务，服务发送消息给本Activity以更新UI
+		bindService(new Intent(MutipleEditActivity.this, MusicService.class),
+				mServiceConnection, Context.BIND_AUTO_CREATE);
+	}
+
+	@Override
+	protected void onStop() {
+		Log.i(TAG, "onStop");
+		super.onStop();
+		// 本界面不可见时取消绑定服务
+		unbindService(mServiceConnection);
+	}
+
+	@Override
 	protected void onDestroy() {
 		Log.i(TAG, "onDestroy");
 		super.onDestroy();
 		mDataList = null;
 		mAdapter = null;
+		mMusicServiceBinder = null;
 		mLocalBroadcastManager.unregisterReceiver(mReceiver);
 	}
 
@@ -222,6 +247,13 @@ public class MutipleEditActivity extends FragmentActivity implements
 				Toast.makeText(MutipleEditActivity.this,
 						R.string.please_select_play_song_first,
 						Toast.LENGTH_SHORT).show();
+			} else {
+				// 追加选择的歌曲条目到后台的正在播放的列表中
+				mMusicServiceBinder.appendToCurrentPlayList(mAdapter
+						.getSelectedItems());
+
+				// 关闭本界面
+				mHandler.sendEmptyMessageDelayed(0, mCloseDelayTime);
 			}
 			break;
 		case R.id.delete_selected_item:
@@ -315,6 +347,23 @@ public class MutipleEditActivity extends FragmentActivity implements
 			} else {
 				mHandler.sendEmptyMessageDelayed(0, mCloseDelayTime);
 			}
+		}
+	};
+
+	/** 与Service连接时交互的类 */
+	private ServiceConnection mServiceConnection = new ServiceConnection() {
+		public void onServiceConnected(ComponentName className, IBinder service) {
+			Log.i(TAG, "onServiceConnected");
+
+			// 保持对Service的Binder引用，以便调用Service提供给客户端的方法
+			mMusicServiceBinder = (MusicPlaybackLocalBinder) service;
+
+		}
+
+		// 与服务端连接异常丢失时才调用，调用unBindService不调用此方法哎
+		public void onServiceDisconnected(ComponentName className) {
+			Log.i(TAG, "onServiceDisconnected");
+
 		}
 	};
 }

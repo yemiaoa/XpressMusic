@@ -1,6 +1,7 @@
 package com.lq.adapter;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import android.content.Context;
 import android.util.SparseBooleanArray;
@@ -72,6 +73,15 @@ public class TrackMutipleChooseAdapter extends BaseAdapter {
 			selectedAudioPaths[i] = getItem(checkedPostions[i]).getData();
 		}
 		return selectedAudioPaths;
+	}
+
+	public List<TrackInfo> getSelectedItems() {
+		int[] checkedPostions = getSelectedItemPositions();
+		List<TrackInfo> list = new ArrayList<TrackInfo>();
+		for (int i = 0; i < checkedPostions.length; i++) {
+			list.add(getItem(checkedPostions[i]));
+		}
+		return list;
 	}
 
 	/**

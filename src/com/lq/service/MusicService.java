@@ -132,6 +132,32 @@ public class MusicService extends Service implements OnCompletionListener,
 			mRequestPlayPos = 0;
 		}
 
+		public void appendToCurrentPlayList(List<TrackInfo> list) {
+			if (list == null) {
+				return;
+			}
+
+			// 只添加当前播放列表中没有的歌曲
+			boolean existed = false;
+			for (int i = 0; i < list.size(); i++) {
+				existed = false;
+				for (int j = 0; j < mPlayList.size(); j++) {
+					if (mPlayList.get(j).equals(list.get(i))) {
+						existed = true;
+						break;
+					}
+				}
+				if (!existed) {
+					mPlayList.add(list.get(i));
+				}
+			}
+			mHasPlayList = true;
+			if (mState == State.Stopped) {
+				mRequestPlayPos = 0;
+				processPlayRequest();
+			}
+		}
+
 		public Bundle getCurrentPlayInfo() {
 			Bundle bundle = new Bundle();
 			TrackInfo item = null;
@@ -400,8 +426,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	public void onPrepared(MediaPlayer player) {
 		// 准备完成了，可以播放歌曲了
 		mState = State.Playing;
-		updateNotification(mPlayingSong.getTitle()
-				+ " (playing)");
+		updateNotification(mPlayingSong.getTitle() + " (playing)");
 		configAndStartMediaPlayer();
 		if (!mServiceHandler.hasMessages(MESSAGE_UPDATE_PLAYING_SONG_PROGRESS)) {
 			mServiceHandler
@@ -501,8 +526,7 @@ public class MusicService extends Service implements OnCompletionListener,
 				&& mPlayingSong.getId() == mRequsetPlayId) {
 			// 如果处于“暂停”状态，则继续播放，并且恢复“前台服务”的状态
 			mState = State.Playing;
-			setUpAsForeground(mPlayingSong.getTitle()
-					+ " (playing)");
+			setUpAsForeground(mPlayingSong.getTitle() + " (playing)");
 			configAndStartMediaPlayer();
 		} else if (mMediaPlayer.isLooping()) {
 			mMediaPlayer.start();
@@ -701,7 +725,8 @@ public class MusicService extends Service implements OnCompletionListener,
 				createMediaPlayerIfNeeded();
 				mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 				mMediaPlayer.setDataSource(getApplicationContext(), ContentUris
-						.withAppendedId(Media.EXTERNAL_CONTENT_URI, mPlayingSong.getId()));
+						.withAppendedId(Media.EXTERNAL_CONTENT_URI,
+								mPlayingSong.getId()));
 			} else {
 				processStopRequest(true);
 				return;
@@ -711,8 +736,7 @@ public class MusicService extends Service implements OnCompletionListener,
 
 			loadLyric(mPlayingSong.getData());
 
-			setUpAsForeground(mPlayingSong.getTitle()
-					+ " (loading)");
+			setUpAsForeground(mPlayingSong.getTitle() + " (loading)");
 
 			// 在后台准备MediaPlayer，准备完成后会调用OnPreparedListener的onPrepared()方法。
 			// 在MediaPlayer准备好之前，我们不能调用其start()方法
@@ -732,8 +756,7 @@ public class MusicService extends Service implements OnCompletionListener,
 
 		// 每次播放新的歌曲的时候，把当前播放的歌曲信息传递给播放观察者
 		for (int i = 0; i < mOnPlaybackStateChangeListeners.size(); i++) {
-			mOnPlaybackStateChangeListeners.get(i).onPlayNewSong(
-					mPlayingSong);
+			mOnPlaybackStateChangeListeners.get(i).onPlayNewSong(mPlayingSong);
 		}
 	}
 
@@ -799,8 +822,7 @@ public class MusicService extends Service implements OnCompletionListener,
 		// String lyricFilePath = path.substring(0, path.lastIndexOf(".") + 1)
 		// + "lrc";
 		String lyricFilePath = Environment.getExternalStorageDirectory()
-				+ "/MIUI/music/lyric/"
-				+ mPlayingSong.getTitle() + "_"
+				+ "/MIUI/music/lyric/" + mPlayingSong.getTitle() + "_"
 				+ mPlayingSong.getArtist() + ".lrc";
 		mHasLyric = mLyricLoadHelper.loadLyric(lyricFilePath);
 	}

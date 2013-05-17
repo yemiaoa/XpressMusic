@@ -35,6 +35,16 @@ public class TrackInfo implements Parcelable {
 	}
 
 	@Override
+	public boolean equals(Object o) {
+		if (o instanceof TrackInfo) {
+			TrackInfo object = (TrackInfo) o;
+			return object.getId() == this.id;
+		} else {
+			return super.equals(o);
+		}
+	}
+
+	@Override
 	public String toString() {
 		return "song_id:" + id + ",song_title:" + title;
 	}
