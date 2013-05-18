@@ -44,53 +44,24 @@
             android:src="@drawable/button_favorite" />
     </RelativeLayout>
 
-    <FrameLayout
-        android:id="@+id/player_frame_content"
-        android:layout_width="match_parent"
-        android:layout_height="400dp"
-        android:layout_below="@id/player_top" >
-
-        <ListView
-            android:id="@+id/lyricshow"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:descendantFocusability="blocksDescendants"
-            android:divider="@color/transparent"
-            android:gravity="center"
-            android:scrollbars="none" />
-
-        <TextView
-            android:id="@+id/lyric_empty"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:padding="15dip"
-            android:text="@string/there_is_no_lyric_yet"
-            android:textColor="@color/white"
-            android:textIsSelectable="false"
-            android:textSize="18sp"
-            android:visibility="gone" />
-    </FrameLayout>
-
-    <SeekBar
-        android:id="@+id/play_progress"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/player_frame_content"
-        android:max="100"
-        android:maxHeight="2dp"
-        android:minHeight="2dp"
-        android:progress="0"
-        android:progressDrawable="@drawable/playback_playingbar_seekbar_style"
-        android:thumb="@drawable/playback_playingbar_seekbar_thumb" />
-
     <LinearLayout
         android:id="@+id/player_bottom"
         android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:layout_below="@id/play_progress"
+        android:layout_height="100dp"
+        android:layout_alignParentBottom="true"
         android:background="@drawable/bottom_play_panel"
         android:orientation="vertical" >
+
+        <SeekBar
+            android:id="@+id/play_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:maxHeight="2dp"
+            android:minHeight="2dp"
+            android:progress="0"
+            android:progressDrawable="@drawable/playback_playingbar_seekbar_style"
+            android:thumb="@drawable/playback_playingbar_seekbar_thumb" />
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -176,5 +147,34 @@
                 android:src="@drawable/button_items" />
         </LinearLayout>
     </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/player_frame_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/player_bottom"
+        android:layout_below="@id/player_top" >
+
+        <ListView
+            android:id="@+id/lyricshow"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:descendantFocusability="blocksDescendants"
+            android:divider="@color/transparent"
+            android:gravity="center"
+            android:scrollbars="none" />
+
+        <TextView
+            android:id="@+id/lyric_empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="15dip"
+            android:text="@string/there_is_no_lyric_yet"
+            android:textColor="@color/white"
+            android:textIsSelectable="false"
+            android:textSize="18sp"
+            android:visibility="gone" />
+    </FrameLayout>
 
 </RelativeLayout>

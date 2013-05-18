@@ -180,6 +180,24 @@ public class MusicService extends Service implements OnCompletionListener,
 
 			return bundle;
 		}
+
+		public void removeSongFromCurrenPlaylist(long trackId) {
+			if (mHasPlayList) {
+				for (int i = 0; i < mPlayList.size(); i++) {
+					if (mPlayList.get(i).getId() == trackId) {
+						mPlayList.remove(i);
+						break;
+					}
+				}
+				if (mPlayList.size() == 0) {
+					mHasPlayList = false;
+					processStopRequest();
+				} else {
+					mRequestPlayPos--;
+					processNextRequest(true);
+				}
+			}
+		}
 	}
 
 	// 打印调试信息用的标记
@@ -372,7 +390,6 @@ public class MusicService extends Service implements OnCompletionListener,
 							GlobalConstant.REQUEST_PLAY_ID, 0);
 					mRequestPlayPos = seekPosInListById(mPlayList,
 							mRequsetPlayId);
-					Log.i("test", mRequestPlayPos + "");
 				} else {
 					mRequsetPlayId = mPlayList.get(mRequestPlayPos).getId();
 				}
@@ -639,6 +656,7 @@ public class MusicService extends Service implements OnCompletionListener,
 					// 如果不是用户请求，循环播放
 					mMediaPlayer.setLooping(true);
 				}
+				break;
 			default:
 				break;
 			}

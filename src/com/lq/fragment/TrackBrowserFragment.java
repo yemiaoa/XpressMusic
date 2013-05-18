@@ -673,6 +673,19 @@ public class TrackBrowserFragment extends Fragment implements
 				break;
 
 			default:
+				// 删除的歌曲现在是否正在播放
+				TrackInfo curTrack = mMusicServiceBinder.getCurrentPlayInfo()
+						.getParcelable(GlobalConstant.PLAYING_MUSIC_ITEM);
+
+				if (curTrack != null) {
+					if (curTrack.getId() == mToDeleteTrack.getId()) {
+						// 要删除的歌曲正在播放，则先播放下一首歌,如果没有下一首就停止播放
+						mMusicServiceBinder
+								.removeSongFromCurrenPlaylist(mToDeleteTrack
+										.getId());
+					}
+				}
+
 				// 删除指定的歌曲,在存储器上的文件和数据库里的记录都要删除
 				PlaylistDAO.removeTrackFromDatabase(getActivity()
 						.getContentResolver(), new long[] { mToDeleteTrack
