@@ -19,7 +19,7 @@
             android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:text="@string/song_name"
-            android:textSize="18sp" />
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/track_detail_name"
@@ -31,7 +31,7 @@
             android:marqueeRepeatLimit="marquee_forever"
             android:singleLine="true"
             android:textIsSelectable="false"
-            android:textSize="18sp" />
+            android:textSize="15sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -47,14 +47,14 @@
             android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:text="@string/artist"
-            android:textSize="18sp" />
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/track_detail_artist"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textIsSelectable="false"
-            android:textSize="18sp" />
+            android:textSize="15sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -70,7 +70,7 @@
             android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:text="@string/song_duration"
-            android:textSize="18sp" />
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/track_detail_song_duration"
@@ -78,7 +78,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:textIsSelectable="false"
-            android:textSize="18sp" />
+            android:textSize="15sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -94,7 +94,7 @@
             android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:text="@string/file_size"
-            android:textSize="18sp" />
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/track_detail_file_size"
@@ -102,7 +102,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:textIsSelectable="false"
-            android:textSize="18sp" />
+            android:textSize="15sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -118,14 +118,14 @@
             android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:text="@string/file_path"
-            android:textSize="18sp" />
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/track_detail_file_path"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textIsSelectable="false"
-            android:textSize="18sp" />
+            android:textSize="15sp" />
     </LinearLayout>
 
 </LinearLayout>

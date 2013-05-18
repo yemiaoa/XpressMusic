@@ -131,7 +131,6 @@ public class SelectPlaylistDialogFragment extends DialogFragment implements
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
-				// TODO 点击一个条目，则收藏到对应的列表中
 				addTrackToPlaylist(position);
 			}
 

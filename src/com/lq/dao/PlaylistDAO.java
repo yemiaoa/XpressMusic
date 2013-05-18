@@ -1,6 +1,7 @@
 package com.lq.dao;
 
 import java.io.File;
+import java.util.List;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -9,6 +10,8 @@ import android.net.Uri;
 import android.provider.MediaStore.Audio.Media;
 import android.provider.MediaStore.Audio.Playlists;
 import android.util.Log;
+
+import com.lq.entity.TrackInfo;
 
 /** 对“播放列表”相关的数据库访问进行的封装类 */
 public class PlaylistDAO {

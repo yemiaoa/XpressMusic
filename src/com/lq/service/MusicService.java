@@ -373,6 +373,8 @@ public class MusicService extends Service implements OnCompletionListener,
 					mRequestPlayPos = seekPosInListById(mPlayList,
 							mRequsetPlayId);
 					Log.i("test", mRequestPlayPos + "");
+				} else {
+					mRequsetPlayId = mPlayList.get(mRequestPlayPos).getId();
 				}
 				if (mRequestPlayPos != -1) {
 					processPlayRequest();

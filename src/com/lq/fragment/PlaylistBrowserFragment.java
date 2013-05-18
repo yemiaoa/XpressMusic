@@ -3,12 +3,20 @@ package com.lq.fragment;
 import java.util.List;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.IBinder;
+import android.provider.MediaStore.Audio.Media;
+import android.provider.MediaStore.Audio.Playlists;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
 import android.util.Log;
@@ -33,8 +41,12 @@ import com.lq.activity.R;
 import com.lq.adapter.PlaylistAdapter;
 import com.lq.dao.PlaylistDAO;
 import com.lq.entity.PlaylistInfo;
+import com.lq.entity.TrackInfo;
 import com.lq.fragment.EditTextDialogFragment.OnMyDialogInputListener;
+import com.lq.loader.MusicRetrieveLoader;
 import com.lq.loader.PlaylistInfoRetrieveLoader;
+import com.lq.service.MusicService;
+import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.util.GlobalConstant;
 
 public class PlaylistBrowserFragment extends Fragment implements
@@ -42,8 +54,11 @@ public class PlaylistBrowserFragment extends Fragment implements
 	private final String TAG = this.getClass().getSimpleName();
 
 	private final int PLAYLIST_RETRIEVE_LOADER = 0;
+	private final int TRACK_RETRIEVE_LOADER = 1;
 	private final int CONTEXT_MENU_RENAME = 1;
 	private final int CONTEXT_MENU_DELETE = 2;
+	private final int CONTEXT_MENU_PLAYLATER = 3;
+	private final int CONTEXT_MENU_ADD_MEMBERS = 4;
 
 	private ImageView mView_MenuNavigation = null;
 	private ImageView mView_MoreFunctions = null;
@@ -58,6 +73,8 @@ public class PlaylistBrowserFragment extends Fragment implements
 	private EditTextDialogFragment mEditTextDialogFragment = null;
 
 	private int mSelectedPlaylistId = -1;
+
+	private MusicPlaybackLocalBinder mMusicServiceBinder = null;
 
 	@Override
 	public void onAttach(Activity activity) {
@@ -115,11 +132,29 @@ public class PlaylistBrowserFragment extends Fragment implements
 	}
 
 	@Override
+	public void onStart() {
+		Log.i(TAG, "onStart");
+		super.onStart();
+		// 本Activity界面显示时绑定服务，服务发送消息给本Activity以更新UI
+		getActivity().bindService(
+				new Intent(getActivity(), MusicService.class),
+				mServiceConnection, Context.BIND_AUTO_CREATE);
+	}
+
+	@Override
 	public void onResume() {
 		Log.i(TAG, "onResume");
 		super.onResume();
 		getLoaderManager().restartLoader(PLAYLIST_RETRIEVE_LOADER, null,
 				PlaylistBrowserFragment.this);
+	}
+
+	@Override
+	public void onStop() {
+		Log.i(TAG, "onStop");
+		super.onStop();
+		// 本界面不可见时取消绑定服务
+		getActivity().unbindService(mServiceConnection);
 	}
 
 	@Override
@@ -140,6 +175,7 @@ public class PlaylistBrowserFragment extends Fragment implements
 		super.onCreateContextMenu(menu, v, menuInfo);
 		final AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
 		menu.setHeaderTitle(mAdapter.getItem(info.position).getPlaylistName());
+		menu.add(0, CONTEXT_MENU_PLAYLATER, Menu.NONE, R.string.play_later);
 		menu.add(0, CONTEXT_MENU_RENAME, Menu.NONE, R.string.rename);
 		menu.add(0, CONTEXT_MENU_DELETE, Menu.NONE, R.string.delete);
 	}
@@ -151,6 +187,11 @@ public class PlaylistBrowserFragment extends Fragment implements
 		mSelectedPlaylistId = mAdapter.getItem(menuInfo.position).getId();
 		DialogFragment dialogF;
 		switch (item.getItemId()) {
+		case CONTEXT_MENU_PLAYLATER:
+			// 追加选择的歌曲条目到后台的正在播放的列表中
+			getLoaderManager().restartLoader(TRACK_RETRIEVE_LOADER, null,
+					mTracksLoaderCallbacks);
+			break;
 		case CONTEXT_MENU_RENAME:
 			// 弹出重命名的对话框
 			mEditTextDialogFragment = EditTextDialogFragment.newInstance(
@@ -326,5 +367,60 @@ public class PlaylistBrowserFragment extends Fragment implements
 
 		}
 	};
+	/** 与Service连接时交互的类 */
+	private ServiceConnection mServiceConnection = new ServiceConnection() {
+		public void onServiceConnected(ComponentName className, IBinder service) {
+			Log.i(TAG, "onServiceConnected");
 
+			// 保持对Service的Binder引用，以便调用Service提供给客户端的方法
+			mMusicServiceBinder = (MusicPlaybackLocalBinder) service;
+
+		}
+
+		// 与服务端连接异常丢失时才调用，调用unBindService不调用此方法哎
+		public void onServiceDisconnected(ComponentName className) {
+			Log.i(TAG, "onServiceDisconnected");
+
+		}
+	};
+
+	private LoaderManager.LoaderCallbacks<List<TrackInfo>> mTracksLoaderCallbacks = new LoaderCallbacks<List<TrackInfo>>() {
+		@Override
+		public Loader<List<TrackInfo>> onCreateLoader(int id, Bundle args) {
+			Log.i(TAG, "onCreateLoader");
+
+			String sortOrder = Media.TITLE_KEY;
+
+			// 查询语句：检索出.mp3为后缀名，时长大于1分钟，文件大小大于1MB的媒体文件
+			StringBuffer where = new StringBuffer("(" + Media.DATA
+					+ " like'%.mp3' or " + Media.DATA + " like'%.wma') and "
+					+ Media.DURATION + " > " + 1000 * 60 * 1 + " and "
+					+ Media.SIZE + " > " + 1024);
+
+			where.append(" and " + Media._ID + " in (select "
+					+ Playlists.Members.AUDIO_ID
+					+ " from audio_playlists_map where "
+					+ Playlists.Members.PLAYLIST_ID + "=" + mSelectedPlaylistId
+					+ ")");
+
+			return new MusicRetrieveLoader(getActivity(), where.toString(),
+					null, sortOrder);
+		}
+
+		@Override
+		public void onLoaderReset(Loader<List<TrackInfo>> loader) {
+			Log.i(TAG, "onLoaderReset");
+
+		}
+
+		@Override
+		public void onLoadFinished(Loader<List<TrackInfo>> loader,
+				List<TrackInfo> data) {
+			Log.i(TAG, "onLoadFinished");
+			if (mMusicServiceBinder != null) {
+				// 数据载入完毕，追加到当前播放列表后
+				mMusicServiceBinder.appendToCurrentPlayList(data);
+			}
+		}
+	};
 }

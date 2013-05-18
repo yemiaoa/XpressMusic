@@ -82,6 +82,9 @@ public class TrackBrowserFragment extends Fragment implements
 	private ImageView mView_GoToPlayer = null;
 	private ImageView mView_MoreFunctions = null;
 	private TextView mView_Title = null;
+	private View mView_PlayAll = null;
+	private View mView_Search = null;
+	private View mView_MutipleChoose = null;
 	private PopupMenu mOverflowPopupMenu = null;
 
 	/** 用来绑定数据至ListView的适配器 */
@@ -136,6 +139,10 @@ public class TrackBrowserFragment extends Fragment implements
 		mView_MenuNavigation = (ImageView) rootView
 				.findViewById(R.id.menu_navigation);
 		mView_Title = (TextView) rootView.findViewById(R.id.title_of_top);
+		mView_PlayAll = (View) rootView.findViewById(R.id.btn_play_all);
+		mView_Search = (View) rootView.findViewById(R.id.btn_search);
+		mView_MutipleChoose = (View) rootView
+				.findViewById(R.id.btn_mutiple_choose);
 		mView_MoreFunctions = (ImageView) rootView
 				.findViewById(R.id.more_functions);
 		mView_GoToPlayer = (ImageView) rootView
@@ -227,7 +234,9 @@ public class TrackBrowserFragment extends Fragment implements
 		super.onDestroy();
 	}
 
+	/** 初始化各个视图组件的设置 */
 	private void initViewsSetting() {
+		// ListView的设置-------------------------------------------------------------
 		// 创建一个空的适配器，用来显示加载的数据，适配器内容稍后由Loader填充
 		mAdapter = new TrackAdapter(getActivity());
 		// 为ListView绑定数据适配器
@@ -236,13 +245,18 @@ public class TrackBrowserFragment extends Fragment implements
 		// 为ListView的条目绑定一个点击事件监听
 		mView_ListView.setOnItemClickListener(this);
 
+		// 标题的设置-------------------------------------------------------------
 		mView_Title.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				// 标题作为回退导航
 				getFragmentManager().popBackStackImmediate();
 			}
 		});
+		// 默认不可点击
 		mView_Title.setClickable(false);
+
+		// 跳转至播放界面-----------------------------------------------
 		mView_GoToPlayer.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -250,6 +264,8 @@ public class TrackBrowserFragment extends Fragment implements
 				mActivity.switchToPlayer();
 			}
 		});
+
+		// 顶部弹出菜单----------------------------------------------------
 		mOverflowPopupMenu
 				.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
 					public boolean onMenuItemClick(MenuItem item) {
@@ -296,65 +312,12 @@ public class TrackBrowserFragment extends Fragment implements
 										.addToBackStack(null).commit();
 							}
 							break;
-						case R.id.mutiple_choose:
-							Intent intent = new Intent(getActivity(),
-									MutipleEditActivity.class);
-							Bundle data = new Bundle();
-
-							switch (getArguments()
-									.getInt(GlobalConstant.PARENT)) {
-							case GlobalConstant.START_FROM_LOCAL_MUSIC:
-								data.putString(
-										GlobalConstant.TITLE,
-										getResources().getString(
-												R.string.local_music));
-								data.putInt(GlobalConstant.PARENT,
-										GlobalConstant.START_FROM_LOCAL_MUSIC);
-								break;
-							case GlobalConstant.START_FROM_ARTIST:
-								data.putString(GlobalConstant.TITLE,
-										mArtistInfo.getArtistName());
-								data.putInt(GlobalConstant.PARENT,
-										GlobalConstant.START_FROM_ARTIST);
-								break;
-							case GlobalConstant.START_FROM_FOLER:
-								data.putString(GlobalConstant.TITLE,
-										mFolderInfo.getFolderName());
-								data.putInt(GlobalConstant.PARENT,
-										GlobalConstant.START_FROM_FOLER);
-								break;
-							case GlobalConstant.START_FROM_PLAYLIST:
-								data.putString(GlobalConstant.TITLE,
-										mPlaylistInfo.getPlaylistName());
-								data.putInt(GlobalConstant.PARENT,
-										GlobalConstant.START_FROM_PLAYLIST);
-								data.putInt(GlobalConstant.PLAYLIST_ID,
-										mPlaylistInfo.getId());
-								break;
-							default:
-								break;
-							}
-							data.putInt(GlobalConstant.FIRST_VISIBLE_POSITION,
-									mView_ListView.getFirstVisiblePosition());
-							data.putParcelableArrayList(
-									GlobalConstant.DATA_LIST,
-									mAdapter.getData());
-							intent.putExtras(data);
-							startActivity(intent);
-							break;
 						default:
 							break;
 						}
 						return true;
 					}
 				});
-
-		mView_MenuNavigation.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				mActivity.getSlidingMenu().showMenu();
-			}
-		});
 
 		mView_MoreFunctions.setOnClickListener(new View.OnClickListener() {
 
@@ -364,6 +327,90 @@ public class TrackBrowserFragment extends Fragment implements
 			}
 		});
 
+		// 侧滑菜单弹出按钮------------------------------------------------
+		mView_MenuNavigation.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				mActivity.getSlidingMenu().showMenu();
+			}
+		});
+
+		// 多选按钮-----------------------------------------------------------
+		mView_MutipleChoose.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO 进入多选
+
+				Intent intent = new Intent(getActivity(),
+						MutipleEditActivity.class);
+				Bundle data = new Bundle();
+
+				// 传递参数给多选界面
+				switch (getArguments().getInt(GlobalConstant.PARENT)) {
+				case GlobalConstant.START_FROM_LOCAL_MUSIC:
+					data.putString(GlobalConstant.TITLE, getResources()
+							.getString(R.string.local_music));
+					data.putInt(GlobalConstant.PARENT,
+							GlobalConstant.START_FROM_LOCAL_MUSIC);
+					break;
+				case GlobalConstant.START_FROM_ARTIST:
+					data.putString(GlobalConstant.TITLE,
+							mArtistInfo.getArtistName());
+					data.putInt(GlobalConstant.PARENT,
+							GlobalConstant.START_FROM_ARTIST);
+					break;
+				case GlobalConstant.START_FROM_FOLER:
+					data.putString(GlobalConstant.TITLE,
+							mFolderInfo.getFolderName());
+					data.putInt(GlobalConstant.PARENT,
+							GlobalConstant.START_FROM_FOLER);
+					break;
+				case GlobalConstant.START_FROM_PLAYLIST:
+					data.putString(GlobalConstant.TITLE,
+							mPlaylistInfo.getPlaylistName());
+					data.putInt(GlobalConstant.PARENT,
+							GlobalConstant.START_FROM_PLAYLIST);
+					data.putInt(GlobalConstant.PLAYLIST_ID,
+							mPlaylistInfo.getId());
+					break;
+				default:
+					break;
+				}
+				data.putInt(GlobalConstant.FIRST_VISIBLE_POSITION,
+						mView_ListView.getFirstVisiblePosition());
+				data.putParcelableArrayList(GlobalConstant.DATA_LIST,
+						mAdapter.getData());
+				intent.putExtras(data);
+				startActivity(intent);
+			}
+		});
+
+		// 搜索按钮-------------------------------------------------------------
+		mView_Search.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO 搜索歌曲
+
+			}
+		});
+
+		// 全部播放按钮----------------------------------------------------------
+		mView_PlayAll.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO 全部播放
+				if (mHasNewData && mMusicServiceBinder != null) {
+					mMusicServiceBinder.setCurrentPlayList(mAdapter.getData());
+				}
+				mHasNewData = false;
+				Intent intent = new Intent(MusicService.ACTION_PLAY);
+				mActivity.startService(intent);
+				mActivity.switchToPlayer();
+			}
+		});
 	}
 
 	@Override
@@ -544,6 +591,7 @@ public class TrackBrowserFragment extends Fragment implements
 
 	}
 
+	/** 处理从启动处传递过来的参数 */
 	private void handleArguments() {
 		// 如果有谁传递数据过来了，就设置一下
 		Bundle args = getArguments();

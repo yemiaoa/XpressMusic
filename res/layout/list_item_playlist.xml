@@ -37,7 +37,7 @@
         android:layout_toLeftOf="@id/playlist_popup_menu"
         android:textColor="@color/grey_dark"
         android:textIsSelectable="false"
-        android:textSize="15sp" />
+        android:textSize="14sp" />
 
     <TextView
         android:id="@+id/playlist_name"
@@ -49,6 +49,6 @@
         android:singleLine="true"
         android:textColor="@color/black"
         android:textIsSelectable="false"
-        android:textSize="20sp" />
+        android:textSize="18sp" />
 
 </RelativeLayout>
