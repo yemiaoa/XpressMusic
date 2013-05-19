@@ -28,7 +28,7 @@ import com.lq.activity.R;
 import com.lq.adapter.FolderAdapter;
 import com.lq.entity.FolderInfo;
 import com.lq.loader.FolderInfoRetreiveLoader;
-import com.lq.util.CharHelper;
+import com.lq.util.StringHelper;
 import com.lq.util.GlobalConstant;
 
 public class FolderBrowserFragment extends Fragment implements
@@ -240,11 +240,11 @@ public class FolderBrowserFragment extends Fragment implements
 		public int compare(FolderInfo lhs, FolderInfo rhs) {
 			first_l = lhs.getFolderName().charAt(0);
 			first_r = rhs.getFolderName().charAt(0);
-			if (CharHelper.checkType(first_l) == CharHelper.CharType.CHINESE) {
-				first_l = CharHelper.getPinyinFirstLetter(first_l);
+			if (StringHelper.checkType(first_l) == StringHelper.CharType.CHINESE) {
+				first_l = StringHelper.getPinyinFirstLetter(first_l);
 			}
-			if (CharHelper.checkType(first_r) == CharHelper.CharType.CHINESE) {
-				first_r = CharHelper.getPinyinFirstLetter(first_r);
+			if (StringHelper.checkType(first_r) == StringHelper.CharType.CHINESE) {
+				first_r = StringHelper.getPinyinFirstLetter(first_r);
 			}
 			if (first_l > first_r) {
 				return 1;

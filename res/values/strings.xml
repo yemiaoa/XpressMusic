@@ -68,5 +68,7 @@
     <string name="please_select_play_song_first">请先选择要播放的歌曲</string>
     <string name="please_select_delete_song_first">请先选择要删除的歌曲</string>
     <string name="please_select_add_song_first">请先选择要添加的歌曲</string>
+    <string name="please_input_jianpin_or_quanpin">请输入简拼或全拼</string>
+    <string name="please_input_song_or_artist_name">请输入歌曲名称或歌手名称</string>
 
 </resources>

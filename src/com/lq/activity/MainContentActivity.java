@@ -14,14 +14,18 @@ import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.KeyEvent;
 
-import com.lq.fragment.PromptDialogFragment;
 import com.lq.fragment.FrameLocalMusicFragment;
 import com.lq.fragment.MenuFragment;
+import com.lq.fragment.PromptDialogFragment;
 import com.lq.service.MusicService;
 import com.slidingmenu.lib.SlidingMenu;
 
 public class MainContentActivity extends FragmentActivity implements
 		OnBackStackChangedListener {
+	public interface OnBackKeyPressedListener {
+		public abstract void onBackKeyPressed();
+	}
+
 	private static final String TAG = MainContentActivity.class.getSimpleName();
 
 	public static final int MESSAGE_SWITCH_TO_PLAY_IMAGE = 0;
@@ -34,6 +38,8 @@ public class MainContentActivity extends FragmentActivity implements
 	private Fragment mCurrentFragment = null;
 
 	private int mBackStackEntryCount = 0;
+
+	private List<OnBackKeyPressedListener> mBackKeyPressedListeners = new ArrayList<OnBackKeyPressedListener>();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +108,19 @@ public class MainContentActivity extends FragmentActivity implements
 		super.onDestroy();
 		mFragmentList.clear();
 		mFragmentList = null;
+		mBackKeyPressedListeners.clear();
+		mBackKeyPressedListeners = null;
+	}
+
+	public void registerBackKeyPressedListener(OnBackKeyPressedListener listener) {
+		if (!mBackKeyPressedListeners.contains(listener)) {
+			mBackKeyPressedListeners.add(listener);
+		}
+	}
+
+	public void unregisterBackKeyPressedListener(
+			OnBackKeyPressedListener listener) {
+		mBackKeyPressedListeners.remove(listener);
 	}
 
 	public void switchToPlayer() {
@@ -161,6 +180,12 @@ public class MainContentActivity extends FragmentActivity implements
 
 	@Override
 	public void onBackPressed() {
+		if (mBackKeyPressedListeners.size() != 0) {
+			for (OnBackKeyPressedListener listener : mBackKeyPressedListeners) {
+				listener.onBackKeyPressed();
+			}
+		}
+
 		if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
 			getSupportFragmentManager().popBackStackImmediate();
 		} else if (mCurrentFragment != null

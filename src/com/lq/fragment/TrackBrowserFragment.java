@@ -1,7 +1,10 @@
 package com.lq.fragment;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -19,25 +22,39 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.text.Editable;
+import android.text.InputType;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.text.style.ImageSpan;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
+import android.view.WindowManager.LayoutParams;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lq.activity.MainContentActivity;
+import com.lq.activity.MainContentActivity.OnBackKeyPressedListener;
 import com.lq.activity.MutipleEditActivity;
 import com.lq.activity.R;
 import com.lq.adapter.TrackAdapter;
@@ -51,6 +68,7 @@ import com.lq.loader.MusicRetrieveLoader;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.util.GlobalConstant;
+import com.lq.util.StringHelper;
 
 /**
  * 读取并显示设备外存上的音乐文件
@@ -58,7 +76,8 @@ import com.lq.util.GlobalConstant;
  * @author lq
  * */
 public class TrackBrowserFragment extends Fragment implements
-		LoaderManager.LoaderCallbacks<List<TrackInfo>>, OnItemClickListener {
+		LoaderManager.LoaderCallbacks<List<TrackInfo>>, OnItemClickListener,
+		OnBackKeyPressedListener {
 	// 调试用的标记
 	private final String TAG = this.getClass().getSimpleName();
 
@@ -85,16 +104,31 @@ public class TrackBrowserFragment extends Fragment implements
 	private View mView_PlayAll = null;
 	private View mView_Search = null;
 	private View mView_MutipleChoose = null;
+	private View mView_SearchBar = null;
+	private EditText mView_SearchInput = null;
+	private View mView_SearchCancel = null;
+	private View mView_TrackOperations = null;
+	private ImageView mView_KeyboardSwitcher = null;
+
+	/** 弹出的搜索软键盘是否是自定义的T9键盘 */
+	private boolean mIsT9Keyboard = true;
+
 	private PopupMenu mOverflowPopupMenu = null;
+
+	private PopupWindow mT9KeyBoardWindow = null;
 
 	/** 用来绑定数据至ListView的适配器 */
 	private TrackAdapter mAdapter = null;
+	private List<TrackInfo> mOriginalData = new ArrayList<TrackInfo>();
+	private List<TrackInfo> mShowData = new ArrayList<TrackInfo>();
 
 	private ArtistInfo mArtistInfo = null;
 	private FolderInfo mFolderInfo = null;
 	private PlaylistInfo mPlaylistInfo = null;
 
 	private TrackInfo mToDeleteTrack = null;
+
+	private InputMethodManager mInputMethodManager = null;
 
 	private MusicPlaybackLocalBinder mMusicServiceBinder = null;
 
@@ -119,6 +153,7 @@ public class TrackBrowserFragment extends Fragment implements
 		super.onAttach(activity);
 		if (activity instanceof MainContentActivity) {
 			mActivity = (MainContentActivity) activity;
+			mActivity.registerBackKeyPressedListener(this);
 		}
 	}
 
@@ -126,6 +161,8 @@ public class TrackBrowserFragment extends Fragment implements
 	public void onCreate(Bundle savedInstanceState) {
 		Log.i(TAG, "onCreate");
 		super.onCreate(savedInstanceState);
+		mInputMethodManager = (InputMethodManager) getActivity()
+				.getSystemService(Context.INPUT_METHOD_SERVICE);
 	}
 
 	/** 在此加载一个ListView，可以使用自定义的ListView */
@@ -147,6 +184,13 @@ public class TrackBrowserFragment extends Fragment implements
 				.findViewById(R.id.more_functions);
 		mView_GoToPlayer = (ImageView) rootView
 				.findViewById(R.id.switch_to_player);
+		mView_SearchBar = (View) rootView.findViewById(R.id.search_bar);
+		mView_KeyboardSwitcher = (ImageView) rootView
+				.findViewById(R.id.keyboard_switcher);
+		mView_SearchInput = (EditText) rootView.findViewById(R.id.search_input);
+		mView_SearchCancel = (View) rootView.findViewById(R.id.cancel_search);
+		mView_TrackOperations = (View) rootView
+				.findViewById(R.id.track_operations);
 		mOverflowPopupMenu = new PopupMenu(getActivity(), mView_MoreFunctions);
 		Bundle args = getArguments();
 		if (args != null) {
@@ -225,6 +269,7 @@ public class TrackBrowserFragment extends Fragment implements
 	public void onDetach() {
 		Log.i(TAG, "onDetach");
 		super.onDetach();
+		mActivity.unregisterBackKeyPressedListener(this);
 		mActivity = null;
 	}
 
@@ -232,6 +277,17 @@ public class TrackBrowserFragment extends Fragment implements
 	public void onDestroy() {
 		Log.i(TAG, "onDestroy");
 		super.onDestroy();
+	}
+
+	@Override
+	public void onBackKeyPressed() {
+
+		// 按下返回键时关闭T9键盘
+		if (mT9KeyBoardWindow != null) {
+			if (mT9KeyBoardWindow.isShowing()) {
+				mT9KeyBoardWindow.dismiss();
+			}
+		}
 	}
 
 	/** 初始化各个视图组件的设置 */
@@ -340,8 +396,6 @@ public class TrackBrowserFragment extends Fragment implements
 
 			@Override
 			public void onClick(View v) {
-				// TODO 进入多选
-
 				Intent intent = new Intent(getActivity(),
 						MutipleEditActivity.class);
 				Bundle data = new Bundle();
@@ -386,22 +440,11 @@ public class TrackBrowserFragment extends Fragment implements
 			}
 		});
 
-		// 搜索按钮-------------------------------------------------------------
-		mView_Search.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				// TODO 搜索歌曲
-
-			}
-		});
-
 		// 全部播放按钮----------------------------------------------------------
 		mView_PlayAll.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				// TODO 全部播放
 				if (mHasNewData && mMusicServiceBinder != null) {
 					mMusicServiceBinder.setCurrentPlayList(mAdapter.getData());
 				}
@@ -411,7 +454,210 @@ public class TrackBrowserFragment extends Fragment implements
 				mActivity.switchToPlayer();
 			}
 		});
+
+		// 搜索相关-------------------------------------------------------------
+		OnClickListener searchbarClickListner = new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				switch (v.getId()) {
+				case R.id.btn_search:
+					// 显示搜索条，隐藏歌曲操作条
+					mView_TrackOperations.setVisibility(View.GONE);
+					mView_SearchBar.setVisibility(View.VISIBLE);
+					mView_KeyboardSwitcher
+							.setImageResource(R.drawable.keyboard_switch);
+					mIsT9Keyboard = true;
+					// 弹出T9键盘
+					mT9KeyBoardWindow.showAtLocation(getView(), Gravity.BOTTOM,
+							0, 0);
+					// 搜索输入框禁止输入法输入
+					mView_SearchInput.setInputType(InputType.TYPE_NULL);
+					mView_SearchInput.requestFocus();
+					break;
+				case R.id.cancel_search:
+					mView_SearchBar.setVisibility(View.GONE);
+					mView_TrackOperations.setVisibility(View.VISIBLE);
+					mView_SearchInput.setText("");
+					mView_SearchInput
+							.setHint(R.string.please_input_jianpin_or_quanpin);
+					if (mIsT9Keyboard) {// 如果T9键盘开启，则隐藏
+						mT9KeyBoardWindow.dismiss();
+					} else {// 如果T9键盘未开启
+						// 隐藏输入法
+						mInputMethodManager.hideSoftInputFromWindow(
+								mView_SearchInput.getWindowToken(), 0);
+					}
+
+					break;
+				case R.id.keyboard_switcher:
+					mIsT9Keyboard = !mIsT9Keyboard;// 置反一下
+					if (mIsT9Keyboard) {// 如果T9键盘开启了
+						mView_KeyboardSwitcher
+								.setImageResource(R.drawable.keyboard_switch);
+						mView_SearchInput
+								.setHint(R.string.please_input_jianpin_or_quanpin);
+						// 搜索输入框禁止输入法输入
+						mView_SearchInput.setInputType(InputType.TYPE_NULL);
+
+						// 隐藏输入法
+						mInputMethodManager.hideSoftInputFromWindow(
+								mView_SearchInput.getWindowToken(), 0);
+						// 弹出T9键盘
+						mT9KeyBoardWindow.showAtLocation(getView(),
+								Gravity.BOTTOM, 0, 0);
+					} else {// 如果T9键盘关闭了
+						mT9KeyBoardWindow.dismiss();
+						mView_KeyboardSwitcher
+								.setImageResource(R.drawable.keyboard_switch_9);
+						mView_SearchInput
+								.setHint(R.string.please_input_song_or_artist_name);
+						// 显示输入法
+						mInputMethodManager.showSoftInput(mView_SearchInput, 0);
+						// 搜索输入框允许输入法输入
+						mView_SearchInput
+								.setInputType(InputType.TYPE_CLASS_TEXT);
+					}
+					break;
+				case R.id.search_input:
+					if (mIsT9Keyboard) {
+						if (!mT9KeyBoardWindow.isShowing()) {
+							mT9KeyBoardWindow.showAtLocation(getView(),
+									Gravity.BOTTOM, 0, 0);
+						}
+					}
+					break;
+				default:
+					break;
+				}
+
+			}
+		};
+
+		mView_Search.setOnClickListener(searchbarClickListner);
+		mView_SearchCancel.setOnClickListener(searchbarClickListner);
+		mView_KeyboardSwitcher.setOnClickListener(searchbarClickListner);
+		mView_SearchInput.setOnClickListener(searchbarClickListner);
+
+		// T9键盘的设置---------------------------------------------------------------
+		// 加载布局
+		ViewGroup t9Layout = (ViewGroup) LayoutInflater.from(getActivity())
+				.inflate(R.layout.t9_keyboard, null, false);
+		t9Layout.findViewById(R.id.t9_key_2).setOnClickListener(
+				mT9KeyClickedListener);
+		t9Layout.findViewById(R.id.t9_key_3).setOnClickListener(
+				mT9KeyClickedListener);
+		t9Layout.findViewById(R.id.t9_key_4).setOnClickListener(
+				mT9KeyClickedListener);
+		t9Layout.findViewById(R.id.t9_key_5).setOnClickListener(
+				mT9KeyClickedListener);
+		t9Layout.findViewById(R.id.t9_key_6).setOnClickListener(
+				mT9KeyClickedListener);
+		t9Layout.findViewById(R.id.t9_key_7).setOnClickListener(
+				mT9KeyClickedListener);
+		t9Layout.findViewById(R.id.t9_key_8).setOnClickListener(
+				mT9KeyClickedListener);
+		t9Layout.findViewById(R.id.t9_key_9).setOnClickListener(
+				mT9KeyClickedListener);
+		t9Layout.findViewById(R.id.t9_exit).setOnClickListener(
+				mT9KeyClickedListener);
+		View deleteKey = t9Layout.findViewById(R.id.t9_delete);
+		deleteKey.setOnClickListener(mT9KeyClickedListener);
+		deleteKey.setOnLongClickListener(new OnLongClickListener() {
+			@Override
+			public boolean onLongClick(View v) {
+				// 长按删除，删除所有输入内容
+				Editable et = mView_SearchInput.getText();
+				if (!et.toString().equals("")) {
+					et.clear();
+					mView_SearchInput.setText(et);
+					mView_SearchInput.setSelection(0);
+					return true;
+				}
+				return false;
+			}
+		});
+
+		// 设置T9键盘弹出窗口属性
+		mT9KeyBoardWindow = new PopupWindow(getActivity());
+		mT9KeyBoardWindow.setOutsideTouchable(false);
+		mT9KeyBoardWindow.setWidth(LayoutParams.MATCH_PARENT);
+		mT9KeyBoardWindow.setHeight(LayoutParams.WRAP_CONTENT);
+		mT9KeyBoardWindow.setContentView(t9Layout);
+		mT9KeyBoardWindow.setAnimationStyle(R.style.t9_window_anim);
+
+		// 搜索输入框文本变化监听
+		mView_SearchInput.addTextChangedListener(new TextWatcher() {
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
+				// TODO 输入框文字改变时过滤歌曲列表
+				if (TextUtils.isEmpty(s)) {
+					mAdapter.setData(mOriginalData);
+				} else if (mIsT9Keyboard) {
+					// T9键盘开启，进行简拼全拼搜索
+					pinyinSearch(s.toString());
+				} else {
+					// 普通的模糊搜索
+					pinyinSearch(StringHelper.getPingYin(s.toString()));
+				}
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+
+			}
+		});
 	}
+
+	/** T9键盘按键处理 */
+	private OnClickListener mT9KeyClickedListener = new OnClickListener() {
+
+		@Override
+		public void onClick(View v) {
+			switch (v.getId()) {
+			case R.id.t9_key_2:
+				appendImageSpan(R.drawable.keyboard_edit_2, 2);
+				break;
+			case R.id.t9_key_3:
+				appendImageSpan(R.drawable.keyboard_edit_3, 3);
+				break;
+			case R.id.t9_key_4:
+				appendImageSpan(R.drawable.keyboard_edit_4, 4);
+				break;
+			case R.id.t9_key_5:
+				appendImageSpan(R.drawable.keyboard_edit_5, 5);
+				break;
+			case R.id.t9_key_6:
+				appendImageSpan(R.drawable.keyboard_edit_6, 6);
+				break;
+			case R.id.t9_key_7:
+				appendImageSpan(R.drawable.keyboard_edit_7, 7);
+				break;
+			case R.id.t9_key_8:
+				appendImageSpan(R.drawable.keyboard_edit_8, 8);
+				break;
+			case R.id.t9_key_9:
+				appendImageSpan(R.drawable.keyboard_edit_9, 9);
+				break;
+			case R.id.t9_exit:
+				mT9KeyBoardWindow.dismiss();
+				break;
+			case R.id.t9_delete:
+				backDeleteImageSpan();
+				break;
+			default:
+				break;
+			}
+		}
+	};
 
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position,
@@ -537,6 +783,11 @@ public class TrackBrowserFragment extends Fragment implements
 		Log.i(TAG, "onLoadFinished");
 		mHasNewData = true;
 
+		mOriginalData.clear();
+		mOriginalData.addAll(data);
+		mShowData.clear();
+		mShowData.addAll(data);
+
 		// TODO SD卡拔出时，没有处理
 		mAdapter.setData(data);
 
@@ -653,6 +904,114 @@ public class TrackBrowserFragment extends Fragment implements
 		mView_Title.setBackgroundResource(R.drawable.button_backround_light);
 	}
 
+	// 处理搜索的相关函数------------------------------------------------------------------
+
+	/** T9键盘各数字键对应的正则表达式 */
+	private static String T9KEYS[] = { "", "", "[abc]", "[def]", "[ghi]",
+			"[jkl]", "[mno]", "[pqrs]", "[tuv]", "[wxyz]" };
+
+	/** 在搜索输入框末尾追加T9键的输入 */
+	private void appendImageSpan(int drawableResId, int keynum) {
+		Drawable drawable = getResources().getDrawable(drawableResId);
+		String insteadString = String.valueOf(keynum);
+		drawable.setBounds(0, 0, drawable.getIntrinsicWidth(),
+				drawable.getIntrinsicHeight());
+		// 需要处理的文本，[smile]是需要被替代的文本
+		SpannableString spannable = new SpannableString(insteadString);
+		// 要让图片替代指定的文字就要用ImageSpan
+		ImageSpan span = new ImageSpan(drawable, ImageSpan.ALIGN_BOTTOM);
+		// 开始替换，注意第2和第3个参数表示从哪里开始替换到哪里替换结束（start和end）
+		// 最后一个参数类似数学中的集合,[5,12)表示从5到12，包括5但不包括12
+		spannable.setSpan(span, 0, insteadString.length(),
+				Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+		Editable et = mView_SearchInput.getText();
+		int start = mView_SearchInput.getSelectionStart();
+		et.insert(start, spannable);
+		mView_SearchInput.setText(et);
+		mView_SearchInput.setSelection(start + spannable.length());
+	}
+
+	/** 回退删除搜索框的T9键的输入 */
+	private void backDeleteImageSpan() {
+		Editable et = mView_SearchInput.getText();
+		if (!et.toString().equals("")) {
+			et = et.delete(et.length() - 1, et.length());
+			mView_SearchInput.setText(et);
+			mView_SearchInput.setSelection(et.length());
+		}
+	}
+
+	/**
+	 * T9键盘简拼、全拼搜索
+	 * 
+	 * @param str
+	 *            输入的字符串，均为2~9的数字
+	 */
+	private void pinyinSearch(String input) {
+		mShowData.clear();
+		StringBuffer sb = new StringBuffer();
+
+		// 对特殊非字母、非数字、非汉字的字符支持不理想，有待改进
+
+		// 获取每一个数字对应的字母列表并以'-'隔开
+		for (int i = 0; i < input.length(); i++) {
+			if (mIsT9Keyboard && input.charAt(i) <= '9'
+					&& input.charAt(i) >= '0') {
+				sb.append(T9KEYS[input.charAt(i) - '0']);
+			} else {
+				sb.append(input.charAt(i));
+			}
+			if (i != input.length() - 1) {
+				sb.append("-");
+			}
+		}
+
+		// 遍历原始数据集合，寻找匹配的条目
+		for (TrackInfo item : mOriginalData) {
+			if (contains(sb.toString(), item.getTitleKey(), input)) {
+				mShowData.add(item);
+			} else if (contains(sb.toString(), item.getArtistKey(), input)) {
+				mShowData.add(item);
+			}
+		}
+		mAdapter.setData(mShowData);
+	}
+
+	/**
+	 * 检查所给的搜索索引值是否匹配给定正则表达式
+	 * 
+	 * @param regexp
+	 *            正则表达式
+	 * @param key
+	 *            索引值
+	 * @param input
+	 *            搜索条件是否大于6个字符
+	 * @return
+	 */
+	private boolean contains(String regexp, String key, String input) {
+		if (TextUtils.isEmpty(key)) {
+			return false;
+		}
+		// 搜索条件大于6个字符将不按拼音首字母查询
+		if (input.length() < 6) {
+			// 根据首字母进行模糊查询
+			Pattern pattern = Pattern.compile(regexp.toUpperCase().replace("-",
+					"[*+a-z]*"));
+			Matcher matcher = pattern.matcher(key);
+
+			if (matcher.find()) {
+				return true;
+			}
+		}
+
+		// 根据全拼查询
+		Pattern pattern = Pattern.compile(regexp.replace("-", ""),
+				Pattern.CASE_INSENSITIVE);
+		Matcher matcher = pattern.matcher(key);
+		return matcher.find();
+	}
+
+	// 删除提醒对话框处理------------------------------------------------------------------
 	private DialogInterface.OnClickListener mDeletePromptListener = new DialogInterface.OnClickListener() {
 
 		@Override
@@ -747,4 +1106,5 @@ public class TrackBrowserFragment extends Fragment implements
 		}
 
 	};
+
 }

@@ -1,5 +1,7 @@
 package com.lq.entity;
 
+import com.lq.util.StringHelper;
+
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -30,8 +32,22 @@ public class TrackInfo implements Parcelable {
 	/** 时长 */
 	private long duration;
 
+	/** 歌曲标题索引，用来搜索、排序用 */
+	private String title_key;
+
+	/** 艺术家名称索引，用来搜索、排序用 */
+	private String artist_key;
+
 	public TrackInfo() {
 
+	}
+
+	public String getArtistKey() {
+		return artist_key;
+	}
+
+	public String getTitleKey() {
+		return title_key;
 	}
 
 	@Override
@@ -71,6 +87,7 @@ public class TrackInfo implements Parcelable {
 
 	public void setTitle(String title) {
 		this.title = title;
+		this.title_key = StringHelper.getPingYin(title);
 	}
 
 	public String getAlbum() {
@@ -103,6 +120,7 @@ public class TrackInfo implements Parcelable {
 
 	public void setArtist(String artist) {
 		this.artist = artist;
+		this.artist_key = StringHelper.getPingYin(artist);
 	}
 
 	public String getDisplayName() {

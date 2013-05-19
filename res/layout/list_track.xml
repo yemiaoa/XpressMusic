@@ -84,6 +84,54 @@
             </LinearLayout>
         </LinearLayout>
 
+        <RelativeLayout
+            android:id="@+id/search_bar"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:background="@color/grey_dark_light2"
+            android:gravity="center_vertical"
+            android:visibility="gone" >
+
+            <ImageView
+                android:id="@+id/keyboard_switcher"
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:contentDescription="@string/app_name"
+                android:scaleType="centerInside"
+                android:src="@drawable/keyboard_switch_9" />
+
+            <Button
+                android:id="@+id/cancel_search"
+                android:layout_width="50dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:layout_marginBottom="6dp"
+                android:layout_marginLeft="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/button_pressed_blue_backround"
+                android:gravity="center"
+                android:text="@string/cancel"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <EditText
+                android:id="@+id/search_input"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_centerVertical="true"
+                android:layout_marginBottom="2dp"
+                android:layout_marginTop="2dp"
+                android:layout_toLeftOf="@id/cancel_search"
+                android:layout_toRightOf="@id/keyboard_switcher"
+                android:ellipsize="end"
+                android:hint="@string/please_input_jianpin_or_quanpin"
+                android:textSize="14sp" />
+        </RelativeLayout>
+
         <ListView
             android:id="@+id/listview_local_music"
             android:layout_width="match_parent"

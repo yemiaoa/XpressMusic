@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="@color/holo_blue_light" />
+
+    <TableLayout
+        android:id="@+id/t9_grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/grey_white"
+        android:divider="@color/grey_dark_light"
+        android:orientation="vertical"
+        android:showDividers="middle" >
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:divider="@color/grey_dark_light"
+            android:gravity="center"
+            android:showDividers="middle" >
+
+            <ImageButton
+                style="@style/t9_key"
+                android:background="@color/transparent"
+                android:clickable="false"
+                android:contentDescription="@string/app_name" />
+
+            <ImageButton
+                android:id="@+id/t9_key_2"
+                style="@style/t9_key"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/key_default_2" />
+
+            <ImageButton
+                android:id="@+id/t9_key_3"
+                style="@style/t9_key"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/key_default_3" />
+
+            <ImageButton
+                android:id="@+id/t9_delete"
+                style="@style/t9_key"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/key_default_del" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:divider="@color/grey_dark_light"
+            android:gravity="center"
+            android:showDividers="middle" >
+
+            <ImageButton
+                android:id="@+id/t9_key_4"
+                style="@style/t9_key"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/key_default_4" />
+
+            <ImageButton
+                android:id="@+id/t9_key_5"
+                style="@style/t9_key"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/key_default_5" />
+
+            <ImageButton
+                android:id="@+id/t9_key_6"
+                style="@style/t9_key"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/key_default_6" />
+
+            <ImageButton
+                style="@style/t9_key"
+                android:background="@color/transparent"
+                android:clickable="false"
+                android:contentDescription="@string/app_name" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:divider="@color/grey_dark_light"
+            android:gravity="center"
+            android:showDividers="middle" >
+
+            <ImageButton
+                android:id="@+id/t9_key_7"
+                style="@style/t9_key"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/key_default_7" />
+
+            <ImageButton
+                android:id="@+id/t9_key_8"
+                style="@style/t9_key"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/key_default_8" />
+
+            <ImageButton
+                android:id="@+id/t9_key_9"
+                style="@style/t9_key"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/key_default_9" />
+
+            <ImageButton
+                android:id="@+id/t9_exit"
+                style="@style/t9_key"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/key_default_exit" />
+        </TableRow>
+    </TableLayout>
+
+</LinearLayout>

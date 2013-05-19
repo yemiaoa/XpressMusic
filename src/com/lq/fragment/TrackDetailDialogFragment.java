@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import com.lq.activity.R;
 import com.lq.entity.TrackInfo;
-import com.lq.util.CharHelper;
+import com.lq.util.StringHelper;
 import com.lq.util.TimeHelper;
 
 public class TrackDetailDialogFragment extends DialogFragment {
@@ -37,7 +37,7 @@ public class TrackDetailDialogFragment extends DialogFragment {
 		args.putString(SONG_DURATION,
 				TimeHelper.milliSecondsToFormatTimeString(track.getDuration()));
 		args.putString(ARTIST, track.getArtist());
-		args.putString(FILE_SIZE, CharHelper.bytesToMB(track.getSize()));
+		args.putString(FILE_SIZE, StringHelper.bytesToMB(track.getSize()));
 		args.putString(FILE_PATH, track.getData());
 		f.setArguments(args);
 		return f;

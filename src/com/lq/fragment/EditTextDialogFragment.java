@@ -85,7 +85,9 @@ public class EditTextDialogFragment extends DialogFragment {
 		}
 		mView_et_PlaylistName.setText(content);
 		mView_et_PlaylistName.setHint(hint);
-
+		if (content != null) {
+			mView_et_PlaylistName.setSelection(content.length());
+		}
 		mAlertDialog = new AlertDialog.Builder(getActivity()).setTitle(title)
 				.setView(mView_et_PlaylistName)
 				.setPositiveButton(R.string.confirm, mPositiveClickListener)
@@ -124,10 +126,10 @@ public class EditTextDialogFragment extends DialogFragment {
 		dismiss();
 	}
 
-	public void setDialogStayShown(){
+	public void setDialogStayShown() {
 		setWindowShownWhenClickedButton(true);
 	}
-	
+
 	private DialogInterface.OnClickListener mPositiveClickListener = new DialogInterface.OnClickListener() {
 
 		@Override
