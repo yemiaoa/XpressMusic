@@ -387,6 +387,9 @@ public class TrackBrowserFragment extends Fragment implements
 		mView_MenuNavigation.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				if (mIsT9Keyboard) {
+					mT9KeyBoardWindow.dismiss();
+				}
 				mActivity.getSlidingMenu().showMenu();
 			}
 		});

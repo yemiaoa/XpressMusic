@@ -1,5 +1,7 @@
 package com.lq.fragment;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import android.app.Activity;
@@ -33,6 +35,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,10 +51,15 @@ import com.lq.loader.PlaylistInfoRetrieveLoader;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.util.GlobalConstant;
+import com.lq.util.StringHelper;
 
 public class PlaylistBrowserFragment extends Fragment implements
 		LoaderCallbacks<List<PlaylistInfo>> {
 	private final String TAG = this.getClass().getSimpleName();
+
+	private final String SORT_ORDER = "sort_order";
+	private final int SORT_ORDER_CREATED_TIME = 1;
+	private final int SORT_ORDER_MODIFIED_TIME = 2;
 
 	private final int PLAYLIST_RETRIEVE_LOADER = 0;
 	private final int TRACK_RETRIEVE_LOADER = 1;
@@ -66,6 +74,7 @@ public class PlaylistBrowserFragment extends Fragment implements
 	private TextView mView_Title = null;
 	private View mView_CreatePlaylist = null;
 	private ListView mView_ListView = null;
+	private PopupMenu mOverflowPopupMenu = null;
 
 	private PlaylistAdapter mAdapter = null;
 	private MainContentActivity mActivity = null;
@@ -107,7 +116,10 @@ public class PlaylistBrowserFragment extends Fragment implements
 		mView_CreatePlaylist = (View) rootView.findViewById(R.id.add_playlist);
 		mView_MoreFunctions = (ImageView) rootView
 				.findViewById(R.id.more_functions);
-		mView_MoreFunctions.setVisibility(View.GONE);
+		// TODO 加载菜单
+		mOverflowPopupMenu = new PopupMenu(getActivity(), mView_MoreFunctions);
+		mOverflowPopupMenu.getMenuInflater().inflate(
+				R.menu.popup_playlist_list, mOverflowPopupMenu.getMenu());
 		return rootView;
 	}
 
@@ -274,13 +286,70 @@ public class PlaylistBrowserFragment extends Fragment implements
 						"createNewPlaylist");
 			}
 		});
+
+		mView_MoreFunctions.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				mOverflowPopupMenu.show();
+			}
+		});
+
+		mOverflowPopupMenu
+				.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+					public boolean onMenuItemClick(MenuItem item) {
+						Bundle args;
+						switch (item.getItemId()) {
+						case R.id.sort_by_playlist_name:
+							Collections.sort(mAdapter.getData(),
+									mPlaylistNameComparator);
+							mAdapter.notifyDataSetChanged();
+							break;
+						case R.id.sort_by_playlist_music_count:
+							Collections.sort(mAdapter.getData(),
+									mPlaylistSongCountComparator);
+							mAdapter.notifyDataSetChanged();
+							break;
+						case R.id.sort_by_playlist_created_time:
+							args = new Bundle();
+							args.putInt(SORT_ORDER, SORT_ORDER_CREATED_TIME);
+							getLoaderManager().restartLoader(
+									PLAYLIST_RETRIEVE_LOADER, args,
+									PlaylistBrowserFragment.this);
+							break;
+						case R.id.sort_by_playlist_modified_time:
+							args = new Bundle();
+							args.putInt(SORT_ORDER, SORT_ORDER_MODIFIED_TIME);
+							getLoaderManager().restartLoader(
+									PLAYLIST_RETRIEVE_LOADER, args,
+									PlaylistBrowserFragment.this);
+							break;
+						default:
+							break;
+						}
+						return true;
+					}
+				});
 	}
 
 	@Override
 	public Loader<List<PlaylistInfo>> onCreateLoader(int id, Bundle args) {
 		Log.i(TAG, "onCreateLoader");
-
-		return new PlaylistInfoRetrieveLoader(getActivity(), null, null, null);
+		String sortOrder = null;
+		if (args != null) {
+			switch (args.getInt(SORT_ORDER, -1)) {
+			case SORT_ORDER_CREATED_TIME:
+				sortOrder = Playlists.DATE_ADDED;
+				break;
+			case SORT_ORDER_MODIFIED_TIME:
+				sortOrder = Playlists.DATE_MODIFIED;
+				break;
+			default:
+				break;
+			}
+		}
+		return new PlaylistInfoRetrieveLoader(getActivity(), null, null,
+				sortOrder);
 	}
 
 	@Override
@@ -420,6 +489,44 @@ public class PlaylistBrowserFragment extends Fragment implements
 			if (mMusicServiceBinder != null) {
 				// 数据载入完毕，追加到当前播放列表后
 				mMusicServiceBinder.appendToCurrentPlayList(data);
+			}
+		}
+	};
+
+	// 按歌曲数量倒序排序
+	private Comparator<PlaylistInfo> mPlaylistSongCountComparator = new Comparator<PlaylistInfo>() {
+		@Override
+		public int compare(PlaylistInfo lhs, PlaylistInfo rhs) {
+			if (lhs.getNumOfMembers() > rhs.getNumOfMembers()) {
+				return -1;
+			} else if (lhs.getNumOfMembers() < rhs.getNumOfMembers()) {
+				return 1;
+			} else {
+				return 0;
+			}
+		}
+	};
+
+	// 按播放列表名称顺序排序
+	private Comparator<PlaylistInfo> mPlaylistNameComparator = new Comparator<PlaylistInfo>() {
+		char first_l, first_r;
+
+		@Override
+		public int compare(PlaylistInfo lhs, PlaylistInfo rhs) {
+			first_l = lhs.getPlaylistName().charAt(0);
+			first_r = rhs.getPlaylistName().charAt(0);
+			if (StringHelper.checkType(first_l) == StringHelper.CharType.CHINESE) {
+				first_l = StringHelper.getPinyinFirstLetter(first_l);
+			}
+			if (StringHelper.checkType(first_r) == StringHelper.CharType.CHINESE) {
+				first_r = StringHelper.getPinyinFirstLetter(first_r);
+			}
+			if (first_l > first_r) {
+				return 1;
+			} else if (first_l < first_r) {
+				return -1;
+			} else {
+				return 0;
 			}
 		}
 	};

@@ -102,7 +102,8 @@ public class ArtistBrowserFragment extends Fragment implements
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
-				if (getParentFragment() instanceof FrameLocalMusicFragment) {
+				if (getParentFragment() instanceof FrameLocalMusicFragment
+						|| getParentFragment() instanceof FrameArtistFragment) {
 					Bundle data = new Bundle();
 					data.putParcelable(ArtistInfo.class.getSimpleName(),
 							mAdapter.getData().get(position));

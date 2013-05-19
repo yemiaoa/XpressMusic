@@ -39,22 +39,25 @@ public class MenuFragment extends ListFragment {
 		case 0:// TODO 本地音乐
 			newContent = FrameLocalMusicFragment.class.getName();
 			break;
-		case 1:// TODO 喜爱
+		case 1:// TODO 歌手
+			newContent = FrameArtistFragment.class.getName();
+			break;
+		case 2:// TODO 专辑
 			newContent = ColorFragment.class.getName();
 			break;
-		case 2:// TODO 收藏列表
+		case 3:// TODO 文件夹
+			newContent = FrameFolderFragment.class.getName();
+			break;
+		case 4:// TODO 收藏列表
 			newContent = FramePlaylistFragment.class.getName();
 			break;
-		case 3:// TODO 最近播放
+		case 5:// TODO 选项
 			newContent = ColorFragment.class.getName();
 			break;
-		case 4:// TODO 选项
+		case 6:// TODO 意见反馈
 			newContent = ColorFragment.class.getName();
 			break;
-		case 5:// TODO 意见反馈
-			newContent = ColorFragment.class.getName();
-			break;
-		case 6:// TODO 退出
+		case 7:// TODO 退出
 			((MainContentActivity) getActivity()).exit();
 			break;
 		}

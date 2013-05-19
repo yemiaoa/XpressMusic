@@ -136,6 +136,7 @@
             android:id="@+id/listview_local_music"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layoutAnimation="@anim/list_anim_layout"
             android:cacheColorHint="#00000000"
             android:fastScrollEnabled="true" >
         </ListView>

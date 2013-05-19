@@ -101,7 +101,8 @@ public class FolderBrowserFragment extends Fragment implements
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
-				if (getParentFragment() instanceof FrameLocalMusicFragment) {
+				if (getParentFragment() instanceof FrameLocalMusicFragment
+						|| getParentFragment() instanceof FrameFolderFragment) {
 					Bundle data = new Bundle();
 					data.putParcelable(FolderInfo.class.getSimpleName(),
 							mAdapter.getData().get(position));
@@ -167,8 +168,8 @@ public class FolderBrowserFragment extends Fragment implements
 				mOverflowPopupMenu.show();
 			}
 		});
-		
-		if(getParentFragment() instanceof FrameLocalMusicFragment){
+
+		if (getParentFragment() instanceof FrameLocalMusicFragment) {
 			setTitleLeftDrawable();
 		}
 	}
@@ -207,6 +208,16 @@ public class FolderBrowserFragment extends Fragment implements
 		mAdapter.setData(null);
 	}
 
+	private void setTitleLeftDrawable() {
+		mView_Title.setClickable(true);
+		Drawable title_drawable = getResources().getDrawable(
+				R.drawable.btn_titile_back);
+		title_drawable.setBounds(0, 0, title_drawable.getIntrinsicWidth(),
+				title_drawable.getIntrinsicHeight());
+		mView_Title.setCompoundDrawables(title_drawable, null, null, null);
+		mView_Title.setBackgroundResource(R.drawable.button_backround_light);
+	}
+
 	// 按歌曲数量倒序排序
 	private Comparator<FolderInfo> mFolderSongCountComparator = new Comparator<FolderInfo>() {
 		@Override
@@ -221,17 +232,6 @@ public class FolderBrowserFragment extends Fragment implements
 		}
 	};
 
-	private void setTitleLeftDrawable() {
-		mView_Title.setClickable(true);
-		Drawable title_drawable = getResources().getDrawable(
-				R.drawable.btn_titile_back);
-		title_drawable.setBounds(0, 0, title_drawable.getIntrinsicWidth(),
-				title_drawable.getIntrinsicHeight());
-		mView_Title.setCompoundDrawables(title_drawable, null, null, null);
-		mView_Title.setBackgroundResource(R.drawable.button_backround_light);
-	}
-
-	
 	// 按歌曲名称顺序排序
 	private Comparator<FolderInfo> mFolderNameComparator = new Comparator<FolderInfo>() {
 		char first_l, first_r;

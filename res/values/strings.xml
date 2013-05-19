@@ -22,6 +22,10 @@
     <string name="classify_by_folder">按文件夹分类</string>
     <string name="local_music">本地音乐</string>
     <string name="unknown_artist">未知艺术家</string>
+    <string name="sort_by_playlist_music_count">按歌曲数量排序</string>
+    <string name="sort_by_playlist_name">按名称排序</string>
+    <string name="sort_by_playlist_created_time">按创建时间排序</string>
+    <string name="sort_by_playlist_modified_time">按修改时间排序</string>
     <string name="sort_by_folder_music_count">按歌曲数量排序</string>
     <string name="sort_by_folder_name">按文件夹名称排序</string>
     <string name="sort_by_last_modify_time">按上次修改时间排序</string>
@@ -63,7 +67,7 @@
     <string name="search">查找</string>
     <string name="has_selected">已选</string>
     <string name="a_piece_of_song">首歌</string>
-    <string name="play_later">稍后播</string>
+    <string name="play_later">稍后播放</string>
     <string name="add_songs">添加歌曲</string>
     <string name="please_select_play_song_first">请先选择要播放的歌曲</string>
     <string name="please_select_delete_song_first">请先选择要删除的歌曲</string>
