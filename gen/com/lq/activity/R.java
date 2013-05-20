@@ -321,11 +321,11 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int num_of_tracks=0x7f06001f;
         public static final int play_button_back=0x7f06000b;
         public static final int play_current_time=0x7f060010;
-        public static final int play_favorite=0x7f06000d;
         public static final int play_indicator=0x7f06002c;
         public static final int play_list=0x7f060016;
         public static final int play_list_later=0x7f060049;
         public static final int play_mode=0x7f060012;
+        public static final int play_more_functions=0x7f06000d;
         public static final int play_playbutton=0x7f060014;
         public static final int play_playnext=0x7f060015;
         public static final int play_playprevious=0x7f060013;

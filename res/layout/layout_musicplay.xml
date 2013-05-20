@@ -35,13 +35,14 @@
             android:textIsSelectable="false" />
 
         <ImageButton
-            android:id="@+id/play_favorite"
+            android:id="@+id/play_more_functions"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_alignParentRight="true"
+            android:alpha="0.8"
             android:background="@drawable/button_backround_deep"
             android:contentDescription="@string/app_name"
-            android:src="@drawable/button_favorite" />
+            android:src="@drawable/overflow_white" />
     </RelativeLayout>
 
     <LinearLayout

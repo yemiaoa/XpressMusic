@@ -11,9 +11,12 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -36,6 +39,9 @@ public class FolderBrowserFragment extends Fragment implements
 	private static final String TAG = FolderBrowserFragment.class
 			.getSimpleName();
 	private final int FOLDER_RETRIEVE_LOADER = 0;
+
+	/** 手势检测 */
+	private GestureDetector mDetector = null;
 
 	private ImageView mView_MenuNavigation = null;
 	private ImageView mView_MoreFunctions = null;
@@ -94,6 +100,31 @@ public class FolderBrowserFragment extends Fragment implements
 	}
 
 	private void initViewsSetting() {
+		// 设置滑动手势
+		mDetector = new GestureDetector(new SimpleOnGestureListener() {
+			@Override
+			public boolean onFling(MotionEvent e1, MotionEvent e2,
+					float velocityX, float velocityY) {
+				// 从右向左滑动
+				if (e1 != null && e2 != null) {
+					if (e1.getX() - e2.getX() > 120) {
+						mActivity.switchToPlayer();
+						return true;
+					}
+				}
+				return false;
+			}
+		});
+		View.OnTouchListener gestureListener = new View.OnTouchListener() {
+			public boolean onTouch(View v, MotionEvent event) {
+				if (mDetector.onTouchEvent(event)) {
+					return true;
+				}
+				return false;
+			}
+		};
+		mView_ListView.setOnTouchListener(gestureListener);
+
 		mAdapter = new FolderAdapter(getActivity());
 		mView_ListView.setAdapter(mAdapter);
 		mView_ListView.setOnItemClickListener(new OnItemClickListener() {

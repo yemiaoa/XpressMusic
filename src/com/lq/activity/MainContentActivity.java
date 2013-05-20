@@ -12,7 +12,10 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager.OnBackStackChangedListener;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 
 import com.lq.fragment.FrameLocalMusicFragment;
 import com.lq.fragment.MenuFragment;
@@ -30,6 +33,9 @@ public class MainContentActivity extends FragmentActivity implements
 
 	public static final int MESSAGE_SWITCH_TO_PLAY_IMAGE = 0;
 	public static final int MESSAGE_SWITCH_TO_PAUSE_IMAGE = 1;
+
+	/** 手势检测 */
+	private GestureDetector mDetector = null;
 
 	/** 侧滑菜单控件 */
 	private SlidingMenu mSlidingMenu = null;
@@ -54,6 +60,21 @@ public class MainContentActivity extends FragmentActivity implements
 		// 初始化SlidingMenu，并为其填充Fragment
 		initSlidingMenu();
 		initPopulateFragment();
+		// 设置滑动手势
+		mDetector = new GestureDetector(new SimpleOnGestureListener() {
+			@Override
+			public boolean onFling(MotionEvent e1, MotionEvent e2,
+					float velocityX, float velocityY) {
+				// 从左向右滑动
+				if (e1 != null && e2 != null) {
+					if (e1.getX() - e2.getX() > 120) {
+						switchToPlayer();
+						return true;
+					}
+				}
+				return false;
+			}
+		});
 	}
 
 	/** 设置SlidingMenu */
@@ -179,6 +200,11 @@ public class MainContentActivity extends FragmentActivity implements
 	}
 
 	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		return this.mDetector.onTouchEvent(event);
+	}
+
+	@Override
 	public void onBackPressed() {
 		if (mBackKeyPressedListeners.size() != 0) {
 			for (OnBackKeyPressedListener listener : mBackKeyPressedListeners) {
@@ -242,4 +268,5 @@ public class MainContentActivity extends FragmentActivity implements
 			mBackStackEntryCount--;
 		}
 	}
+
 }

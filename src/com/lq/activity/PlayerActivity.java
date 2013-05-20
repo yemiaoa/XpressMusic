@@ -13,6 +13,9 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
@@ -37,8 +40,11 @@ public class PlayerActivity extends FragmentActivity {
 
 	public static final int MSG_SET_LYRIC_INDEX = 1;
 
+	/** 手势检测 */
+	private GestureDetector mDetector = null;
+
 	private ImageButton mView_ib_back = null;
-	private ImageButton mView_ib_favorite = null;
+	private ImageButton mView_ib_more_functions = null;
 	private TextView mView_tv_songtitle = null;
 	private TextView mView_tv_current_time = null;
 	private TextView mView_tv_total_time = null;
@@ -117,7 +123,7 @@ public class PlayerActivity extends FragmentActivity {
 	protected void onCreate(android.os.Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		findViews();
-		initViews();
+		initViewsSetting();
 	};
 
 	@Override
@@ -150,8 +156,36 @@ public class PlayerActivity extends FragmentActivity {
 		}
 	}
 
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		return this.mDetector.onTouchEvent(event);
+	}
+
 	/** 对各个控件设置相关参数、监听器等 */
-	private void initViews() {
+	private void initViewsSetting() {
+		// 左滑切换至主页
+		mDetector = new GestureDetector(new SimpleOnGestureListener(){
+			@Override
+			public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+					float velocityY) {
+				// 从左向右滑动
+				if (e1.getX() - e2.getX() < -120) {
+					switchToMain();
+					return true;
+				}
+				return false;
+			}
+		});
+		View.OnTouchListener gestureListener = new View.OnTouchListener() {
+			public boolean onTouch(View v, MotionEvent event) {
+				if (mDetector.onTouchEvent(event)) {
+					return true;
+				}
+				return false;
+			}
+		};
+		mView_lv_lyricshow.setOnTouchListener(gestureListener);
+
 		mLyricAdapter = new LyricAdapter(this);
 		mView_lv_lyricshow.setAdapter(mLyricAdapter);
 		mView_lv_lyricshow.setEmptyView(mView_tv_lyric_empty);
@@ -320,7 +354,7 @@ public class PlayerActivity extends FragmentActivity {
 	private void findViews() {
 		setContentView(R.layout.layout_musicplay);
 		mView_ib_back = (ImageButton) findViewById(R.id.play_button_back);
-		mView_ib_favorite = (ImageButton) findViewById(R.id.play_favorite);
+		mView_ib_more_functions = (ImageButton) findViewById(R.id.play_more_functions);
 		mView_ib_list = (ImageButton) findViewById(R.id.play_list);
 		mView_ib_play_mode = (ImageButton) findViewById(R.id.play_mode);
 		mView_ib_play_next = (ImageButton) findViewById(R.id.play_playnext);
@@ -426,4 +460,5 @@ public class PlayerActivity extends FragmentActivity {
 							mView_lv_lyricshow.getHeight() / 2, 500);
 		}
 	};
+
 }

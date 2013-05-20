@@ -2,6 +2,8 @@ package com.lq.fragment;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,10 +34,13 @@ import android.text.style.ImageSpan;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
@@ -86,6 +91,9 @@ public class TrackBrowserFragment extends Fragment implements
 	private final int CONTEXT_MENU_CHECK_DETAIL = 2;
 	private final int CONTEXT_MENU_DELETE = 3;
 
+	/** 手势检测 */
+	private GestureDetector mDetector = null;
+
 	private String mSortOrder = Media.DEFAULT_SORT_ORDER;
 
 	private Bundle mCurrentPlayInfo = null;
@@ -125,8 +133,8 @@ public class TrackBrowserFragment extends Fragment implements
 	private ArtistInfo mArtistInfo = null;
 	private FolderInfo mFolderInfo = null;
 	private PlaylistInfo mPlaylistInfo = null;
-
 	private TrackInfo mToDeleteTrack = null;
+	private TrackInfo mPlayingTrack = null;
 
 	private InputMethodManager mInputMethodManager = null;
 
@@ -153,7 +161,6 @@ public class TrackBrowserFragment extends Fragment implements
 		super.onAttach(activity);
 		if (activity instanceof MainContentActivity) {
 			mActivity = (MainContentActivity) activity;
-			mActivity.registerBackKeyPressedListener(this);
 		}
 	}
 
@@ -241,6 +248,9 @@ public class TrackBrowserFragment extends Fragment implements
 		getActivity().bindService(
 				new Intent(getActivity(), MusicService.class),
 				mServiceConnection, Context.BIND_AUTO_CREATE);
+		if (mActivity instanceof MainContentActivity) {
+			mActivity.registerBackKeyPressedListener(this);
+		}
 	}
 
 	@Override
@@ -260,23 +270,35 @@ public class TrackBrowserFragment extends Fragment implements
 	public void onStop() {
 		Log.i(TAG, "onStop");
 		super.onStop();
-
+		mActivity.unregisterBackKeyPressedListener(this);
 		// Fragment不可见时，无需更新UI，取消服务绑定
 		mActivity.unbindService(mServiceConnection);
+		mMusicServiceBinder
+				.unregisterOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
+		mMusicServiceBinder = null;
 	}
 
 	@Override
 	public void onDetach() {
 		Log.i(TAG, "onDetach");
 		super.onDetach();
-		mActivity.unregisterBackKeyPressedListener(this);
-		mActivity = null;
 	}
 
 	@Override
 	public void onDestroy() {
 		Log.i(TAG, "onDestroy");
 		super.onDestroy();
+		mPlayingTrack = null;
+		mAdapter = null;
+		mActivity = null;
+		mArtistInfo = null;
+		mPlaylistInfo = null;
+		mFolderInfo = null;
+		mCurrentPlayInfo = null;
+		mShowData.clear();
+		mShowData = null;
+		mOriginalData.clear();
+		mOriginalData = null;
 	}
 
 	@Override
@@ -292,6 +314,31 @@ public class TrackBrowserFragment extends Fragment implements
 
 	/** 初始化各个视图组件的设置 */
 	private void initViewsSetting() {
+		// 设置滑动手势
+		mDetector = new GestureDetector(new SimpleOnGestureListener() {
+			@Override
+			public boolean onFling(MotionEvent e1, MotionEvent e2,
+					float velocityX, float velocityY) {
+				// 从右向左滑动
+				if (e1 != null && e2 != null) {
+					if (e1.getX() - e2.getX() > 120) {
+						mActivity.switchToPlayer();
+						return true;
+					}
+				}
+				return false;
+			}
+		});
+		View.OnTouchListener gestureListener = new View.OnTouchListener() {
+			public boolean onTouch(View v, MotionEvent event) {
+				if (mDetector.onTouchEvent(event)) {
+					return true;
+				}
+				return false;
+			}
+		};
+		mView_ListView.setOnTouchListener(gestureListener);
+
 		// ListView的设置-------------------------------------------------------------
 		// 创建一个空的适配器，用来显示加载的数据，适配器内容稍后由Loader填充
 		mAdapter = new TrackAdapter(getActivity());
@@ -588,6 +635,7 @@ public class TrackBrowserFragment extends Fragment implements
 		mT9KeyBoardWindow.setHeight(LayoutParams.WRAP_CONTENT);
 		mT9KeyBoardWindow.setContentView(t9Layout);
 		mT9KeyBoardWindow.setAnimationStyle(R.style.t9_window_anim);
+		// TODO 滑出主页菜单时，T9键盘并为随之消失
 
 		// 搜索输入框文本变化监听
 		mView_SearchInput.addTextChangedListener(new TextWatcher() {
@@ -595,7 +643,7 @@ public class TrackBrowserFragment extends Fragment implements
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before,
 					int count) {
-				// TODO 输入框文字改变时过滤歌曲列表
+				// 输入框文字改变时过滤歌曲列表
 				if (TextUtils.isEmpty(s)) {
 					mAdapter.setData(mOriginalData);
 				} else if (mIsT9Keyboard) {
@@ -615,7 +663,13 @@ public class TrackBrowserFragment extends Fragment implements
 
 			@Override
 			public void afterTextChanged(Editable s) {
-
+				if (mPlayingTrack != null) {
+					mAdapter.setSpecifiedIndicator(MusicService
+							.seekPosInListById(mAdapter.getData(),
+									mPlayingTrack.getId()));
+				} else {
+					mAdapter.setSpecifiedIndicator(-1);
+				}
 			}
 		});
 	}
@@ -791,6 +845,8 @@ public class TrackBrowserFragment extends Fragment implements
 		mShowData.clear();
 		mShowData.addAll(data);
 
+		Collections.sort(data, mTrackNameComparator);
+
 		// TODO SD卡拔出时，没有处理
 		mAdapter.setData(data);
 
@@ -954,7 +1010,7 @@ public class TrackBrowserFragment extends Fragment implements
 		mShowData.clear();
 		StringBuffer sb = new StringBuffer();
 
-		// 对特殊非字母、非数字、非汉字的字符支持不理想，有待改进
+		// XXX 对特殊非字母、非数字、非汉字的字符支持不理想，有待改进
 
 		// 获取每一个数字对应的字母列表并以'-'隔开
 		for (int i = 0; i < input.length(); i++) {
@@ -1094,6 +1150,7 @@ public class TrackBrowserFragment extends Fragment implements
 
 		@Override
 		public void onPlayNewSong(TrackInfo playingSong) {
+			mPlayingTrack = playingSong;
 			mAdapter.setSpecifiedIndicator(MusicService.seekPosInListById(
 					mAdapter.getData(), playingSong.getId()));
 		}
@@ -1108,6 +1165,30 @@ public class TrackBrowserFragment extends Fragment implements
 
 		}
 
+	};
+
+	// 按歌曲名称顺序排序
+	private Comparator<TrackInfo> mTrackNameComparator = new Comparator<TrackInfo>() {
+		char first_l, first_r;
+
+		@Override
+		public int compare(TrackInfo lhs, TrackInfo rhs) {
+			first_l = lhs.getTitleKey().charAt(0);
+			first_r = rhs.getTitleKey().charAt(0);
+			if (StringHelper.checkType(first_l) == StringHelper.CharType.CHINESE) {
+				first_l = StringHelper.getPinyinFirstLetter(first_l);
+			}
+			if (StringHelper.checkType(first_r) == StringHelper.CharType.CHINESE) {
+				first_r = StringHelper.getPinyinFirstLetter(first_r);
+			}
+			if (first_l > first_r) {
+				return 1;
+			} else if (first_l < first_r) {
+				return -1;
+			} else {
+				return 0;
+			}
+		}
 	};
 
 }
