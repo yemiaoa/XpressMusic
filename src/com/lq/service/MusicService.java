@@ -127,9 +127,16 @@ public class MusicService extends Service implements OnCompletionListener,
 		 * */
 		public void setCurrentPlayList(List<TrackInfo> list) {
 			mPlayList.clear();
-			mPlayList.addAll(list);
-			mHasPlayList = true;
-			mRequestPlayPos = 0;
+			if (list != null) {
+				mPlayList.addAll(list);
+				mHasPlayList = true;
+				mRequestPlayPos = 0;
+			} else {
+				mHasPlayList = false;
+				mRequestPlayPos = -1;
+				mRequsetPlayId = -1;
+			}
+
 		}
 
 		public void appendToCurrentPlayList(List<TrackInfo> list) {
@@ -171,6 +178,9 @@ public class MusicService extends Service implements OnCompletionListener,
 			bundle.putInt(GlobalConstant.CURRENT_PLAY_POSITION, currentPlayPos);
 			bundle.putInt(GlobalConstant.PLAYING_STATE, mState);
 			bundle.putInt(GlobalConstant.PLAY_MODE, mPlayMode);
+			bundle.putInt(GlobalConstant.PLAYING_SONG_POSITION_IN_LIST,
+					mPlayingSongPos);
+			bundle.putParcelableArrayList(GlobalConstant.DATA_LIST, mPlayList);
 
 			// 如果当前正在播放歌曲，通知LyricListener载入歌词
 			if (mState == State.Playing || mState == State.Paused) {
@@ -251,7 +261,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	private LyricListener mLyricListener = null;
 
 	// 当前播放列表
-	private List<TrackInfo> mPlayList = new ArrayList<TrackInfo>();
+	private ArrayList<TrackInfo> mPlayList = new ArrayList<TrackInfo>();
 
 	// 丢失音频焦点，我们为媒体播放设置一个低音量(1.0f为最大)，而不是停止播放
 	private static final float DUCK_VOLUME = 0.1f;
@@ -383,8 +393,8 @@ public class MusicService extends Service implements OnCompletionListener,
 		if (action.equals(ACTION_PLAY)) {
 			if (mHasPlayList) {
 				// 如果是列表中点击的
-				if (1 == intent.getIntExtra(GlobalConstant.CLICK_ITEM_IN_LIST,
-						0)) {
+				if (intent.getBooleanExtra(GlobalConstant.CLICK_ITEM_IN_LIST,
+						false)) {
 					// 获取到点击的歌曲的ID
 					mRequsetPlayId = intent.getLongExtra(
 							GlobalConstant.REQUEST_PLAY_ID, 0);

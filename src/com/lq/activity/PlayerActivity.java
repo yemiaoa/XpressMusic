@@ -54,7 +54,7 @@ public class PlayerActivity extends FragmentActivity {
 	private ImageButton mView_ib_play_previous = null;
 	private ImageButton mView_ib_play_or_pause = null;
 	private ImageButton mView_ib_play_next = null;
-	private ImageButton mView_ib_list = null;
+	private ImageButton mView_ib_playqueue = null;
 	private ListView mView_lv_lyricshow = null;
 
 	private LyricAdapter mLyricAdapter = null;
@@ -163,11 +163,12 @@ public class PlayerActivity extends FragmentActivity {
 
 	/** 对各个控件设置相关参数、监听器等 */
 	private void initViewsSetting() {
+		// 手势设置----------------------------------------------
 		// 左滑切换至主页
-		mDetector = new GestureDetector(new SimpleOnGestureListener(){
+		mDetector = new GestureDetector(new SimpleOnGestureListener() {
 			@Override
-			public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
-					float velocityY) {
+			public boolean onFling(MotionEvent e1, MotionEvent e2,
+					float velocityX, float velocityY) {
 				// 从左向右滑动
 				if (e1.getX() - e2.getX() < -120) {
 					switchToMain();
@@ -186,17 +187,20 @@ public class PlayerActivity extends FragmentActivity {
 		};
 		mView_lv_lyricshow.setOnTouchListener(gestureListener);
 
+		// 歌词秀设置---------------------------------------------------------------
 		mLyricAdapter = new LyricAdapter(this);
 		mView_lv_lyricshow.setAdapter(mLyricAdapter);
 		mView_lv_lyricshow.setEmptyView(mView_tv_lyric_empty);
 		mView_lv_lyricshow.startAnimation(AnimationUtils.loadAnimation(this,
 				android.R.anim.fade_in));
 
+		// 当前播放信息-----------------------------------------------------
 		mView_tv_current_time.setText(TimeHelper
 				.milliSecondsToFormatTimeString(0));
 		mView_tv_total_time.setText(TimeHelper
 				.milliSecondsToFormatTimeString(0));
 
+		// 回退按键----------------------------------------------------------
 		mView_ib_back.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -204,6 +208,8 @@ public class PlayerActivity extends FragmentActivity {
 			}
 		});
 
+		// 播放控制-----------------------------------------------------------------
+		// 播放模式--
 		mView_ib_play_mode.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -213,6 +219,7 @@ public class PlayerActivity extends FragmentActivity {
 			}
 		});
 
+		// 上一首--
 		mView_ib_play_previous.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -221,6 +228,7 @@ public class PlayerActivity extends FragmentActivity {
 			}
 		});
 
+		// 播放、暂停
 		mView_ib_play_or_pause.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -234,6 +242,7 @@ public class PlayerActivity extends FragmentActivity {
 			}
 		});
 
+		// 下一首--
 		mView_ib_play_next.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -242,6 +251,7 @@ public class PlayerActivity extends FragmentActivity {
 			}
 		});
 
+		// 可拖动的进度条
 		mView_sb_song_progress
 				.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
@@ -272,6 +282,27 @@ public class PlayerActivity extends FragmentActivity {
 						}
 					}
 				});
+
+		// 显示当前播放队列的按钮--
+		mView_ib_playqueue.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO 显示当前播放队列
+				startActivity(new Intent(PlayerActivity.this,
+						PlayQueueActivity.class));
+			}
+		});
+
+		// 播放界面的功能列表--
+		mView_ib_more_functions.setOnClickListener(new View.OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO 播放界面的功能列表
+
+			}
+		});
 	}
 
 	/**
@@ -355,7 +386,7 @@ public class PlayerActivity extends FragmentActivity {
 		setContentView(R.layout.layout_musicplay);
 		mView_ib_back = (ImageButton) findViewById(R.id.play_button_back);
 		mView_ib_more_functions = (ImageButton) findViewById(R.id.play_more_functions);
-		mView_ib_list = (ImageButton) findViewById(R.id.play_list);
+		mView_ib_playqueue = (ImageButton) findViewById(R.id.play_list);
 		mView_ib_play_mode = (ImageButton) findViewById(R.id.play_mode);
 		mView_ib_play_next = (ImageButton) findViewById(R.id.play_playnext);
 		mView_ib_play_previous = (ImageButton) findViewById(R.id.play_playprevious);

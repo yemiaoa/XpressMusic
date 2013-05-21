@@ -3,7 +3,7 @@
 
     <item
         android:id="@+id/sort_by_playlist_music_count"
-        android:title="@string/sort_by_playlist_music_count"/>
+        android:title="@string/sort_by_music_count"/>
     <item
         android:id="@+id/sort_by_playlist_name"
         android:title="@string/sort_by_playlist_name"/>

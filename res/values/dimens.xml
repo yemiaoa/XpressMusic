@@ -6,5 +6,10 @@
     <dimen name="slidingmenu_offset">60dp</dimen>
     <dimen name="list_padding">10dp</dimen>
     <dimen name="shadow_width">15dp</dimen>
+    <dimen name="playqueue_dialog_marginright">0dp</dimen>
+    <dimen name="playqueue_dialog_marginbottom">60dp</dimen>
+    <dimen name="playqueue_dialog_width">250dp</dimen>
+    <dimen name="playqueue_dialog_height">380dp</dimen>
+    <dimen name="playqueue_dialog_select_item_from_top">90dp</dimen>
 
 </resources>

@@ -633,6 +633,7 @@ public class TrackBrowserFragment extends Fragment implements
 		mT9KeyBoardWindow.setOutsideTouchable(false);
 		mT9KeyBoardWindow.setWidth(LayoutParams.MATCH_PARENT);
 		mT9KeyBoardWindow.setHeight(LayoutParams.WRAP_CONTENT);
+		mT9KeyBoardWindow.setFocusable(true);
 		mT9KeyBoardWindow.setContentView(t9Layout);
 		mT9KeyBoardWindow.setAnimationStyle(R.style.t9_window_anim);
 		// TODO 滑出主页菜单时，T9键盘并为随之消失
@@ -726,7 +727,7 @@ public class TrackBrowserFragment extends Fragment implements
 		Intent intent = new Intent(MusicService.ACTION_PLAY);
 		intent.putExtra(GlobalConstant.REQUEST_PLAY_ID,
 				mAdapter.getItem(position).getId());
-		intent.putExtra(GlobalConstant.CLICK_ITEM_IN_LIST, 1);
+		intent.putExtra(GlobalConstant.CLICK_ITEM_IN_LIST, true);
 		mActivity.startService(intent);
 		mActivity.switchToPlayer();
 	}

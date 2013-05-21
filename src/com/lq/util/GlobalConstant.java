@@ -12,6 +12,7 @@ public final class GlobalConstant {
 	public static final String TITLE = "title";
 	public static final String FIRST_VISIBLE_POSITION = "first_visible_position";
 	public static final String PLAYLIST_ID = "playlist_id";
+	public static final String PLAYING_SONG_POSITION_IN_LIST = "playing_song_position_in_list";
 	public static final int START_FROM_LOCAL_MUSIC = 1;
 	public static final int START_FROM_ARTIST = 2;
 	public static final int START_FROM_FOLER = 3;
