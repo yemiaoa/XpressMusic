@@ -23,8 +23,11 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.example.android.swipedismiss.SwipeDismissListViewTouchListener;
+import com.example.android.swipedismiss.SwipeDismissListViewTouchListener.OnDismissCallback;
 import com.lq.entity.TrackInfo;
 import com.lq.fragment.PromptDialogFragment;
+import com.lq.listener.OnPlaybackStateChangeListener;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.util.GlobalConstant;
@@ -36,12 +39,13 @@ public class PlayQueueActivity extends FragmentActivity implements
 	private ListView mListView = null;
 	private View mClear = null;
 	private TextView mTitle = null;
-	private ArrayList<TrackInfo> mDataList = null;
+	private ArrayList<TrackInfo> mDataList = new ArrayList<TrackInfo>();
 	private ArrayList<String> mShownList = new ArrayList<String>();
 	private int mPlayingSongPosition = -1;
 	private MyArrayAdapter mAdapter = null;
 	/** 与MusicService交互的类 */
 	private MusicPlaybackLocalBinder mMusicServiceBinder = null;
+	private TrackInfo mPlayingTrack = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +71,11 @@ public class PlayQueueActivity extends FragmentActivity implements
 		Log.i(TAG, "onStop");
 		super.onStop();
 		// 本界面不可见时取消绑定服务，服务端无需发送消息过来，不可见时无需更新界面
+		mMusicServiceBinder
+				.unregisterOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
 		unbindService(mServiceConnection);
+		mDataList = null;
+		mMusicServiceBinder = null;
 	}
 
 	@Override
@@ -76,7 +84,6 @@ public class PlayQueueActivity extends FragmentActivity implements
 		super.onDestroy();
 		mShownList.clear();
 		mShownList = null;
-		mDataList = null;
 	}
 
 	@Override
@@ -112,10 +119,18 @@ public class PlayQueueActivity extends FragmentActivity implements
 
 	/** 获取传递过来的数据 */
 	private void handleArguments() {
-		mDataList = mMusicServiceBinder.getCurrentPlayInfo()
+		Bundle args = mMusicServiceBinder.getCurrentPlayInfo();
+
+		List<TrackInfo> list = args
 				.getParcelableArrayList(GlobalConstant.DATA_LIST);
-		mPlayingSongPosition = mMusicServiceBinder.getCurrentPlayInfo().getInt(
-				GlobalConstant.PLAYING_SONG_POSITION_IN_LIST, -1);
+		if (list != null) {
+			mDataList.addAll(list);
+		}
+		mPlayingTrack = args.getParcelable(GlobalConstant.PLAYING_MUSIC_ITEM);
+		if (mPlayingTrack != null) {
+			mPlayingSongPosition = MusicService.seekPosInListById(mDataList,
+					mPlayingTrack.getId());
+		}
 		if (mDataList != null) {
 			for (int i = 0; i < mDataList.size(); i++) {
 				mShownList.add(mDataList.get(i).getTitle());
@@ -161,6 +176,22 @@ public class PlayQueueActivity extends FragmentActivity implements
 					getResources().getDimensionPixelSize(
 							R.dimen.playqueue_dialog_select_item_from_top));
 		}
+
+		// 设置ListView的滑动删除响应
+		// Create a ListView-specific touch listener. ListViews are given
+		// special treatment because
+		// by default they handle touches for their list items... i.e.
+		// they're in charge of drawing
+		// the pressed state (the list selector), handling list item clicks,
+		// etc.
+		SwipeDismissListViewTouchListener touchListener = new SwipeDismissListViewTouchListener(
+				mListView, mOnDismissCallback);
+		mListView.setOnTouchListener(touchListener);
+		// Setting this scroll listener is required to ensure that during
+		// ListView scrolling,
+		// we don't look for swipes.
+		mListView.setOnScrollListener(touchListener.makeScrollListener());
+
 	}
 
 	/** 与Service连接时交互的类 */
@@ -171,6 +202,9 @@ public class PlayQueueActivity extends FragmentActivity implements
 			// 保持对Service的Binder引用，以便调用Service提供给客户端的方法
 			mMusicServiceBinder = (MusicPlaybackLocalBinder) service;
 
+			mMusicServiceBinder
+					.registerOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
+
 			handleArguments();
 			initViewsSetting();
 		}
@@ -179,6 +213,89 @@ public class PlayQueueActivity extends FragmentActivity implements
 		public void onServiceDisconnected(ComponentName className) {
 			Log.i(TAG, "onServiceDisconnected");
 		}
+	};
+
+	// 删除提醒对话框处理------------------------------------------------------------------
+	private DialogInterface.OnClickListener mDeletePromptListener = new DialogInterface.OnClickListener() {
+
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+
+			startService(new Intent(MusicService.ACTION_STOP));
+			mMusicServiceBinder.setCurrentPlayList(null);
+			mShownList.clear();
+			mAdapter.notifyDataSetChanged();
+			mTitle.setText(getResources().getString(R.string.playqueue) + "(0)");
+			PlayQueueActivity.this.finish();
+		}
+	};
+
+	private OnDismissCallback mOnDismissCallback = new OnDismissCallback() {
+
+		@Override
+		public void onDismiss(ListView listView, int[] reverseSortedPositions) {
+			// ListView的条目消失时，删除播放队列中对应歌曲
+			Log.i("test", "" + reverseSortedPositions.length);
+			for (int position : reverseSortedPositions) {
+				if (mAdapter != null && mAdapter.getCount() > 0) {
+					// 删除ListView中对应项
+					mAdapter.remove(mAdapter.getItem(position));
+					// 删除Service中保存的对应项
+					mMusicServiceBinder.removeSongFromCurrenPlaylist(mDataList
+							.get(position).getId());
+					// 删除数据源中对应项
+					mDataList.remove(position);
+					// 如果删除的是正在播放的歌曲，播放下一首歌
+					if (position == mPlayingSongPosition) {
+						startService(new Intent(MusicService.ACTION_NEXT));
+					}
+					// 更新当前播放位置
+					if (position < mPlayingSongPosition) {
+						mPlayingSongPosition--;
+					}
+					// 更新标题
+					mTitle.setText(getResources().getString(R.string.playqueue)
+							+ "(" + mAdapter.getCount() + ")");
+				}
+			}
+			mAdapter.notifyDataSetChanged();
+		}
+
+	};
+	private OnPlaybackStateChangeListener mOnPlaybackStateChangeListener = new OnPlaybackStateChangeListener() {
+
+		@Override
+		public void onMusicPlayed() {
+
+		}
+
+		@Override
+		public void onMusicPaused() {
+
+		}
+
+		@Override
+		public void onMusicStopped() {
+
+		}
+
+		@Override
+		public void onPlayNewSong(TrackInfo playingSong) {
+			mPlayingSongPosition = MusicService.seekPosInListById(mDataList,
+					playingSong.getId());
+			mAdapter.notifyDataSetChanged();
+		}
+
+		@Override
+		public void onPlayModeChanged(int playMode) {
+
+		}
+
+		@Override
+		public void onPlayProgressUpdate(int currentMillis) {
+
+		}
+
 	};
 
 	class MyArrayAdapter extends ArrayAdapter<String> {
@@ -203,17 +320,4 @@ public class PlayQueueActivity extends FragmentActivity implements
 		}
 	}
 
-	// 删除提醒对话框处理------------------------------------------------------------------
-	private DialogInterface.OnClickListener mDeletePromptListener = new DialogInterface.OnClickListener() {
-
-		@Override
-		public void onClick(DialogInterface dialog, int which) {
-
-			startService(new Intent(MusicService.ACTION_STOP));
-			mMusicServiceBinder.setCurrentPlayList(null);
-			mShownList.clear();
-			mAdapter.notifyDataSetChanged();
-			mTitle.setText(getResources().getString(R.string.playqueue) + "(0)");
-		}
-	};
 }

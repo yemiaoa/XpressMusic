@@ -139,6 +139,7 @@ public class MusicService extends Service implements OnCompletionListener,
 
 		}
 
+		/** 向当前播放队列追加歌曲 */
 		public void appendToCurrentPlayList(List<TrackInfo> list) {
 			if (list == null) {
 				return;
@@ -165,6 +166,7 @@ public class MusicService extends Service implements OnCompletionListener,
 			}
 		}
 
+		/** 获取当前播放的信息 */
 		public Bundle getCurrentPlayInfo() {
 			Bundle bundle = new Bundle();
 			TrackInfo item = null;
@@ -183,7 +185,7 @@ public class MusicService extends Service implements OnCompletionListener,
 			bundle.putParcelableArrayList(GlobalConstant.DATA_LIST, mPlayList);
 
 			// 如果当前正在播放歌曲，通知LyricListener载入歌词
-			if (mState == State.Playing || mState == State.Paused) {
+			if (mPlayingSong != null && mState != State.Stopped) {
 				loadLyric(mPlayingSong.getData());
 				mLyricLoadHelper.notifyTime(mMediaPlayer.getCurrentPosition());
 			}
@@ -191,10 +193,14 @@ public class MusicService extends Service implements OnCompletionListener,
 			return bundle;
 		}
 
+		/** 从当前播放队列移除指定歌曲 */
 		public void removeSongFromCurrenPlaylist(long trackId) {
 			if (mHasPlayList) {
 				for (int i = 0; i < mPlayList.size(); i++) {
 					if (mPlayList.get(i).getId() == trackId) {
+						if (i < mPlayingSongPos) {
+							mRequestPlayPos = mPlayingSongPos--;
+						}
 						mPlayList.remove(i);
 						break;
 					}
@@ -202,9 +208,14 @@ public class MusicService extends Service implements OnCompletionListener,
 				if (mPlayList.size() == 0) {
 					mHasPlayList = false;
 					processStopRequest();
-				} else {
-					mRequestPlayPos--;
-					processNextRequest(true);
+				} else if (trackId == mPlayingSong.getId()) {
+					--mPlayingSongPos;
+					// mPlayingSong = mPlayList.get(mPlayingSongPos);
+					if (mPlayMode == PlayMode.SHUFFLE && mPlayQueue.size() != 0) {
+						mRequestPlayPos = mPlayQueue.pop();
+					} else {
+						mRequestPlayPos--;
+					}
 				}
 			}
 		}
@@ -279,7 +290,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	private boolean mHasLyric = false;
 
 	private TrackInfo mPlayingSong = null;
-	private int mPlayingSongPos = 0;
+	private int mPlayingSongPos = 0;// XXX 使用这个变量也许会有未知BUG
 	private int mRequestPlayPos = -1;
 	private long mRequsetPlayId = -1;
 
@@ -546,9 +557,11 @@ public class MusicService extends Service implements OnCompletionListener,
 
 		// 如果处于“停止”状态，直接播放下一首歌曲
 		// 如果处于“播放”或者“暂停”状态，并且请求播放的歌曲与当前播放的歌曲不同，则播放请求的歌曲
-		if (mState == State.Stopped
-				|| ((mState == State.Paused || mState == State.Playing) && mPlayingSong
-						.getId() != mRequsetPlayId)) {
+		if (mState != State.Stopped && mPlayingSong == null) {
+			mPlayingSongPos = mRequestPlayPos;
+			playSong();
+		} else if (mState == State.Stopped
+				|| (mState != State.Stopped && mPlayingSong.getId() != mRequsetPlayId)) {
 			mPlayingSongPos = mRequestPlayPos;
 			playSong();
 		} else if (mState == State.Paused
@@ -639,10 +652,10 @@ public class MusicService extends Service implements OnCompletionListener,
 				|| mState == State.Stopped) {
 			switch (mPlayMode) {
 			case PlayMode.REPEAT:
-				mRequestPlayPos = (mRequestPlayPos + 1) % mPlayList.size();
+				mRequestPlayPos = (mPlayingSongPos + 1) % mPlayList.size();
 				break;
 			case PlayMode.SEQUENTIAL:
-				mRequestPlayPos = (mRequestPlayPos + 1) % mPlayList.size();
+				mRequestPlayPos = (mPlayingSongPos + 1) % mPlayList.size();
 				if (mRequestPlayPos == 0) {
 					if (fromUser) {
 						mRequestPlayPos = 0;
@@ -655,13 +668,13 @@ public class MusicService extends Service implements OnCompletionListener,
 				}
 				break;
 			case PlayMode.SHUFFLE:
-				mPlayQueue.push(mRequestPlayPos);
+				mPlayQueue.push(mPlayingSongPos);
 				mRequestPlayPos = mRandom.nextInt(mPlayList.size());
 				break;
 			case PlayMode.REPEAT_SINGLE:
 				if (fromUser) {
 					// 如果是用户请求，就顺序播放下一首
-					mRequestPlayPos = (mRequestPlayPos + 1) % mPlayList.size();
+					mRequestPlayPos = (mPlayingSongPos + 1) % mPlayList.size();
 				} else {
 					// 如果不是用户请求，循环播放
 					mMediaPlayer.setLooping(true);

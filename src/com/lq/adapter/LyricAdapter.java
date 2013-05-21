@@ -35,7 +35,9 @@ public class LyricAdapter extends BaseAdapter {
 	/** 设置歌词，由外部调用， */
 	public void setLyric(List<LyricSentence> lyric) {
 		mLyricSentences.clear();
-		mLyricSentences.addAll(lyric);
+		if (lyric != null) {
+			mLyricSentences.addAll(lyric);
+		}
 		mIndexOfCurrentSentence = 0;
 		notifyDataSetChanged();
 	}
@@ -43,7 +45,14 @@ public class LyricAdapter extends BaseAdapter {
 	@Override
 	public boolean isEmpty() {
 		// 歌词为空时，让ListView显示EmptyView
-		return mLyricSentences.size() == 0;
+
+		if (mLyricSentences == null) {
+			return true;
+		} else if (mLyricSentences.size() == 0) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	@Override

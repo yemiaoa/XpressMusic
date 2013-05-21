@@ -1102,6 +1102,8 @@ public class TrackBrowserFragment extends Fragment implements
 						mMusicServiceBinder
 								.removeSongFromCurrenPlaylist(mToDeleteTrack
 										.getId());
+						getActivity().startService(
+								new Intent(MusicService.ACTION_NEXT));
 					}
 				}
 

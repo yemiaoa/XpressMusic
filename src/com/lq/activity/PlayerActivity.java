@@ -146,6 +146,7 @@ public class PlayerActivity extends FragmentActivity {
 		if (mMusicServiceBinder != null) {
 			mMusicServiceBinder
 					.unregisterOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
+			mMusicServiceBinder = null;
 		}
 	}
 
@@ -434,6 +435,7 @@ public class PlayerActivity extends FragmentActivity {
 			mView_tv_current_time.setText(TimeHelper
 					.milliSecondsToFormatTimeString(0));
 			mView_sb_song_progress.setProgress(0);
+			mLyricAdapter.setLyric(null);
 			mPlaySong = null;
 		}
 
