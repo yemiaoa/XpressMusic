@@ -23,13 +23,12 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.example.android.swipedismiss.SwipeDismissListViewTouchListener;
-import com.example.android.swipedismiss.SwipeDismissListViewTouchListener.OnDismissCallback;
 import com.lq.entity.TrackInfo;
 import com.lq.fragment.PromptDialogFragment;
 import com.lq.listener.OnPlaybackStateChangeListener;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
+import com.lq.service.MusicService.State;
 import com.lq.util.GlobalConstant;
 
 public class PlayQueueActivity extends FragmentActivity implements
@@ -46,6 +45,7 @@ public class PlayQueueActivity extends FragmentActivity implements
 	/** 与MusicService交互的类 */
 	private MusicPlaybackLocalBinder mMusicServiceBinder = null;
 	private TrackInfo mPlayingTrack = null;
+	private int mPlayingState = State.Stopped;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -120,12 +120,15 @@ public class PlayQueueActivity extends FragmentActivity implements
 	/** 获取传递过来的数据 */
 	private void handleArguments() {
 		Bundle args = mMusicServiceBinder.getCurrentPlayInfo();
+		mPlayingState = args
+				.getInt(GlobalConstant.PLAYING_STATE, State.Stopped);
 
 		List<TrackInfo> list = args
 				.getParcelableArrayList(GlobalConstant.DATA_LIST);
 		if (list != null) {
 			mDataList.addAll(list);
 		}
+
 		mPlayingTrack = args.getParcelable(GlobalConstant.PLAYING_MUSIC_ITEM);
 		if (mPlayingTrack != null) {
 			mPlayingSongPosition = MusicService.seekPosInListById(mDataList,
@@ -176,22 +179,6 @@ public class PlayQueueActivity extends FragmentActivity implements
 					getResources().getDimensionPixelSize(
 							R.dimen.playqueue_dialog_select_item_from_top));
 		}
-
-		// 设置ListView的滑动删除响应
-		// Create a ListView-specific touch listener. ListViews are given
-		// special treatment because
-		// by default they handle touches for their list items... i.e.
-		// they're in charge of drawing
-		// the pressed state (the list selector), handling list item clicks,
-		// etc.
-		SwipeDismissListViewTouchListener touchListener = new SwipeDismissListViewTouchListener(
-				mListView, mOnDismissCallback);
-		mListView.setOnTouchListener(touchListener);
-		// Setting this scroll listener is required to ensure that during
-		// ListView scrolling,
-		// we don't look for swipes.
-		mListView.setOnScrollListener(touchListener.makeScrollListener());
-
 	}
 
 	/** 与Service连接时交互的类 */
@@ -230,53 +217,21 @@ public class PlayQueueActivity extends FragmentActivity implements
 		}
 	};
 
-	private OnDismissCallback mOnDismissCallback = new OnDismissCallback() {
-
-		@Override
-		public void onDismiss(ListView listView, int[] reverseSortedPositions) {
-			// ListView的条目消失时，删除播放队列中对应歌曲
-			Log.i("test", "" + reverseSortedPositions.length);
-			for (int position : reverseSortedPositions) {
-				if (mAdapter != null && mAdapter.getCount() > 0) {
-					// 删除ListView中对应项
-					mAdapter.remove(mAdapter.getItem(position));
-					// 删除Service中保存的对应项
-					mMusicServiceBinder.removeSongFromCurrenPlaylist(mDataList
-							.get(position).getId());
-					// 删除数据源中对应项
-					mDataList.remove(position);
-					// 如果删除的是正在播放的歌曲，播放下一首歌
-					if (position == mPlayingSongPosition) {
-						startService(new Intent(MusicService.ACTION_NEXT));
-					}
-					// 更新当前播放位置
-					if (position < mPlayingSongPosition) {
-						mPlayingSongPosition--;
-					}
-					// 更新标题
-					mTitle.setText(getResources().getString(R.string.playqueue)
-							+ "(" + mAdapter.getCount() + ")");
-				}
-			}
-			mAdapter.notifyDataSetChanged();
-		}
-
-	};
 	private OnPlaybackStateChangeListener mOnPlaybackStateChangeListener = new OnPlaybackStateChangeListener() {
 
 		@Override
 		public void onMusicPlayed() {
-
+			mPlayingState = State.Playing;
 		}
 
 		@Override
 		public void onMusicPaused() {
-
+			mPlayingState = State.Paused;
 		}
 
 		@Override
 		public void onMusicStopped() {
-
+			mPlayingState = State.Stopped;
 		}
 
 		@Override

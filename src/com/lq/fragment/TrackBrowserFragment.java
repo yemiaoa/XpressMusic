@@ -94,7 +94,7 @@ public class TrackBrowserFragment extends Fragment implements
 	/** 手势检测 */
 	private GestureDetector mDetector = null;
 
-	private String mSortOrder = Media.DEFAULT_SORT_ORDER;
+	private String mSortOrder = Media.TITLE_KEY;
 
 	private Bundle mCurrentPlayInfo = null;
 
@@ -379,8 +379,8 @@ public class TrackBrowserFragment extends Fragment implements
 									MUSIC_RETRIEVE_LOADER, null,
 									TrackBrowserFragment.this);
 							break;
-						case R.id.sort_by_last_modify_time:
-							mSortOrder = Media.DATE_MODIFIED;
+						case R.id.sort_by_artist_name:
+							mSortOrder = Media.ARTIST_KEY;
 							getLoaderManager().restartLoader(
 									MUSIC_RETRIEVE_LOADER, null,
 									TrackBrowserFragment.this);
@@ -636,7 +636,6 @@ public class TrackBrowserFragment extends Fragment implements
 		mT9KeyBoardWindow.setFocusable(true);
 		mT9KeyBoardWindow.setContentView(t9Layout);
 		mT9KeyBoardWindow.setAnimationStyle(R.style.t9_window_anim);
-		// TODO 滑出主页菜单时，T9键盘并为随之消失
 
 		// 搜索输入框文本变化监听
 		mView_SearchInput.addTextChangedListener(new TextWatcher() {
@@ -846,7 +845,11 @@ public class TrackBrowserFragment extends Fragment implements
 		mShowData.clear();
 		mShowData.addAll(data);
 
-		Collections.sort(data, mTrackNameComparator);
+		if (mSortOrder.equals(Media.TITLE_KEY)) {
+			Collections.sort(data, mTrackNameComparator);
+		} else if (mSortOrder.equals(Media.ARTIST_KEY)) {
+			Collections.sort(data, mArtistNameComparator);
+		}
 
 		// TODO SD卡拔出时，没有处理
 		mAdapter.setData(data);
@@ -890,12 +893,11 @@ public class TrackBrowserFragment extends Fragment implements
 
 	/** 初始化当前播放信息 */
 	private void initCurrentPlayInfo(Bundle bundle) {
-		TrackInfo playingSong = bundle
-				.getParcelable(GlobalConstant.PLAYING_MUSIC_ITEM);
+		mPlayingTrack = bundle.getParcelable(GlobalConstant.PLAYING_MUSIC_ITEM);
 
-		if (playingSong != null) {
+		if (mPlayingTrack != null) {
 			mAdapter.setSpecifiedIndicator(MusicService.seekPosInListById(
-					mAdapter.getData(), playingSong.getId()));
+					mAdapter.getData(), mPlayingTrack.getId()));
 		} else {
 			mAdapter.setSpecifiedIndicator(-1);
 		}
@@ -1102,8 +1104,8 @@ public class TrackBrowserFragment extends Fragment implements
 						mMusicServiceBinder
 								.removeSongFromCurrenPlaylist(mToDeleteTrack
 										.getId());
-						getActivity().startService(
-								new Intent(MusicService.ACTION_NEXT));
+						// getActivity().startService(
+						// new Intent(MusicService.ACTION_NEXT));
 					}
 				}
 
@@ -1178,6 +1180,29 @@ public class TrackBrowserFragment extends Fragment implements
 		public int compare(TrackInfo lhs, TrackInfo rhs) {
 			first_l = lhs.getTitleKey().charAt(0);
 			first_r = rhs.getTitleKey().charAt(0);
+			if (StringHelper.checkType(first_l) == StringHelper.CharType.CHINESE) {
+				first_l = StringHelper.getPinyinFirstLetter(first_l);
+			}
+			if (StringHelper.checkType(first_r) == StringHelper.CharType.CHINESE) {
+				first_r = StringHelper.getPinyinFirstLetter(first_r);
+			}
+			if (first_l > first_r) {
+				return 1;
+			} else if (first_l < first_r) {
+				return -1;
+			} else {
+				return 0;
+			}
+		}
+	};
+	// 按歌曲名称顺序排序
+	private Comparator<TrackInfo> mArtistNameComparator = new Comparator<TrackInfo>() {
+		char first_l, first_r;
+
+		@Override
+		public int compare(TrackInfo lhs, TrackInfo rhs) {
+			first_l = lhs.getArtistKey().charAt(0);
+			first_r = rhs.getArtistKey().charAt(0);
 			if (StringHelper.checkType(first_l) == StringHelper.CharType.CHINESE) {
 				first_l = StringHelper.getPinyinFirstLetter(first_l);
 			}

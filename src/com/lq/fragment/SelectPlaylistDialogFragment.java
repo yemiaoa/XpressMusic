@@ -68,7 +68,7 @@ public class SelectPlaylistDialogFragment extends DialogFragment implements
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		Log.i(TAG, "onCreateDialog");
-		return new AlertDialog.Builder(getActivity())
+		AlertDialog dialog= new AlertDialog.Builder(getActivity())
 				.setTitle(R.string.add_to)
 				.setView(mView_rootView)
 				.setNegativeButton(R.string.cancel,
@@ -79,6 +79,7 @@ public class SelectPlaylistDialogFragment extends DialogFragment implements
 								dismiss();
 							}
 						}).create();
+		return dialog;
 	}
 
 	@Override

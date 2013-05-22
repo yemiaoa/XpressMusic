@@ -358,9 +358,9 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int song_count_of_playlist=0x7f060028;
         public static final int song_info=0x7f06002e;
         public static final int sort_by_artist=0x7f060068;
+        public static final int sort_by_artist_name=0x7f06006c;
         public static final int sort_by_folder_music_count=0x7f060069;
         public static final int sort_by_folder_name=0x7f06006a;
-        public static final int sort_by_last_modify_time=0x7f06006c;
         public static final int sort_by_music_count=0x7f060067;
         public static final int sort_by_music_name=0x7f06006b;
         public static final int sort_by_playlist_created_time=0x7f060071;
@@ -430,6 +430,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int popup_playlist_list=0x7f0b0003;
         public static final int popup_track_list=0x7f0b0004;
         public static final int track_operation=0x7f0b0005;
+        public static final int track_operations_in_player=0x7f0b0006;
     }
     public static final class string {
         public static final int a_piece_of_song=0x7f09003e;

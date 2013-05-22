@@ -11,21 +11,27 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.PopupMenu;
+import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.lq.adapter.LyricAdapter;
 import com.lq.entity.LyricSentence;
 import com.lq.entity.TrackInfo;
+import com.lq.fragment.SelectPlaylistDialogFragment;
+import com.lq.fragment.TrackDetailDialogFragment;
 import com.lq.listener.OnPlaybackStateChangeListener;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
@@ -56,6 +62,8 @@ public class PlayerActivity extends FragmentActivity {
 	private ImageButton mView_ib_play_next = null;
 	private ImageButton mView_ib_playqueue = null;
 	private ListView mView_lv_lyricshow = null;
+
+	private PopupMenu mOverflowPopupMenu = null;
 
 	private LyricAdapter mLyricAdapter = null;
 
@@ -289,7 +297,7 @@ public class PlayerActivity extends FragmentActivity {
 
 			@Override
 			public void onClick(View v) {
-				// TODO 显示当前播放队列
+				// 显示当前播放队列
 				startActivity(new Intent(PlayerActivity.this,
 						PlayQueueActivity.class));
 			}
@@ -300,10 +308,44 @@ public class PlayerActivity extends FragmentActivity {
 
 			@Override
 			public void onClick(View v) {
-				// TODO 播放界面的功能列表
-
+				// 弹出播放界面的功能列表
+				mOverflowPopupMenu.show();
 			}
 		});
+		mOverflowPopupMenu
+				.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+
+					@Override
+					public boolean onMenuItemClick(MenuItem item) {
+						if (mPlaySong != null) {
+							// 播放界面功能列表项目
+							DialogFragment df = null;
+
+							switch (item.getItemId()) {
+							case R.id.track_addto:
+								// 弹出选择播放列表的窗口
+								df = SelectPlaylistDialogFragment
+										.newInstance(new long[] { mPlaySong
+												.getId() });
+								df.show(getSupportFragmentManager(), null);
+								break;
+							case R.id.track_info:
+								// 弹出歌曲详细信息的窗口
+								if (mPlaySong != null) {
+									df = TrackDetailDialogFragment
+											.newInstance(mPlaySong);
+									df.show(getSupportFragmentManager(), null);
+								}
+								break;
+
+							default:
+								break;
+							}
+							return true;
+						}
+						return false;
+					}
+				});
 	}
 
 	/**
@@ -398,6 +440,12 @@ public class PlayerActivity extends FragmentActivity {
 		mView_tv_songtitle = (TextView) findViewById(R.id.play_song_title);
 		mView_lv_lyricshow = (ListView) findViewById(R.id.lyricshow);
 		mView_tv_lyric_empty = (TextView) findViewById(R.id.lyric_empty);
+		mOverflowPopupMenu = new PopupMenu(PlayerActivity.this,
+				mView_ib_more_functions);
+		mOverflowPopupMenu.getMenuInflater()
+				.inflate(R.menu.track_operations_in_player,
+						mOverflowPopupMenu.getMenu());
+
 	}
 
 	private void switchToMain() {

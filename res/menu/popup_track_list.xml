@@ -5,7 +5,7 @@
         android:id="@+id/sort_by_music_name"
         android:title="@string/sort_by_music_name"/>
     <item
-        android:id="@+id/sort_by_last_modify_time"
-        android:title="@string/sort_by_last_modify_time"/>
+        android:id="@+id/sort_by_artist_name"
+        android:title="@string/sort_by_artist"/>
 
 </menu>
