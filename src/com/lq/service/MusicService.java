@@ -16,6 +16,7 @@
 
 package com.lq.service;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -37,9 +38,9 @@ import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -57,6 +58,7 @@ import com.lq.receiver.MediaButtonReceiver;
 import com.lq.util.AudioFocusHelper;
 import com.lq.util.AudioFocusHelper.MusicFocusable;
 import com.lq.util.GlobalConstant;
+import com.lq.util.LyricDownloadManager;
 import com.lq.util.LyricLoadHelper;
 import com.lq.util.LyricLoadHelper.LyricListener;
 
@@ -80,6 +82,10 @@ public class MusicService extends Service implements OnCompletionListener,
 
 		public void registerLyricListener(LyricListener listener) {
 			mLyricListener = listener;
+		}
+
+		public void unRegisterLyricListener() {
+			mLyricListener = null;
 		}
 
 		/**
@@ -184,13 +190,17 @@ public class MusicService extends Service implements OnCompletionListener,
 					mPlayingSongPos);
 			bundle.putParcelableArrayList(GlobalConstant.DATA_LIST, mPlayList);
 
-			// 如果当前正在播放歌曲，通知LyricListener载入歌词
+			return bundle;
+		}
+
+		/** 如果当前正在播放歌曲，通知LyricListener载入歌词 */
+		public void requestLoadLyric() {
+			Log.i(TAG, "requestLoadLyric");
 			if (mPlayingSong != null && mState != State.Stopped) {
+				Log.i(TAG, "requestLoadLyric--->loadLyric");
 				loadLyric(mPlayingSong.getData());
 				mLyricLoadHelper.notifyTime(mMediaPlayer.getCurrentPosition());
 			}
-
-			return bundle;
 		}
 
 		/** 从当前播放队列移除指定歌曲 */
@@ -313,6 +323,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	private Random mRandom = new Random();
 
 	private LyricLoadHelper mLyricLoadHelper = new LyricLoadHelper();
+	private LyricDownloadManager mLyricDownloadManager = new LyricDownloadManager();
 
 	/** Service的Handler,可以延迟指定时间发送消息，而messenger不可以延时发送消息 */
 	private ServiceIncomingHandler mServiceHandler = new ServiceIncomingHandler(
@@ -452,6 +463,11 @@ public class MusicService extends Service implements OnCompletionListener,
 		if (mState != State.Stopped) {
 			processStopRequest();
 		}
+		mLyricListener = null;
+		mOnPlaybackStateChangeListeners.clear();
+		mOnPlaybackStateChangeListeners = null;
+		mPlayList.clear();
+		mPlayList = null;
 	}
 
 	/** MediaPlayer完成了一首歌曲的播放时调用此方法 */
@@ -777,7 +793,9 @@ public class MusicService extends Service implements OnCompletionListener,
 
 			mState = State.Preparing;
 
-			loadLyric(mPlayingSong.getData());
+			if (mLyricListener != null) {
+				loadLyric(mPlayingSong.getData());
+			}
 
 			setUpAsForeground(mPlayingSong.getTitle() + " (loading)");
 
@@ -832,6 +850,29 @@ public class MusicService extends Service implements OnCompletionListener,
 		startForeground(NOTIFICATION_ID, mNotification);
 	}
 
+	/**
+	 * 根据歌曲的ID，寻找出歌曲在当前播放列表中的位置
+	 * 
+	 * @param list
+	 *            歌曲列表
+	 * @param songId
+	 *            歌曲ID
+	 * @return 返回-1表示未找到
+	 */
+	public static int seekPosInListById(List<TrackInfo> list, long songId) {
+		int result = -1;
+		if (list != null) {
+
+			for (int i = 0; i < list.size(); i++) {
+				if (songId == list.get(i).getId()) {
+					result = i;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
 	@Override
 	public void onLyricLoaded(List<LyricSentence> lyricSentences, int index) {
 		if (mLyricListener != null) {
@@ -862,34 +903,39 @@ public class MusicService extends Service implements OnCompletionListener,
 	 */
 	private void loadLyric(String path) {
 		// 取得歌曲同目录下的歌词文件绝对路径
-		// String lyricFilePath = path.substring(0, path.lastIndexOf(".") + 1)
-		// + "lrc";
-		String lyricFilePath = Environment.getExternalStorageDirectory()
-				+ "/MIUI/music/lyric/" + mPlayingSong.getTitle() + "_"
-				+ mPlayingSong.getArtist() + ".lrc";
-		mHasLyric = mLyricLoadHelper.loadLyric(lyricFilePath);
-	}
-
-	/**
-	 * 根据歌曲的ID，寻找出歌曲在当前播放列表中的位置
-	 * 
-	 * @param list
-	 *            歌曲列表
-	 * @param songId
-	 *            歌曲ID
-	 * @return 返回-1表示未找到
-	 */
-	public static int seekPosInListById(List<TrackInfo> list, long songId) {
-		int result = -1;
-		if (list != null) {
-
-			for (int i = 0; i < list.size(); i++) {
-				if (songId == list.get(i).getId()) {
-					result = i;
-					break;
-				}
-			}
+		String lyricFilePath = GlobalConstant.LYRIC_SAVE_FOLDER_PATH + "/"
+				+ mPlayingSong.getTitle() + "_" + mPlayingSong.getArtist()
+				+ ".lrc";
+		File lyricfile = new File(lyricFilePath);
+		if (lyricfile.exists()) {
+			// 本地有歌词，直接读取
+			Log.i(TAG, "本地有歌词，直接读取");
+			mHasLyric = mLyricLoadHelper.loadLyric(lyricFilePath);
+		} else {
+			// 网络获取歌词
+			Log.i(TAG, "本地无歌词，尝试从网络获取");
+			new LyricDownloadAsyncTask().execute(mPlayingSong.getTitle(),
+					mPlayingSong.getArtist());
 		}
-		return result;
 	}
+
+	class LyricDownloadAsyncTask extends AsyncTask<String, Void, String> {
+
+		@Override
+		protected String doInBackground(String... params) {
+			// 从网络获取歌词，然后保存到本地
+			String lyricFilePath = mLyricDownloadManager.searchLyricFromWeb(
+					params[0], params[1]);
+			// 返回本地歌词路径
+			return lyricFilePath;
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+			Log.i(TAG, "网络获取歌词完毕，歌词保存路径:" + result);
+			// 读取保存到本地的歌曲
+			mHasLyric = mLyricLoadHelper.loadLyric(result);
+		};
+
+	};
 }

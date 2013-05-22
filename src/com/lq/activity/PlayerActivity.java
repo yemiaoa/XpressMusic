@@ -89,8 +89,14 @@ public class PlayerActivity extends FragmentActivity {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 			case MSG_SET_LYRIC_INDEX:
-				mActivity.mView_lv_lyricshow.setSelectionFromTop(msg.arg1,
-						mActivity.mView_lv_lyricshow.getHeight() / 2);
+				if (mActivity.mLyricAdapter.isEmpty()) {
+					Log.i(TAG, "歌词为空");
+					mActivity.mView_tv_lyric_empty
+							.setText(R.string.there_is_no_lyric_yet);
+				} else {
+					mActivity.mView_lv_lyricshow.setSelectionFromTop(msg.arg1,
+							mActivity.mView_lv_lyricshow.getHeight() / 2);
+				}
 				break;
 			default:
 				super.handleMessage(msg);
@@ -113,6 +119,9 @@ public class PlayerActivity extends FragmentActivity {
 			// 传递OnPlaybackStateChangeListener对象给Service，以便音乐回放状态发生变化时通知本Activity
 			mMusicServiceBinder
 					.registerOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
+
+			// 请求加载歌词
+			mMusicServiceBinder.requestLoadLyric();
 
 			initCurrentPlayInfo(mMusicServiceBinder.getCurrentPlayInfo());
 		}
@@ -154,6 +163,7 @@ public class PlayerActivity extends FragmentActivity {
 		if (mMusicServiceBinder != null) {
 			mMusicServiceBinder
 					.unregisterOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
+			mMusicServiceBinder.unRegisterLyricListener();
 			mMusicServiceBinder = null;
 		}
 	}
@@ -484,6 +494,7 @@ public class PlayerActivity extends FragmentActivity {
 					.milliSecondsToFormatTimeString(0));
 			mView_sb_song_progress.setProgress(0);
 			mLyricAdapter.setLyric(null);
+			mLyricAdapter.notifyDataSetChanged();
 			mPlaySong = null;
 		}
 
@@ -500,6 +511,8 @@ public class PlayerActivity extends FragmentActivity {
 						.milliSecondsToFormatTimeString(0));
 				mView_sb_song_progress.setProgress(0);
 			}
+			// 歌词秀清空
+			mView_tv_lyric_empty.setText(R.string.lyric_Loading);
 		}
 
 		@Override
@@ -523,9 +536,13 @@ public class PlayerActivity extends FragmentActivity {
 
 		@Override
 		public void onLyricLoaded(List<LyricSentence> lyricSentences, int index) {
+			Log.i(TAG, "onLyricLoaded");
 			if (lyricSentences != null) {
+				Log.i(TAG, "onLyricLoaded--->歌词句子数目=" + lyricSentences.size()
+						+ ",当前句子索引=" + index);
 				mLyricAdapter.setLyric(lyricSentences);
 				mLyricAdapter.setCurrentSentenceIndex(index);
+				mLyricAdapter.notifyDataSetChanged();
 				// 本方法执行时，lyricshow的控件还没有加载完成，所以延迟下再执行相关命令
 				mHandler.sendMessageDelayed(
 						Message.obtain(null, MSG_SET_LYRIC_INDEX, index, 0),
@@ -535,7 +552,9 @@ public class PlayerActivity extends FragmentActivity {
 
 		@Override
 		public void onLyricSentenceChanged(int indexOfCurSentence) {
+			Log.i(TAG, "onLyricSentenceChanged--->当前句子索引=" + indexOfCurSentence);
 			mLyricAdapter.setCurrentSentenceIndex(indexOfCurSentence);
+			mLyricAdapter.notifyDataSetChanged();
 			mView_lv_lyricshow
 					.smoothScrollToPositionFromTop(indexOfCurSentence,
 							mView_lv_lyricshow.getHeight() / 2, 500);

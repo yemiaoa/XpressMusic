@@ -5,6 +5,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,8 @@ import com.lq.activity.R;
 import com.lq.entity.LyricSentence;
 
 public class LyricAdapter extends BaseAdapter {
+	private static final String TAG = LyricAdapter.class.getSimpleName();
+
 	/** 歌词句子集合 */
 	List<LyricSentence> mLyricSentences = null;
 
@@ -37,20 +40,22 @@ public class LyricAdapter extends BaseAdapter {
 		mLyricSentences.clear();
 		if (lyric != null) {
 			mLyricSentences.addAll(lyric);
+			Log.i(TAG, "歌词句子数目=" + mLyricSentences.size());
 		}
 		mIndexOfCurrentSentence = 0;
-		notifyDataSetChanged();
 	}
 
 	@Override
 	public boolean isEmpty() {
 		// 歌词为空时，让ListView显示EmptyView
-
 		if (mLyricSentences == null) {
+			Log.i(TAG, "isEmpty:null");
 			return true;
 		} else if (mLyricSentences.size() == 0) {
+			Log.i(TAG, "isEmpty:size=0");
 			return true;
 		} else {
+			Log.i(TAG, "isEmpty:not empty");
 			return false;
 		}
 	}
@@ -109,7 +114,6 @@ public class LyricAdapter extends BaseAdapter {
 
 	public void setCurrentSentenceIndex(int index) {
 		mIndexOfCurrentSentence = index;
-		notifyDataSetChanged();
 	}
 
 	static class ViewHolder {

@@ -1,6 +1,10 @@
 package com.lq.util;
 
+import android.os.Environment;
+
 public final class GlobalConstant {
+	public static final String LYRIC_SAVE_FOLDER_PATH = Environment
+			.getExternalStorageDirectory() + "/MIUI/mylyric";
 	public static final String PLAY_MODE = "play_mode";
 	public static final String PLAYING_STATE = "playing_state";
 	public static final String CURRENT_PLAY_POSITION = "current_play_position";

@@ -433,53 +433,54 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int track_operations_in_player=0x7f0b0006;
     }
     public static final class string {
-        public static final int a_piece_of_song=0x7f09003e;
+        public static final int a_piece_of_song=0x7f09003f;
         public static final int action_settings=0x7f090001;
-        public static final int add_songs=0x7f090041;
-        public static final int add_success=0x7f09001d;
-        public static final int add_to=0x7f09001c;
-        public static final int add_to_playlist=0x7f09001e;
+        public static final int add_songs=0x7f090042;
+        public static final int add_success=0x7f09001e;
+        public static final int add_to=0x7f09001d;
+        public static final int add_to_playlist=0x7f09001f;
         public static final int app_name=0x7f090000;
-        public static final int are_you_sure_to_delete=0x7f090029;
+        public static final int are_you_sure_to_delete=0x7f09002a;
         public static final int are_you_sure_to_exit=0x7f090008;
-        public static final int artist=0x7f090032;
-        public static final int cancel=0x7f090019;
-        public static final int check_detail=0x7f090031;
-        public static final int classify_by_artist=0x7f090011;
-        public static final int classify_by_folder=0x7f090012;
-        public static final int clear=0x7f090046;
-        public static final int close=0x7f090037;
-        public static final int collect=0x7f09001a;
+        public static final int artist=0x7f090033;
+        public static final int cancel=0x7f09001a;
+        public static final int check_detail=0x7f090032;
+        public static final int classify_by_artist=0x7f090012;
+        public static final int classify_by_folder=0x7f090013;
+        public static final int clear=0x7f090047;
+        public static final int close=0x7f090038;
+        public static final int collect=0x7f09001b;
         /**  歌曲列表操作 
          */
-        public static final int confirm=0x7f090018;
-        public static final int confirm_clear_playqueue=0x7f090021;
-        public static final int confirm_delete_song_file=0x7f090020;
-        public static final int confirm_remove_song_from_playlist=0x7f09002c;
-        public static final int create_playlist=0x7f090026;
-        public static final int delete=0x7f09001f;
-        public static final int delete_failed=0x7f090023;
-        public static final int delete_success=0x7f090022;
-        public static final int file_format=0x7f090033;
-        public static final int file_path=0x7f090035;
-        public static final int file_size=0x7f090034;
+        public static final int confirm=0x7f090019;
+        public static final int confirm_clear_playqueue=0x7f090022;
+        public static final int confirm_delete_song_file=0x7f090021;
+        public static final int confirm_remove_song_from_playlist=0x7f09002d;
+        public static final int create_playlist=0x7f090027;
+        public static final int delete=0x7f090020;
+        public static final int delete_failed=0x7f090024;
+        public static final int delete_success=0x7f090023;
+        public static final int file_format=0x7f090034;
+        public static final int file_path=0x7f090036;
+        public static final int file_size=0x7f090035;
         /**  多选界面界面 
          */
-        public static final int has_selected=0x7f09003d;
+        public static final int has_selected=0x7f09003e;
         public static final int hello_world=0x7f090002;
-        public static final int input_playlist_name=0x7f090025;
+        public static final int input_playlist_name=0x7f090026;
         public static final int local_music=0x7f090006;
         /**  播放列表操作 
          */
-        public static final int local_playlist=0x7f090024;
+        public static final int local_playlist=0x7f090025;
+        public static final int lyric_Loading=0x7f09000e;
         /**  歌曲列表的操作 
          */
-        public static final int mutiple_choose=0x7f090038;
+        public static final int mutiple_choose=0x7f090039;
         public static final int my_music=0x7f090003;
         public static final int other_settings=0x7f090004;
-        public static final int play_all=0x7f090039;
-        public static final int play_later=0x7f090040;
-        public static final int playlist_has_already_existed=0x7f090028;
+        public static final int play_all=0x7f09003a;
+        public static final int play_later=0x7f090041;
+        public static final int playlist_has_already_existed=0x7f090029;
         /**  播放界面 
          */
         public static final int playmode_repeat=0x7f090009;
@@ -488,37 +489,37 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int playmode_shuffle=0x7f09000b;
         /**  播放队列界面 
          */
-        public static final int playqueue=0x7f090045;
-        public static final int please_input_jianpin_or_quanpin=0x7f09003b;
-        public static final int please_input_song_or_artist_name=0x7f09003c;
-        public static final int please_select_add_song_first=0x7f090044;
-        public static final int please_select_delete_song_first=0x7f090043;
-        public static final int please_select_play_song_first=0x7f090042;
-        public static final int question_mark=0x7f09002a;
-        public static final int remove=0x7f09002d;
-        public static final int remove_success=0x7f09002e;
-        public static final int rename=0x7f09002b;
-        public static final int sdcard_cannot_use=0x7f09001b;
+        public static final int playqueue=0x7f090046;
+        public static final int please_input_jianpin_or_quanpin=0x7f09003c;
+        public static final int please_input_song_or_artist_name=0x7f09003d;
+        public static final int please_select_add_song_first=0x7f090045;
+        public static final int please_select_delete_song_first=0x7f090044;
+        public static final int please_select_play_song_first=0x7f090043;
+        public static final int question_mark=0x7f09002b;
+        public static final int remove=0x7f09002e;
+        public static final int remove_success=0x7f09002f;
+        public static final int rename=0x7f09002c;
+        public static final int sdcard_cannot_use=0x7f09001c;
         /**  歌曲列表的搜索框 
          */
-        public static final int search=0x7f09003a;
-        public static final int select_all=0x7f09003f;
-        public static final int song_duration=0x7f090036;
-        public static final int song_has_already_existed=0x7f090027;
+        public static final int search=0x7f09003b;
+        public static final int select_all=0x7f090040;
+        public static final int song_duration=0x7f090037;
+        public static final int song_has_already_existed=0x7f090028;
         /**  歌曲详细信息 
          */
-        public static final int song_infomation=0x7f09002f;
-        public static final int song_name=0x7f090030;
-        public static final int sort_by_artist=0x7f09000f;
-        public static final int sort_by_folder_name=0x7f090016;
-        public static final int sort_by_last_modify_time=0x7f090017;
-        public static final int sort_by_music_count=0x7f090010;
+        public static final int song_infomation=0x7f090030;
+        public static final int song_name=0x7f090031;
+        public static final int sort_by_artist=0x7f090010;
+        public static final int sort_by_folder_name=0x7f090017;
+        public static final int sort_by_last_modify_time=0x7f090018;
+        public static final int sort_by_music_count=0x7f090011;
         /**  排序、分类 
          */
-        public static final int sort_by_music_name=0x7f09000e;
-        public static final int sort_by_playlist_created_time=0x7f090014;
-        public static final int sort_by_playlist_modified_time=0x7f090015;
-        public static final int sort_by_playlist_name=0x7f090013;
+        public static final int sort_by_music_name=0x7f09000f;
+        public static final int sort_by_playlist_created_time=0x7f090015;
+        public static final int sort_by_playlist_modified_time=0x7f090016;
+        public static final int sort_by_playlist_name=0x7f090014;
         public static final int there_is_no_lyric_yet=0x7f09000d;
         public static final int there_is_no_song_yet=0x7f090005;
         public static final int unknown_artist=0x7f090007;

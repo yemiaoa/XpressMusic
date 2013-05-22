@@ -17,6 +17,7 @@
     <string name="playmode_shuffle">随机播放</string>
     <string name="playmode_sequential">顺序播放</string>
     <string name="there_is_no_lyric_yet">暂无歌词</string>
+    <string name="lyric_Loading">正在加载歌词</string>
 
     <!-- 排序、分类 -->
     <string name="sort_by_music_name">按歌曲名称排序</string>
