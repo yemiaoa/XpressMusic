@@ -12,6 +12,10 @@
         android:title="@string/classify_by_artist">
     </item>
     <item
+        android:id="@+id/classify_by_album"
+        android:title="@string/classify_by_album">
+    </item>
+    <item
         android:id="@+id/classify_by_folder"
         android:title="@string/classify_by_folder">
     </item>

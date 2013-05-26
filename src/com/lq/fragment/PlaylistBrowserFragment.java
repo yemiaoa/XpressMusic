@@ -5,10 +5,12 @@ import java.util.Comparator;
 import java.util.List;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -24,8 +26,8 @@ import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -122,7 +124,6 @@ public class PlaylistBrowserFragment extends Fragment implements
 		mView_CreatePlaylist = (View) rootView.findViewById(R.id.add_playlist);
 		mView_MoreFunctions = (ImageView) rootView
 				.findViewById(R.id.more_functions);
-		// TODO 加载菜单
 		mOverflowPopupMenu = new PopupMenu(getActivity(), mView_MoreFunctions);
 		mOverflowPopupMenu.getMenuInflater().inflate(
 				R.menu.popup_playlist_list, mOverflowPopupMenu.getMenu());
@@ -146,7 +147,6 @@ public class PlaylistBrowserFragment extends Fragment implements
 					getResources().getString(R.string.sdcard_cannot_use),
 					Toast.LENGTH_SHORT).show();
 		}
-
 	}
 
 	@Override
@@ -157,14 +157,34 @@ public class PlaylistBrowserFragment extends Fragment implements
 		getActivity().bindService(
 				new Intent(getActivity(), MusicService.class),
 				mServiceConnection, Context.BIND_AUTO_CREATE);
+
 	}
 
 	@Override
 	public void onResume() {
 		Log.i(TAG, "onResume");
 		super.onResume();
-		getLoaderManager().restartLoader(PLAYLIST_RETRIEVE_LOADER, null,
-				PlaylistBrowserFragment.this);
+
+		if (Environment.getExternalStorageState().equals(
+				Environment.MEDIA_MOUNTED)) {
+			// sd card 可用
+			// 显示操作栏
+			mView_MoreFunctions.setClickable(true);
+			mView_CreatePlaylist.setVisibility(View.VISIBLE);
+			mView_Title.setText("");
+			// 初始化一个装载器，根据第一个参数，要么连接一个已存在的装载器，要么以此ID创建一个新的装载器
+			getLoaderManager().initLoader(PLAYLIST_RETRIEVE_LOADER, null, this);
+		} else {
+			// 当前不可用
+			// 隐藏操作栏
+			mView_MoreFunctions.setClickable(false);
+			mView_CreatePlaylist.setVisibility(View.GONE);
+			// 提示SD卡不可用
+			Toast.makeText(getActivity(), R.string.sdcard_cannot_use,
+					Toast.LENGTH_SHORT).show();
+		}
+
+		startWatchingExternalStorage();
 	}
 
 	@Override
@@ -173,6 +193,7 @@ public class PlaylistBrowserFragment extends Fragment implements
 		super.onStop();
 		// 本界面不可见时取消绑定服务
 		getActivity().unbindService(mServiceConnection);
+		getActivity().unregisterReceiver(mExternalStorageReceiver);
 	}
 
 	@Override
@@ -406,6 +427,43 @@ public class PlaylistBrowserFragment extends Fragment implements
 		Log.i(TAG, "onLoaderReset");
 		mAdapter.setData(null);
 	}
+
+	private void startWatchingExternalStorage() {
+		IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+		intentFilter.addAction(Intent.ACTION_MEDIA_REMOVED);
+		intentFilter.addAction(Intent.ACTION_MEDIA_BAD_REMOVAL);
+		intentFilter.addAction(Intent.ACTION_MEDIA_EJECT);
+		intentFilter.setPriority(1000);
+		intentFilter.addDataScheme("file");
+		getActivity().registerReceiver(mExternalStorageReceiver, intentFilter);
+	}
+
+	private BroadcastReceiver mExternalStorageReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(Intent.ACTION_MEDIA_EJECT)
+					|| intent.getAction().equals(Intent.ACTION_MEDIA_REMOVED)
+					|| intent.getAction().equals(
+							Intent.ACTION_MEDIA_BAD_REMOVAL)) {
+				// SD卡移除，设置列表为空
+				mView_MoreFunctions.setClickable(false);
+				mView_CreatePlaylist.setVisibility(View.GONE);
+				mView_Title.setText("");
+				mAdapter.setData(null);
+				// 提示SD卡不可用
+				Toast.makeText(getActivity(), R.string.sdcard_cannot_use,
+						Toast.LENGTH_SHORT).show();
+			} else if (intent.getAction().equals(Intent.ACTION_MEDIA_MOUNTED)) {
+				// SD卡正常挂载,重新加载数据
+				mView_MoreFunctions.setClickable(true);
+				mView_CreatePlaylist.setVisibility(View.VISIBLE);
+				getLoaderManager().restartLoader(PLAYLIST_RETRIEVE_LOADER,
+						null, PlaylistBrowserFragment.this);
+			}
+
+		}
+	};
 
 	private OnMyDialogInputListener mCreateNewPlaylistListener = new OnMyDialogInputListener() {
 

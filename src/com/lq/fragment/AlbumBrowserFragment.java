@@ -1,7 +1,5 @@
 package com.lq.fragment;
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import android.app.Activity;
@@ -11,16 +9,20 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.provider.MediaStore.Audio.Albums;
+import android.provider.MediaStore.Audio.Media;
+import android.provider.MediaStore.Files.FileColumns;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -33,19 +35,17 @@ import android.widget.Toast;
 
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
-import com.lq.adapter.FolderAdapter;
-import com.lq.entity.FolderInfo;
-import com.lq.loader.FolderInfoRetreiveLoader;
-import com.lq.util.StringHelper;
+import com.lq.adapter.AlbumAdapter;
+import com.lq.entity.AlbumInfo;
+import com.lq.loader.AlbumInfoRetrieveLoader;
 import com.lq.util.GlobalConstant;
 
-public class FolderBrowserFragment extends Fragment implements
-		LoaderCallbacks<List<FolderInfo>> {
-	private static final String TAG = FolderBrowserFragment.class
+public class AlbumBrowserFragment extends Fragment implements
+		LoaderCallbacks<List<AlbumInfo>> {
+	private static final String TAG = AlbumBrowserFragment.class
 			.getSimpleName();
-	private final int FOLDER_RETRIEVE_LOADER = 0;
+	private final int ALBUM_RETRIEVE_LOADER = 0;
 
-	/** 手势检测 */
 	private GestureDetector mDetector = null;
 
 	private ImageView mView_MenuNavigation = null;
@@ -55,14 +55,17 @@ public class FolderBrowserFragment extends Fragment implements
 	private ListView mView_ListView = null;
 	private PopupMenu mOverflowPopupMenu = null;
 
-	private FolderAdapter mAdapter = null;
+	private AlbumAdapter mAdapter = null;
 	private MainContentActivity mActivity = null;
-	private String mSortOrder = null;
+	private String mSortOrder = MediaStore.Audio.Albums.NUMBER_OF_SONGS
+			+ " desc";
 
 	@Override
 	public void onAttach(Activity activity) {
 		super.onAttach(activity);
-		mActivity = (MainContentActivity) activity;
+		if (activity instanceof MainContentActivity) {
+			mActivity = (MainContentActivity) activity;
+		}
 	}
 
 	@Override
@@ -70,9 +73,8 @@ public class FolderBrowserFragment extends Fragment implements
 			Bundle savedInstanceState) {
 		Log.i(TAG, "onCreateView");
 
-		View rootView = inflater
-				.inflate(R.layout.list_folder, container, false);
-		mView_ListView = (ListView) rootView.findViewById(R.id.listview_folder);
+		View rootView = inflater.inflate(R.layout.list_album, container, false);
+		mView_ListView = (ListView) rootView.findViewById(R.id.listview_album);
 		mView_MenuNavigation = (ImageView) rootView
 				.findViewById(R.id.menu_navigation);
 		mView_Title = (TextView) rootView.findViewById(R.id.title_of_top);
@@ -81,7 +83,7 @@ public class FolderBrowserFragment extends Fragment implements
 		mView_GoToPlayer = (ImageView) rootView
 				.findViewById(R.id.switch_to_player);
 		mOverflowPopupMenu = new PopupMenu(getActivity(), mView_MoreFunctions);
-		mOverflowPopupMenu.getMenuInflater().inflate(R.menu.popup_folder_list,
+		mOverflowPopupMenu.getMenuInflater().inflate(R.menu.popup_album_list,
 				mOverflowPopupMenu.getMenu());
 
 		return rootView;
@@ -91,10 +93,8 @@ public class FolderBrowserFragment extends Fragment implements
 	public void onActivityCreated(Bundle savedInstanceState) {
 		Log.i(TAG, "onActivityCreated");
 		super.onActivityCreated(savedInstanceState);
-
 		initViewsSetting();
-
-		getLoaderManager().initLoader(FOLDER_RETRIEVE_LOADER, null, this);
+		getLoaderManager().initLoader(ALBUM_RETRIEVE_LOADER, null, this);
 
 	}
 
@@ -120,7 +120,6 @@ public class FolderBrowserFragment extends Fragment implements
 	}
 
 	private void initViewsSetting() {
-		Log.i(TAG, "initViewsSetting");
 		// 设置滑动手势
 		mDetector = new GestureDetector(new SimpleOnGestureListener() {
 			@Override
@@ -146,7 +145,7 @@ public class FolderBrowserFragment extends Fragment implements
 		};
 		mView_ListView.setOnTouchListener(gestureListener);
 
-		mAdapter = new FolderAdapter(getActivity());
+		mAdapter = new AlbumAdapter(getActivity());
 		mView_ListView.setAdapter(mAdapter);
 		mView_ListView.setOnItemClickListener(new OnItemClickListener() {
 
@@ -154,12 +153,12 @@ public class FolderBrowserFragment extends Fragment implements
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
 				if (getParentFragment() instanceof FrameLocalMusicFragment
-						|| getParentFragment() instanceof FrameFolderFragment) {
+						|| getParentFragment() instanceof FrameAlbumFragment) {
 					Bundle data = new Bundle();
-					data.putParcelable(FolderInfo.class.getSimpleName(),
+					data.putParcelable(AlbumInfo.class.getSimpleName(),
 							mAdapter.getData().get(position));
 					data.putInt(GlobalConstant.PARENT,
-							GlobalConstant.START_FROM_FOLER);
+							GlobalConstant.START_FROM_ALBUM);
 					getFragmentManager()
 							.beginTransaction()
 							.replace(
@@ -189,15 +188,18 @@ public class FolderBrowserFragment extends Fragment implements
 				.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
 					public boolean onMenuItemClick(MenuItem item) {
 						switch (item.getItemId()) {
-						case R.id.sort_by_folder_name:
-							Collections.sort(mAdapter.getData(),
-									mFolderNameComparator);
-							mAdapter.notifyDataSetChanged();
+						case R.id.sort_by_music_count:
+							mSortOrder = MediaStore.Audio.Albums.NUMBER_OF_SONGS
+									+ " desc";
+							getLoaderManager().restartLoader(
+									ALBUM_RETRIEVE_LOADER, null,
+									AlbumBrowserFragment.this);
 							break;
-						case R.id.sort_by_folder_music_count:
-							Collections.sort(mAdapter.getData(),
-									mFolderSongCountComparator);
-							mAdapter.notifyDataSetChanged();
+						case R.id.sort_by_album:
+							mSortOrder = Media.ALBUM_KEY;
+							getLoaderManager().restartLoader(
+									ALBUM_RETRIEVE_LOADER, null,
+									AlbumBrowserFragment.this);
 							break;
 
 						default:
@@ -227,35 +229,38 @@ public class FolderBrowserFragment extends Fragment implements
 	}
 
 	@Override
-	public Loader<List<FolderInfo>> onCreateLoader(int id, Bundle args) {
+	public Loader<List<AlbumInfo>> onCreateLoader(int id, Bundle args) {
 		Log.i(TAG, "onCreateLoader");
 
+		String where = Albums._ID + " in (select " + Media.ALBUM_ID
+				+ " from audio_meta where ((" + FileColumns.DATA
+				+ " like'%.mp3' or " + Media.DATA + " like'%.wma') and "
+				+ Media.DURATION + " > " + 1000 * 60 * 1 + " and "
+				+ FileColumns.SIZE + " > " + 1024 + " )) ";
 		// 创建并返回一个Loader
-		return new FolderInfoRetreiveLoader(getActivity(), mSortOrder);
+		return new AlbumInfoRetrieveLoader(getActivity(), where, null,
+				mSortOrder);
 	}
 
 	@Override
-	public void onLoadFinished(Loader<List<FolderInfo>> loader,
-			List<FolderInfo> data) {
+	public void onLoadFinished(Loader<List<AlbumInfo>> loader,
+			List<AlbumInfo> data) {
 		Log.i(TAG, "onLoadFinished");
 
-		// TODO SD卡拔出时，没有处理
-
 		// 载入完成，更新列表数据
-		Collections.sort(data, mFolderSongCountComparator);
 		mAdapter.setData(data);
 
 		// 在标题栏上显示艺术家数目
 		if (data != null && data.size() != 0) {
 			mView_Title.setText(getResources().getString(
-					R.string.classify_by_folder)
+					R.string.classify_by_album)
 					+ "(" + data.size() + ")");
 		}
 
 	}
 
 	@Override
-	public void onLoaderReset(Loader<List<FolderInfo>> loader) {
+	public void onLoaderReset(Loader<List<AlbumInfo>> loader) {
 		Log.i(TAG, "onLoaderReset");
 		mAdapter.setData(null);
 	}
@@ -288,7 +293,7 @@ public class FolderBrowserFragment extends Fragment implements
 					|| intent.getAction().equals(Intent.ACTION_MEDIA_REMOVED)
 					|| intent.getAction().equals(
 							Intent.ACTION_MEDIA_BAD_REMOVAL)) {
-				// SD卡移除，设置列表为空
+				// TODO SD卡移除，设置列表为空
 				mView_MoreFunctions.setClickable(false);
 				mView_Title.setText("");
 				mAdapter.setData(null);
@@ -298,48 +303,10 @@ public class FolderBrowserFragment extends Fragment implements
 			} else if (intent.getAction().equals(Intent.ACTION_MEDIA_MOUNTED)) {
 				// TODO SD卡正常挂载,重新加载数据
 				mView_MoreFunctions.setClickable(true);
-				getLoaderManager().restartLoader(FOLDER_RETRIEVE_LOADER, null,
-						FolderBrowserFragment.this);
+				getLoaderManager().restartLoader(ALBUM_RETRIEVE_LOADER, null,
+						AlbumBrowserFragment.this);
 			}
 
-		}
-	};
-
-	// 按歌曲数量倒序排序
-	private Comparator<FolderInfo> mFolderSongCountComparator = new Comparator<FolderInfo>() {
-		@Override
-		public int compare(FolderInfo lhs, FolderInfo rhs) {
-			if (lhs.getNumOfTracks() > rhs.getNumOfTracks()) {
-				return -1;
-			} else if (lhs.getNumOfTracks() < rhs.getNumOfTracks()) {
-				return 1;
-			} else {
-				return 0;
-			}
-		}
-	};
-
-	// 按歌曲名称顺序排序
-	private Comparator<FolderInfo> mFolderNameComparator = new Comparator<FolderInfo>() {
-		char first_l, first_r;
-
-		@Override
-		public int compare(FolderInfo lhs, FolderInfo rhs) {
-			first_l = lhs.getFolderName().charAt(0);
-			first_r = rhs.getFolderName().charAt(0);
-			if (StringHelper.checkType(first_l) == StringHelper.CharType.CHINESE) {
-				first_l = StringHelper.getPinyinFirstLetter(first_l);
-			}
-			if (StringHelper.checkType(first_r) == StringHelper.CharType.CHINESE) {
-				first_r = StringHelper.getPinyinFirstLetter(first_r);
-			}
-			if (first_l > first_r) {
-				return 1;
-			} else if (first_l < first_r) {
-				return -1;
-			} else {
-				return 0;
-			}
 		}
 	};
 }

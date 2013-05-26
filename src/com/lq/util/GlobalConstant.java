@@ -21,4 +21,5 @@ public final class GlobalConstant {
 	public static final int START_FROM_ARTIST = 2;
 	public static final int START_FROM_FOLER = 3;
 	public static final int START_FROM_PLAYLIST = 4;
+	public static final int START_FROM_ALBUM = 5;
 }

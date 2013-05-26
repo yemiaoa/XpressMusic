@@ -22,8 +22,10 @@
     <!-- 排序、分类 -->
     <string name="sort_by_music_name">按歌曲名称排序</string>
     <string name="sort_by_artist">按歌手名称排序</string>
+    <string name="sort_by_album">按专辑名称排序</string>
     <string name="sort_by_music_count">按歌曲数量排序</string>
     <string name="classify_by_artist">按歌手分类</string>
+    <string name="classify_by_album">按专辑分类</string>
     <string name="classify_by_folder">按文件夹分类</string>
     <string name="sort_by_playlist_name">按名称排序</string>
     <string name="sort_by_playlist_created_time">按创建时间排序</string>

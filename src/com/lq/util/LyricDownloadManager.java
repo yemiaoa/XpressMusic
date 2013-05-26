@@ -21,6 +21,7 @@ public class LyricDownloadManager {
 			.getSimpleName();
 	public static final String GB2312 = "GB2312";
 	public static final String UTF_8 = "utf-8";
+	private final int mTimeOut = 10 * 1000;
 	private LyricXMLParser mLyricXMLParser = new LyricXMLParser();
 	private URL mUrl = null;
 	private int mDownloadLyricId = -1;
@@ -54,15 +55,21 @@ public class LyricDownloadManager {
 		try {
 			HttpURLConnection httpConn = (HttpURLConnection) mUrl
 					.openConnection();
+			httpConn.setReadTimeout(mTimeOut);
+			if (httpConn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+				Log.i(TAG, "http连接失败");
+				return null;
+			}
 			httpConn.connect();
 			Log.i(TAG, "http连接成功");
 
 			// 将百度音乐盒的返回的输入流传递给自定义的XML解析器，解析出歌词的下载ID
 			mDownloadLyricId = mLyricXMLParser.parseLyricId(httpConn
 					.getInputStream());
+			httpConn.disconnect();
 		} catch (IOException e1) {
 			e1.printStackTrace();
-			Log.i(TAG, "http连接失败");
+			Log.i(TAG, "http连接连接IO异常");
 			return null;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -108,7 +115,6 @@ public class LyricDownloadManager {
 		} catch (IOException e1) {
 			e1.printStackTrace();
 			Log.i(TAG, "歌词获取失败");
-			return null;
 		}
 
 		try {

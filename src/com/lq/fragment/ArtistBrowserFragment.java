@@ -3,6 +3,10 @@ package com.lq.fragment;
 import java.util.List;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -25,6 +29,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
@@ -94,7 +99,22 @@ public class ArtistBrowserFragment extends Fragment implements
 	}
 
 	@Override
+	public void onResume() {
+		Log.i(TAG, "onResume");
+		super.onResume();
+		startWatchingExternalStorage();
+	}
+
+	@Override
+	public void onStop() {
+		Log.i(TAG, "onStop");
+		super.onStop();
+		getActivity().unregisterReceiver(mExternalStorageReceiver);
+	}
+
+	@Override
 	public void onDetach() {
+		Log.i(TAG, "onDetach");
 		super.onDetach();
 		mActivity = null;
 	}
@@ -251,4 +271,39 @@ public class ArtistBrowserFragment extends Fragment implements
 		mView_Title.setCompoundDrawables(title_drawable, null, null, null);
 		mView_Title.setBackgroundResource(R.drawable.button_backround_light);
 	}
+
+	private void startWatchingExternalStorage() {
+		IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+		intentFilter.addAction(Intent.ACTION_MEDIA_REMOVED);
+		intentFilter.addAction(Intent.ACTION_MEDIA_BAD_REMOVAL);
+		intentFilter.addAction(Intent.ACTION_MEDIA_EJECT);
+		intentFilter.setPriority(1000);
+		intentFilter.addDataScheme("file");
+		getActivity().registerReceiver(mExternalStorageReceiver, intentFilter);
+	}
+
+	private BroadcastReceiver mExternalStorageReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(Intent.ACTION_MEDIA_EJECT)
+					|| intent.getAction().equals(Intent.ACTION_MEDIA_REMOVED)
+					|| intent.getAction().equals(
+							Intent.ACTION_MEDIA_BAD_REMOVAL)) {
+				// SD卡移除，设置列表为空
+				mView_MoreFunctions.setClickable(false);
+				mView_Title.setText("");
+				mAdapter.setData(null);
+				// 提示SD卡不可用
+				Toast.makeText(getActivity(), R.string.sdcard_cannot_use,
+						Toast.LENGTH_SHORT).show();
+			} else if (intent.getAction().equals(Intent.ACTION_MEDIA_MOUNTED)) {
+				// SD卡正常挂载,重新加载数据
+				mView_MoreFunctions.setClickable(true);
+				getLoaderManager().restartLoader(ARTIST_RETRIEVE_LOADER, null,
+						ArtistBrowserFragment.this);
+			}
+
+		}
+	};
 }

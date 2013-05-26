@@ -4,8 +4,11 @@ import java.util.List;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.provider.MediaStore.Audio.Media;
 import android.support.v4.app.DialogFragment;
@@ -63,12 +66,14 @@ public class SelectPlaylistDialogFragment extends DialogFragment implements
 
 		// 加载播放列表数据
 		getLoaderManager().initLoader(PLAYLIST_RETRIEVE_LOADER, null, this);
+
+		startWatchingExternalStorage();
 	}
 
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		Log.i(TAG, "onCreateDialog");
-		AlertDialog dialog= new AlertDialog.Builder(getActivity())
+		AlertDialog dialog = new AlertDialog.Builder(getActivity())
 				.setTitle(R.string.add_to)
 				.setView(mView_rootView)
 				.setNegativeButton(R.string.cancel,
@@ -86,6 +91,7 @@ public class SelectPlaylistDialogFragment extends DialogFragment implements
 	public void onDestroy() {
 		Log.i(TAG, "onDestroy");
 		super.onDestroy();
+		getActivity().unregisterReceiver(mExternalStorageReceiver);
 	}
 
 	@Override
@@ -171,4 +177,38 @@ public class SelectPlaylistDialogFragment extends DialogFragment implements
 			dismiss();
 		}
 	}
+
+	private void startWatchingExternalStorage() {
+		IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+		intentFilter.addAction(Intent.ACTION_MEDIA_REMOVED);
+		intentFilter.addAction(Intent.ACTION_MEDIA_BAD_REMOVAL);
+		intentFilter.addAction(Intent.ACTION_MEDIA_EJECT);
+		intentFilter.setPriority(1000);
+		intentFilter.addDataScheme("file");
+		getActivity().registerReceiver(mExternalStorageReceiver, intentFilter);
+	}
+
+	private BroadcastReceiver mExternalStorageReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(Intent.ACTION_MEDIA_EJECT)
+					|| intent.getAction().equals(Intent.ACTION_MEDIA_REMOVED)
+					|| intent.getAction().equals(
+							Intent.ACTION_MEDIA_BAD_REMOVAL)) {
+				// SD卡移除，设置列表为空
+				// 提示SD卡不可用
+				Toast.makeText(getActivity(), R.string.sdcard_cannot_use,
+						Toast.LENGTH_SHORT).show();
+				mAdapter.setData(null);
+				dismiss();
+			} else if (intent.getAction().equals(Intent.ACTION_MEDIA_MOUNTED)) {
+				// SD卡正常挂载,重新加载数据
+				getLoaderManager().restartLoader(PLAYLIST_RETRIEVE_LOADER,
+						null, SelectPlaylistDialogFragment.this);
+			}
+
+		}
+	};
+
 }

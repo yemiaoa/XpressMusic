@@ -9,10 +9,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -64,6 +66,7 @@ import com.lq.activity.MutipleEditActivity;
 import com.lq.activity.R;
 import com.lq.adapter.TrackAdapter;
 import com.lq.dao.PlaylistDAO;
+import com.lq.entity.AlbumInfo;
 import com.lq.entity.ArtistInfo;
 import com.lq.entity.FolderInfo;
 import com.lq.entity.PlaylistInfo;
@@ -133,6 +136,7 @@ public class TrackBrowserFragment extends Fragment implements
 	private ArtistInfo mArtistInfo = null;
 	private FolderInfo mFolderInfo = null;
 	private PlaylistInfo mPlaylistInfo = null;
+	private AlbumInfo mAlbumInfo = null;
 	private TrackInfo mToDeleteTrack = null;
 	private TrackInfo mPlayingTrack = null;
 
@@ -226,18 +230,6 @@ public class TrackBrowserFragment extends Fragment implements
 
 		handleArguments();
 
-		if (Environment.getExternalStorageState().equals(
-				Environment.MEDIA_MOUNTED)) {
-			// sd card 可用
-			// 初始化一个装载器，根据第一个参数，要么连接一个已存在的装载器，要么以此ID创建一个新的装载器
-			getLoaderManager().initLoader(MUSIC_RETRIEVE_LOADER, null, this);
-		} else {
-			// 当前不可用
-			Toast.makeText(getActivity(),
-					getResources().getString(R.string.sdcard_cannot_use),
-					Toast.LENGTH_SHORT).show();
-		}
-
 	}
 
 	@Override
@@ -258,6 +250,26 @@ public class TrackBrowserFragment extends Fragment implements
 		Log.i(TAG, "onResume");
 		super.onResume();
 
+		if (Environment.getExternalStorageState().equals(
+				Environment.MEDIA_MOUNTED)) {
+			// sd card 可用
+			// 显示操作栏
+			mView_TrackOperations.setVisibility(View.VISIBLE);
+			mView_MoreFunctions.setClickable(true);
+			mView_Title.setText("");
+			// 初始化一个装载器，根据第一个参数，要么连接一个已存在的装载器，要么以此ID创建一个新的装载器
+			getLoaderManager().initLoader(MUSIC_RETRIEVE_LOADER, null, this);
+		} else {
+			// 当前不可用
+			// 隐藏操作栏
+			mView_TrackOperations.setVisibility(View.GONE);
+			mView_MoreFunctions.setClickable(false);
+			// 提示SD卡不可用
+			Toast.makeText(getActivity(), R.string.sdcard_cannot_use,
+					Toast.LENGTH_SHORT).show();
+		}
+
+		startWatchingExternalStorage();
 	}
 
 	@Override
@@ -276,6 +288,7 @@ public class TrackBrowserFragment extends Fragment implements
 		mMusicServiceBinder
 				.unregisterOnPlaybackStateChangeListener(mOnPlaybackStateChangeListener);
 		mMusicServiceBinder = null;
+		getActivity().unregisterReceiver(mExternalStorageReceiver);
 	}
 
 	@Override
@@ -294,6 +307,7 @@ public class TrackBrowserFragment extends Fragment implements
 		mArtistInfo = null;
 		mPlaylistInfo = null;
 		mFolderInfo = null;
+		mAlbumInfo = null;
 		mCurrentPlayInfo = null;
 		mShowData.clear();
 		mShowData = null;
@@ -400,6 +414,21 @@ public class TrackBrowserFragment extends Fragment implements
 										.addToBackStack(null).commit();
 							}
 							break;
+						case R.id.classify_by_album:
+							if (null != getParentFragment()
+									&& getParentFragment() instanceof FrameLocalMusicFragment) {
+								getFragmentManager()
+										.beginTransaction()
+										.replace(
+												R.id.frame_for_nested_fragment,
+												Fragment.instantiate(
+														getActivity(),
+														AlbumBrowserFragment.class
+																.getName(),
+														null))
+										.addToBackStack(null).commit();
+							}
+							break;
 						case R.id.classify_by_folder:
 							if (null != getParentFragment()
 									&& getParentFragment() instanceof FrameLocalMusicFragment) {
@@ -477,6 +506,12 @@ public class TrackBrowserFragment extends Fragment implements
 							GlobalConstant.START_FROM_PLAYLIST);
 					data.putInt(GlobalConstant.PLAYLIST_ID,
 							mPlaylistInfo.getId());
+					break;
+				case GlobalConstant.START_FROM_ALBUM:
+					data.putString(GlobalConstant.TITLE,
+							mAlbumInfo.getAlbumName());
+					data.putInt(GlobalConstant.PARENT,
+							GlobalConstant.START_FROM_ALBUM);
 					break;
 				default:
 					break;
@@ -821,6 +856,9 @@ public class TrackBrowserFragment extends Fragment implements
 					+ " from audio_playlists_map where "
 					+ Playlists.Members.PLAYLIST_ID + "="
 					+ mPlaylistInfo.getId() + ")");
+		} else if (mAlbumInfo != null) {
+			select.append(" and " + Media.ALBUM_ID + " = "
+					+ mAlbumInfo.getAlbumId());
 		}
 
 		MusicRetrieveLoader loader = new MusicRetrieveLoader(getActivity(),
@@ -851,7 +889,6 @@ public class TrackBrowserFragment extends Fragment implements
 			Collections.sort(data, mArtistNameComparator);
 		}
 
-		// TODO SD卡拔出时，没有处理
 		mAdapter.setData(data);
 
 		// 每次加载新的数据设置一下标题中的歌曲数目
@@ -872,6 +909,10 @@ public class TrackBrowserFragment extends Fragment implements
 				break;
 			case GlobalConstant.START_FROM_PLAYLIST:
 				mView_Title.setText(mPlaylistInfo.getPlaylistName() + "("
+						+ data.size() + ")");
+				break;
+			case GlobalConstant.START_FROM_ALBUM:
+				mView_Title.setText(mAlbumInfo.getAlbumName() + "("
 						+ data.size() + ")");
 				break;
 			default:
@@ -949,7 +990,17 @@ public class TrackBrowserFragment extends Fragment implements
 					setTitleLeftDrawable();
 				}
 				break;
-
+			case GlobalConstant.START_FROM_ALBUM:
+				// 如果是从专辑列表里启动的
+				mAlbumInfo = args
+						.getParcelable(AlbumInfo.class.getSimpleName());
+				if (mAlbumInfo != null) {
+					// 更新标题
+					mView_Title.setText(mAlbumInfo.getAlbumName() + "("
+							+ mAlbumInfo.getNumberOfSongs() + ")");
+					setTitleLeftDrawable();
+				}
+				break;
 			default:
 				break;
 			}
@@ -1072,6 +1123,44 @@ public class TrackBrowserFragment extends Fragment implements
 		Matcher matcher = pattern.matcher(key);
 		return matcher.find();
 	}
+
+	private void startWatchingExternalStorage() {
+		IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+		intentFilter.addAction(Intent.ACTION_MEDIA_REMOVED);
+		intentFilter.addAction(Intent.ACTION_MEDIA_BAD_REMOVAL);
+		intentFilter.addAction(Intent.ACTION_MEDIA_EJECT);
+		intentFilter.setPriority(1000);
+		intentFilter.addDataScheme("file");
+		getActivity().registerReceiver(mExternalStorageReceiver, intentFilter);
+	}
+
+	private BroadcastReceiver mExternalStorageReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(Intent.ACTION_MEDIA_EJECT)
+					|| intent.getAction().equals(Intent.ACTION_MEDIA_REMOVED)
+					|| intent.getAction().equals(
+							Intent.ACTION_MEDIA_BAD_REMOVAL)) {
+				// SD卡移除，设置列表为空
+				mView_TrackOperations.setVisibility(View.GONE);
+				mView_MoreFunctions.setClickable(false);
+				mView_TrackOperations.setVisibility(View.GONE);
+				mView_Title.setText("");
+				mAdapter.setData(null);
+				// 提示SD卡不可用
+				Toast.makeText(getActivity(), R.string.sdcard_cannot_use,
+						Toast.LENGTH_SHORT).show();
+			} else if (intent.getAction().equals(Intent.ACTION_MEDIA_MOUNTED)) {
+				// SD卡正常挂载,重新加载数据
+				mView_TrackOperations.setVisibility(View.VISIBLE);
+				mView_MoreFunctions.setClickable(true);
+				TrackBrowserFragment.this.getLoaderManager().restartLoader(
+						MUSIC_RETRIEVE_LOADER, null, TrackBrowserFragment.this);
+			}
+
+		}
+	};
 
 	// 删除提醒对话框处理------------------------------------------------------------------
 	private DialogInterface.OnClickListener mDeletePromptListener = new DialogInterface.OnClickListener() {

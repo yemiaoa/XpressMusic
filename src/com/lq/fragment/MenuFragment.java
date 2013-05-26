@@ -20,7 +20,7 @@ import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
 
 public class MenuFragment extends ListFragment {
-	ListView mListView = null;
+	private ListView mListView = null;
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
@@ -43,7 +43,7 @@ public class MenuFragment extends ListFragment {
 			newContent = FrameArtistFragment.class.getName();
 			break;
 		case 2:// TODO 专辑
-			newContent = ColorFragment.class.getName();
+			newContent = FrameAlbumFragment.class.getName();
 			break;
 		case 3:// TODO 文件夹
 			newContent = FrameFolderFragment.class.getName();

@@ -27,10 +27,12 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
@@ -402,6 +404,8 @@ public class MusicService extends Service implements OnCompletionListener,
 		// 本Service实现LyricListener接口，只是为了做个代理延迟一下歌词事件的调用。
 		// 因为bindService启动过程稍慢，客户端的LyricListener来不及注册歌词就已经加载好了。
 		mLyricLoadHelper.setLyricListener(MusicService.this);
+
+		startWatchingExternalStorage();
 	}
 
 	/**
@@ -468,6 +472,7 @@ public class MusicService extends Service implements OnCompletionListener,
 		mOnPlaybackStateChangeListeners = null;
 		mPlayList.clear();
 		mPlayList = null;
+		unregisterReceiver(mExternalStorageReceiver);
 	}
 
 	/** MediaPlayer完成了一首歌曲的播放时调用此方法 */
@@ -549,7 +554,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	 * 确保MediaPlayer存在，并且已经被重置。 这个方法将会在需要时创建一个MediaPlayer，
 	 * 或者重置一个已存在的MediaPlayer。
 	 */
-	void createMediaPlayerIfNeeded() {
+	private void createMediaPlayerIfNeeded() {
 		if (mMediaPlayer == null) {
 			mMediaPlayer = new MediaPlayer();
 
@@ -568,7 +573,7 @@ public class MusicService extends Service implements OnCompletionListener,
 			mMediaPlayer.reset();
 	}
 
-	void processPlayRequest() {
+	private void processPlayRequest() {
 		mAudioFocusHelper.tryToGetAudioFocus();
 
 		// 如果处于“停止”状态，直接播放下一首歌曲
@@ -602,7 +607,7 @@ public class MusicService extends Service implements OnCompletionListener,
 		}
 	}
 
-	void processPauseRequest() {
+	private void processPauseRequest() {
 		if (mState == State.Playing) {
 			mState = State.Paused;
 			mMediaPlayer.pause();
@@ -622,7 +627,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	 * @param fromUser
 	 *            是否是来自用户的请求
 	 * */
-	void processPreviousRequest(boolean fromUser) {
+	private void processPreviousRequest(boolean fromUser) {
 		if (mState == State.Playing || mState == State.Paused
 				|| mState == State.Stopped) {
 			switch (mPlayMode) {
@@ -663,7 +668,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	 * @param fromUser
 	 *            是否是来自用户的请求
 	 * */
-	void processNextRequest(boolean fromUser) {
+	private void processNextRequest(boolean fromUser) {
 		if (mState == State.Playing || mState == State.Paused
 				|| mState == State.Stopped) {
 			switch (mPlayMode) {
@@ -704,11 +709,11 @@ public class MusicService extends Service implements OnCompletionListener,
 		}
 	}
 
-	void processStopRequest() {
+	private void processStopRequest() {
 		processStopRequest(false);
 	}
 
-	void processStopRequest(boolean force) {
+	private void processStopRequest(boolean force) {
 		if (mState == State.Playing || mState == State.Paused || force) {
 			mState = State.Stopped;
 			mRequsetPlayId = -1;
@@ -734,7 +739,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	 * @param releaseMediaPlayer
 	 *            指示MediaPlayer是否要释放掉
 	 */
-	void relaxResources(boolean releaseMediaPlayer) {
+	private void relaxResources(boolean releaseMediaPlayer) {
 		// 取消 "foreground service"的状态
 		stopForeground(true);
 
@@ -755,7 +760,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	 * 如果没有音频焦点，根据当前的焦点设置将MediaPlayer切换为“暂停”状态或者低声播放。
 	 * 这个方法已经假设mPlayer不为空，所以如果要调用此方法，确保正确的使用它。
 	 */
-	void configAndStartMediaPlayer() {
+	private void configAndStartMediaPlayer() {
 		if (mAudioFocusHelper.getAudioFocus() == AudioFocusHelper.NoFocusNoDuck) {
 			// 如果丢失了音频焦点也不允许低声播放，我们必须让播放暂停，即使mState处于State.Playing状态。
 			// 但是我们并不修改mState的状态，因为我们会在获得音频焦点时返回立即返回播放状态。
@@ -774,7 +779,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	/**
 	 * 播放mPlayingSongPos指定的歌曲.
 	 */
-	void playSong() {
+	private void playSong() {
 		mPlayingSong = mPlayList.get(mPlayingSongPos);
 		mState = State.Stopped;
 		relaxResources(false); // 除了MediaPlayer，释放所有资源
@@ -822,7 +827,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	}
 
 	/** 更新通知栏. */
-	void updateNotification(String text) {
+	private void updateNotification(String text) {
 		PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),
 				0, new Intent(getApplicationContext(),
 						MainContentActivity.class),
@@ -835,7 +840,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	/**
 	 * 将本服务设置为“前台服务”。“前台服务”是一个与用户正在交互的服务， 必须在通知栏显示一个通知表示正在交互
 	 */
-	void setUpAsForeground(String text) {
+	private void setUpAsForeground(String text) {
 		Intent intent = new Intent(getApplicationContext(),
 				MainContentActivity.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -918,6 +923,44 @@ public class MusicService extends Service implements OnCompletionListener,
 					mPlayingSong.getArtist());
 		}
 	}
+
+	private void startWatchingExternalStorage() {
+		IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+		intentFilter.addAction(Intent.ACTION_MEDIA_REMOVED);
+		intentFilter.addAction(Intent.ACTION_MEDIA_BAD_REMOVAL);
+		intentFilter.addAction(Intent.ACTION_MEDIA_EJECT);
+		intentFilter.setPriority(1000);
+		intentFilter.addDataScheme("file");
+		registerReceiver(mExternalStorageReceiver, intentFilter);
+	}
+
+	private BroadcastReceiver mExternalStorageReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(Intent.ACTION_MEDIA_EJECT)
+					|| intent.getAction().equals(Intent.ACTION_MEDIA_REMOVED)
+					|| intent.getAction().equals(
+							Intent.ACTION_MEDIA_BAD_REMOVAL)) {
+				if (mState != State.Stopped) {
+					// SD卡移除，停止音乐播放
+					processStopRequest(true);
+
+					// 清空当前播放队列
+					mBinder.setCurrentPlayList(null);
+
+					// 提示SD卡不可用
+					Toast.makeText(getApplicationContext(),
+							R.string.sdcard_cannot_use, Toast.LENGTH_SHORT)
+							.show();
+				}
+			} else if (intent.getAction().equals(Intent.ACTION_MEDIA_MOUNTED)) {
+				// SD卡正常挂载
+
+			}
+
+		}
+	};
 
 	class LyricDownloadAsyncTask extends AsyncTask<String, Void, String> {
 

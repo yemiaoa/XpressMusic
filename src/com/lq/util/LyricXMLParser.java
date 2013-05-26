@@ -23,6 +23,7 @@ public class LyricXMLParser {
 		SAXParser parser = factory.newSAXParser(); // 从factory获取SAXParser实例
 		MyHandler handler = new MyHandler(); // 实例化自定义Handler
 		parser.parse(is, handler); // 根据自定义Handler规则解析输入流
+		is.close();
 		return handler.getFirstLyricId();
 	}
 
