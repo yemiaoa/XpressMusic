@@ -16,10 +16,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore.Audio.Media;
 import android.provider.MediaStore.Audio.Playlists;
 import android.support.v4.app.DialogFragment;
@@ -75,7 +78,7 @@ import com.lq.listener.OnPlaybackStateChangeListener;
 import com.lq.loader.MusicRetrieveLoader;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
-import com.lq.util.GlobalConstant;
+import com.lq.util.Constant;
 import com.lq.util.StringHelper;
 
 /**
@@ -140,6 +143,8 @@ public class TrackBrowserFragment extends Fragment implements
 	private TrackInfo mToDeleteTrack = null;
 	private TrackInfo mPlayingTrack = null;
 
+	private SharedPreferences mSystemPreferences = null;
+
 	private InputMethodManager mInputMethodManager = null;
 
 	private MusicPlaybackLocalBinder mMusicServiceBinder = null;
@@ -159,6 +164,24 @@ public class TrackBrowserFragment extends Fragment implements
 		}
 	};
 
+	/** 文件过滤设置改变的话重新加载显示数据 */
+	private OnSharedPreferenceChangeListener mFilterPreferenceChangedListener = new OnSharedPreferenceChangeListener() {
+		@Override
+		public void onSharedPreferenceChanged(
+				SharedPreferences sharedPreferences, String key) {
+			if (key.equals(SettingFragment.KEY_FILTER_BY_SIZE)
+					|| key.equals(SettingFragment.KEY_FILTER_BY_DURATION)) {
+				// 歌曲过滤设置改变了
+				if (!isDetached()) {
+					// 并且本页面处于可见状态，重新更新数据显示
+					mAdapter.setData(null);
+					getLoaderManager().restartLoader(MUSIC_RETRIEVE_LOADER,
+							null, TrackBrowserFragment.this);
+				}
+			}
+		}
+	};
+
 	@Override
 	public void onAttach(Activity activity) {
 		Log.i(TAG, "onAttach");
@@ -166,6 +189,10 @@ public class TrackBrowserFragment extends Fragment implements
 		if (activity instanceof MainContentActivity) {
 			mActivity = (MainContentActivity) activity;
 		}
+		mSystemPreferences = PreferenceManager
+				.getDefaultSharedPreferences(getActivity());
+		mSystemPreferences
+				.registerOnSharedPreferenceChangeListener(mFilterPreferenceChangedListener);
 	}
 
 	@Override
@@ -205,8 +232,8 @@ public class TrackBrowserFragment extends Fragment implements
 		mOverflowPopupMenu = new PopupMenu(getActivity(), mView_MoreFunctions);
 		Bundle args = getArguments();
 		if (args != null) {
-			switch (args.getInt(GlobalConstant.PARENT)) {
-			case GlobalConstant.START_FROM_LOCAL_MUSIC:
+			switch (args.getInt(Constant.PARENT)) {
+			case Constant.START_FROM_LOCAL_MUSIC:
 				mOverflowPopupMenu.getMenuInflater().inflate(
 						R.menu.popup_local_music_list,
 						mOverflowPopupMenu.getMenu());
@@ -295,6 +322,8 @@ public class TrackBrowserFragment extends Fragment implements
 	public void onDetach() {
 		Log.i(TAG, "onDetach");
 		super.onDetach();
+		mSystemPreferences
+				.unregisterOnSharedPreferenceChangeListener(mFilterPreferenceChangedListener);
 	}
 
 	@Override
@@ -480,45 +509,37 @@ public class TrackBrowserFragment extends Fragment implements
 				Bundle data = new Bundle();
 
 				// 传递参数给多选界面
-				switch (getArguments().getInt(GlobalConstant.PARENT)) {
-				case GlobalConstant.START_FROM_LOCAL_MUSIC:
-					data.putString(GlobalConstant.TITLE, getResources()
-							.getString(R.string.local_music));
-					data.putInt(GlobalConstant.PARENT,
-							GlobalConstant.START_FROM_LOCAL_MUSIC);
+				switch (getArguments().getInt(Constant.PARENT)) {
+				case Constant.START_FROM_LOCAL_MUSIC:
+					data.putString(Constant.TITLE,
+							getResources().getString(R.string.local_music));
+					data.putInt(Constant.PARENT,
+							Constant.START_FROM_LOCAL_MUSIC);
 					break;
-				case GlobalConstant.START_FROM_ARTIST:
-					data.putString(GlobalConstant.TITLE,
-							mArtistInfo.getArtistName());
-					data.putInt(GlobalConstant.PARENT,
-							GlobalConstant.START_FROM_ARTIST);
+				case Constant.START_FROM_ARTIST:
+					data.putString(Constant.TITLE, mArtistInfo.getArtistName());
+					data.putInt(Constant.PARENT, Constant.START_FROM_ARTIST);
 					break;
-				case GlobalConstant.START_FROM_FOLER:
-					data.putString(GlobalConstant.TITLE,
-							mFolderInfo.getFolderName());
-					data.putInt(GlobalConstant.PARENT,
-							GlobalConstant.START_FROM_FOLER);
+				case Constant.START_FROM_FOLER:
+					data.putString(Constant.TITLE, mFolderInfo.getFolderName());
+					data.putInt(Constant.PARENT, Constant.START_FROM_FOLER);
 					break;
-				case GlobalConstant.START_FROM_PLAYLIST:
-					data.putString(GlobalConstant.TITLE,
+				case Constant.START_FROM_PLAYLIST:
+					data.putString(Constant.TITLE,
 							mPlaylistInfo.getPlaylistName());
-					data.putInt(GlobalConstant.PARENT,
-							GlobalConstant.START_FROM_PLAYLIST);
-					data.putInt(GlobalConstant.PLAYLIST_ID,
-							mPlaylistInfo.getId());
+					data.putInt(Constant.PARENT, Constant.START_FROM_PLAYLIST);
+					data.putInt(Constant.PLAYLIST_ID, mPlaylistInfo.getId());
 					break;
-				case GlobalConstant.START_FROM_ALBUM:
-					data.putString(GlobalConstant.TITLE,
-							mAlbumInfo.getAlbumName());
-					data.putInt(GlobalConstant.PARENT,
-							GlobalConstant.START_FROM_ALBUM);
+				case Constant.START_FROM_ALBUM:
+					data.putString(Constant.TITLE, mAlbumInfo.getAlbumName());
+					data.putInt(Constant.PARENT, Constant.START_FROM_ALBUM);
 					break;
 				default:
 					break;
 				}
-				data.putInt(GlobalConstant.FIRST_VISIBLE_POSITION,
+				data.putInt(Constant.FIRST_VISIBLE_POSITION,
 						mView_ListView.getFirstVisiblePosition());
-				data.putParcelableArrayList(GlobalConstant.DATA_LIST,
+				data.putParcelableArrayList(Constant.DATA_LIST,
 						mAdapter.getData());
 				intent.putExtras(data);
 				startActivity(intent);
@@ -759,9 +780,9 @@ public class TrackBrowserFragment extends Fragment implements
 		}
 		mHasNewData = false;
 		Intent intent = new Intent(MusicService.ACTION_PLAY);
-		intent.putExtra(GlobalConstant.REQUEST_PLAY_ID,
-				mAdapter.getItem(position).getId());
-		intent.putExtra(GlobalConstant.CLICK_ITEM_IN_LIST, true);
+		intent.putExtra(Constant.REQUEST_PLAY_ID, mAdapter.getItem(position)
+				.getId());
+		intent.putExtra(Constant.CLICK_ITEM_IN_LIST, true);
 		mActivity.startService(intent);
 		mActivity.switchToPlayer();
 	}
@@ -776,8 +797,8 @@ public class TrackBrowserFragment extends Fragment implements
 				R.string.add_to_playlist);
 		menu.add(0, CONTEXT_MENU_CHECK_DETAIL, Menu.NONE, R.string.check_detail);
 
-		switch (getArguments().getInt(GlobalConstant.PARENT)) {
-		case GlobalConstant.START_FROM_PLAYLIST:
+		switch (getArguments().getInt(Constant.PARENT)) {
+		case Constant.START_FROM_PLAYLIST:
 			menu.add(0, CONTEXT_MENU_DELETE, Menu.NONE, R.string.remove);
 			break;
 		default:
@@ -809,8 +830,8 @@ public class TrackBrowserFragment extends Fragment implements
 		case CONTEXT_MENU_DELETE:
 			// 弹出确认删除的提示窗口
 			mToDeleteTrack = mAdapter.getItem(menuInfo.position);
-			switch (getArguments().getInt(GlobalConstant.PARENT)) {
-			case GlobalConstant.START_FROM_PLAYLIST:
+			switch (getArguments().getInt(Constant.PARENT)) {
+			case Constant.START_FROM_PLAYLIST:
 				df = PromptDialogFragment.newInstance(
 						getResources().getString(
 								R.string.confirm_remove_song_from_playlist),
@@ -838,11 +859,24 @@ public class TrackBrowserFragment extends Fragment implements
 	public Loader<List<TrackInfo>> onCreateLoader(int id, Bundle args) {
 		Log.i(TAG, "onCreateLoader");
 
-		// 查询语句：检索出.mp3为后缀名，时长大于1分钟，文件大小大于1MB的媒体文件
-		StringBuffer select = new StringBuffer("(" + Media.DATA
-				+ " like'%.mp3' or " + Media.DATA + " like'%.wma') and "
-				+ Media.DURATION + " > " + 1000 * 60 * 1 + " and " + Media.SIZE
-				+ " > " + 1024);
+		// 数据库查询条件子句
+		// StringBuffer select = new StringBuffer("(" + Media.DATA
+		// + " like'%.mp3' or " + Media.DATA + " like'%.wma')");
+		StringBuffer select = new StringBuffer(" 1=1 ");
+
+		// 检查系统设置，是否需要按文件大小过滤
+		if (mSystemPreferences.getBoolean(SettingFragment.KEY_FILTER_BY_SIZE,
+				true)) {
+			// 查询语句：检索出.mp3为后缀名，时长大于1分钟，文件大小大于1MB的媒体文件
+			select.append(" and " + Media.SIZE + " > " + Constant.FILTER_SIZE);
+		}
+
+		// 检查系统设置，是否需要按歌曲时长过滤
+		if (mSystemPreferences.getBoolean(
+				SettingFragment.KEY_FILTER_BY_DURATION, true)) {
+			select.append(" and " + Media.DURATION + " > "
+					+ Constant.FILTER_DURATION);
+		}
 
 		if (mArtistInfo != null) {
 			select.append(" and " + Media.ARTIST + " = '"
@@ -893,25 +927,25 @@ public class TrackBrowserFragment extends Fragment implements
 
 		// 每次加载新的数据设置一下标题中的歌曲数目
 		if (getArguments() != null) {
-			switch (getArguments().getInt(GlobalConstant.PARENT)) {
-			case GlobalConstant.START_FROM_LOCAL_MUSIC:
+			switch (getArguments().getInt(Constant.PARENT)) {
+			case Constant.START_FROM_LOCAL_MUSIC:
 				mView_Title.setText(getResources().getString(
 						R.string.local_music)
 						+ "(" + data.size() + ")");
 				break;
-			case GlobalConstant.START_FROM_ARTIST:
+			case Constant.START_FROM_ARTIST:
 				mView_Title.setText(mArtistInfo.getArtistName() + "("
 						+ data.size() + ")");
 				break;
-			case GlobalConstant.START_FROM_FOLER:
+			case Constant.START_FROM_FOLER:
 				mView_Title.setText(mFolderInfo.getFolderName() + "("
 						+ data.size() + ")");
 				break;
-			case GlobalConstant.START_FROM_PLAYLIST:
+			case Constant.START_FROM_PLAYLIST:
 				mView_Title.setText(mPlaylistInfo.getPlaylistName() + "("
 						+ data.size() + ")");
 				break;
-			case GlobalConstant.START_FROM_ALBUM:
+			case Constant.START_FROM_ALBUM:
 				mView_Title.setText(mAlbumInfo.getAlbumName() + "("
 						+ data.size() + ")");
 				break;
@@ -934,7 +968,7 @@ public class TrackBrowserFragment extends Fragment implements
 
 	/** 初始化当前播放信息 */
 	private void initCurrentPlayInfo(Bundle bundle) {
-		mPlayingTrack = bundle.getParcelable(GlobalConstant.PLAYING_MUSIC_ITEM);
+		mPlayingTrack = bundle.getParcelable(Constant.PLAYING_MUSIC_ITEM);
 
 		if (mPlayingTrack != null) {
 			mAdapter.setSpecifiedIndicator(MusicService.seekPosInListById(
@@ -950,8 +984,8 @@ public class TrackBrowserFragment extends Fragment implements
 		// 如果有谁传递数据过来了，就设置一下
 		Bundle args = getArguments();
 		if (args != null) {
-			switch (args.getInt(GlobalConstant.PARENT)) {
-			case GlobalConstant.START_FROM_ARTIST:
+			switch (args.getInt(Constant.PARENT)) {
+			case Constant.START_FROM_ARTIST:
 				// 如果是从歌手列表里启动的
 				mArtistInfo = args.getParcelable(ArtistInfo.class
 						.getSimpleName());
@@ -968,7 +1002,7 @@ public class TrackBrowserFragment extends Fragment implements
 					setTitleLeftDrawable();
 				}
 				break;
-			case GlobalConstant.START_FROM_FOLER:
+			case Constant.START_FROM_FOLER:
 				// 如果是从文件夹列表里启动的
 				mFolderInfo = args.getParcelable(FolderInfo.class
 						.getSimpleName());
@@ -979,7 +1013,7 @@ public class TrackBrowserFragment extends Fragment implements
 					setTitleLeftDrawable();
 				}
 				break;
-			case GlobalConstant.START_FROM_PLAYLIST:
+			case Constant.START_FROM_PLAYLIST:
 				// 如果是从播放列表里启动的
 				mPlaylistInfo = args.getParcelable(PlaylistInfo.class
 						.getSimpleName());
@@ -990,7 +1024,7 @@ public class TrackBrowserFragment extends Fragment implements
 					setTitleLeftDrawable();
 				}
 				break;
-			case GlobalConstant.START_FROM_ALBUM:
+			case Constant.START_FROM_ALBUM:
 				// 如果是从专辑列表里启动的
 				mAlbumInfo = args
 						.getParcelable(AlbumInfo.class.getSimpleName());
@@ -1168,8 +1202,8 @@ public class TrackBrowserFragment extends Fragment implements
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
 			boolean isDeleted = false;
-			switch (getArguments().getInt(GlobalConstant.PARENT)) {
-			case GlobalConstant.START_FROM_PLAYLIST:
+			switch (getArguments().getInt(Constant.PARENT)) {
+			case Constant.START_FROM_PLAYLIST:
 				// 从播放列表移除歌曲，不会删除文件
 				isDeleted = PlaylistDAO.removeTrackFromPlaylist(getActivity()
 						.getContentResolver(), mPlaylistInfo.getId(),
@@ -1185,7 +1219,7 @@ public class TrackBrowserFragment extends Fragment implements
 			default:
 				// 删除的歌曲现在是否正在播放
 				TrackInfo curTrack = mMusicServiceBinder.getCurrentPlayInfo()
-						.getParcelable(GlobalConstant.PLAYING_MUSIC_ITEM);
+						.getParcelable(Constant.PLAYING_MUSIC_ITEM);
 
 				if (curTrack != null) {
 					if (curTrack.getId() == mToDeleteTrack.getId()) {

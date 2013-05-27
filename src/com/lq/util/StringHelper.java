@@ -107,7 +107,12 @@ public class StringHelper {
 
 	public static String bytesToMB(long bytes) {
 		float size = (float) (bytes * 1.0 / 1024 / 1024);
-		String result = new DecimalFormat("###.00").format(size) + "MB";
+		String result = null;
+		if (bytes >= (1024 * 1024)) {
+			result = new DecimalFormat("###.00").format(size) + "MB";
+		} else {
+			result = new DecimalFormat("0.00").format(size) + "MB";
+		}
 		return result;
 	}
 

@@ -36,7 +36,7 @@ import com.lq.fragment.PromptDialogFragment;
 import com.lq.fragment.SelectPlaylistDialogFragment;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
-import com.lq.util.GlobalConstant;
+import com.lq.util.Constant;
 
 public class MutipleEditActivity extends FragmentActivity implements
 		View.OnClickListener {
@@ -114,13 +114,13 @@ public class MutipleEditActivity extends FragmentActivity implements
 	private void handleArguments() {
 		// 获取Intent中传递过来的数据
 		Bundle args = getIntent().getExtras();
-		mDataList = args.getParcelableArrayList(GlobalConstant.DATA_LIST);
-		mTitle = args.getString(GlobalConstant.TITLE) + "(" + mDataList.size()
+		mDataList = args.getParcelableArrayList(Constant.DATA_LIST);
+		mTitle = args.getString(Constant.TITLE) + "(" + mDataList.size()
 				+ ")";
 		mFirstVisiblePosition = args.getInt(
-				GlobalConstant.FIRST_VISIBLE_POSITION, 0);
-		mParent = args.getInt(GlobalConstant.PARENT, -1);
-		mPlaylistId = args.getInt(GlobalConstant.PLAYLIST_ID, -1);
+				Constant.FIRST_VISIBLE_POSITION, 0);
+		mParent = args.getInt(Constant.PARENT, -1);
+		mPlaylistId = args.getInt(Constant.PLAYLIST_ID, -1);
 
 	}
 
@@ -264,7 +264,7 @@ public class MutipleEditActivity extends FragmentActivity implements
 						Toast.LENGTH_SHORT).show();
 			} else {
 				DialogFragment df;
-				if (mParent == GlobalConstant.START_FROM_PLAYLIST) {
+				if (mParent == Constant.START_FROM_PLAYLIST) {
 					df = PromptDialogFragment
 							.newInstance(
 									getResources()
@@ -311,7 +311,7 @@ public class MutipleEditActivity extends FragmentActivity implements
 		public void onClick(DialogInterface dialog, int which) {
 			boolean isDeleted = false;
 			switch (mParent) {
-			case GlobalConstant.START_FROM_PLAYLIST:
+			case Constant.START_FROM_PLAYLIST:
 				// 从播放列表移除歌曲，不会删除文件
 				isDeleted = PlaylistDAO.removeTrackFromPlaylist(
 						getContentResolver(), mPlaylistId,

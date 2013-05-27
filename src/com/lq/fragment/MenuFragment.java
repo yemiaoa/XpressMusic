@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -17,6 +18,7 @@ import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 import com.lq.activity.MainContentActivity;
+import com.lq.activity.MyPreferenceActivity;
 import com.lq.activity.R;
 
 public class MenuFragment extends ListFragment {
@@ -51,9 +53,10 @@ public class MenuFragment extends ListFragment {
 		case 4:// TODO 收藏列表
 			newContent = FramePlaylistFragment.class.getName();
 			break;
-		case 5:// TODO 选项
-			newContent = ColorFragment.class.getName();
-			break;
+		case 5:// TODO 系统设置
+			getActivity().startActivity(
+					new Intent(getActivity(), MyPreferenceActivity.class));
+			return;
 		case 6:// TODO 意见反馈
 			newContent = ColorFragment.class.getName();
 			break;
@@ -79,7 +82,7 @@ public class MenuFragment extends ListFragment {
 		List<Pair<String, List<String>>> mDataList = new ArrayList<Pair<String, List<String>>>();
 		Resources res = getResources();
 		String[] section_titles = { res.getString(R.string.my_music),
-				res.getString(R.string.other_settings) };
+				res.getString(R.string.other_functions) };
 		String[][] menu_titles = { res.getStringArray(R.array.menu_mymusic),
 				res.getStringArray(R.array.menu_othersettings) };
 		for (int i = 0; i < section_titles.length; i++) {

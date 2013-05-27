@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/lyric_setting" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="key_download_lyric_automatically"
+            android:summary="@string/download_lyric_automatically_summary"
+            android:title="@string/download_lyric_automatically" />
+
+        <Preference
+            android:key="key_lyric_save_path"
+            android:title="@string/lyric_save_path" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/file_filter" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="key_filter_by_size"
+            android:summary="@string/filter_by_size_summary"
+            android:title="@string/filter_by_size" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="key_filter_by_duration"
+            android:summary="@string/filter_by_duration_summary"
+            android:title="@string/filter_by_duration" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/other_settings" >
+        <Preference
+            android:key="key_reset_to_default"
+            android:title="@string/reset_to_default" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

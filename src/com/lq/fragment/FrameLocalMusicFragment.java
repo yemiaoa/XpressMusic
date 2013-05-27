@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.lq.activity.R;
-import com.lq.util.GlobalConstant;
+import com.lq.util.Constant;
 
 public class FrameLocalMusicFragment extends Fragment {
 
@@ -24,7 +24,7 @@ public class FrameLocalMusicFragment extends Fragment {
 		super.onActivityCreated(savedInstanceState);
 
 		Bundle args = new Bundle();
-		args.putInt(GlobalConstant.PARENT, GlobalConstant.START_FROM_LOCAL_MUSIC);
+		args.putInt(Constant.PARENT, Constant.START_FROM_LOCAL_MUSIC);
 
 		getChildFragmentManager()
 				.beginTransaction()

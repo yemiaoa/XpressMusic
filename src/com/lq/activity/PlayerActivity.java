@@ -37,7 +37,7 @@ import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.service.MusicService.PlayMode;
 import com.lq.service.MusicService.State;
-import com.lq.util.GlobalConstant;
+import com.lq.util.Constant;
 import com.lq.util.LyricLoadHelper.LyricListener;
 import com.lq.util.TimeHelper;
 
@@ -401,12 +401,12 @@ public class PlayerActivity extends FragmentActivity {
 
 	/** 初始化当前播放信息 */
 	private void initCurrentPlayInfo(Bundle bundle) {
-		int playMode = bundle.getInt(GlobalConstant.PLAY_MODE);
-		int currentPlayerState = bundle.getInt(GlobalConstant.PLAYING_STATE);
+		int playMode = bundle.getInt(Constant.PLAY_MODE);
+		int currentPlayerState = bundle.getInt(Constant.PLAYING_STATE);
 		int currenPlayPosition = bundle.getInt(
-				GlobalConstant.CURRENT_PLAY_POSITION, 0);
+				Constant.CURRENT_PLAY_POSITION, 0);
 		TrackInfo playingSong = bundle
-				.getParcelable(GlobalConstant.PLAYING_MUSIC_ITEM);
+				.getParcelable(Constant.PLAYING_MUSIC_ITEM);
 
 		// 根据播放状态，设置播放按钮的图片
 		if (currentPlayerState == State.Playing

@@ -29,7 +29,7 @@ import com.lq.listener.OnPlaybackStateChangeListener;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.service.MusicService.State;
-import com.lq.util.GlobalConstant;
+import com.lq.util.Constant;
 
 public class PlayQueueActivity extends FragmentActivity implements
 		OnItemClickListener {
@@ -110,9 +110,9 @@ public class PlayQueueActivity extends FragmentActivity implements
 			long id) {
 		// 点击音乐进行播放
 		Intent intent = new Intent(MusicService.ACTION_PLAY);
-		intent.putExtra(GlobalConstant.REQUEST_PLAY_ID, mDataList.get(position)
+		intent.putExtra(Constant.REQUEST_PLAY_ID, mDataList.get(position)
 				.getId());
-		intent.putExtra(GlobalConstant.CLICK_ITEM_IN_LIST, true);
+		intent.putExtra(Constant.CLICK_ITEM_IN_LIST, true);
 		startService(intent);
 		PlayQueueActivity.this.finish();
 	}
@@ -121,15 +121,15 @@ public class PlayQueueActivity extends FragmentActivity implements
 	private void handleArguments() {
 		Bundle args = mMusicServiceBinder.getCurrentPlayInfo();
 		mPlayingState = args
-				.getInt(GlobalConstant.PLAYING_STATE, State.Stopped);
+				.getInt(Constant.PLAYING_STATE, State.Stopped);
 
 		List<TrackInfo> list = args
-				.getParcelableArrayList(GlobalConstant.DATA_LIST);
+				.getParcelableArrayList(Constant.DATA_LIST);
 		if (list != null) {
 			mDataList.addAll(list);
 		}
 
-		mPlayingTrack = args.getParcelable(GlobalConstant.PLAYING_MUSIC_ITEM);
+		mPlayingTrack = args.getParcelable(Constant.PLAYING_MUSIC_ITEM);
 		if (mPlayingTrack != null) {
 			mPlayingSongPosition = MusicService.seekPosInListById(mDataList,
 					mPlayingTrack.getId());

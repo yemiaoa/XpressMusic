@@ -33,6 +33,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
@@ -47,6 +48,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore.Audio.Media;
 import android.util.Log;
 import android.widget.Toast;
@@ -55,11 +57,12 @@ import com.lq.activity.MainContentActivity;
 import com.lq.activity.R;
 import com.lq.entity.LyricSentence;
 import com.lq.entity.TrackInfo;
+import com.lq.fragment.SettingFragment;
 import com.lq.listener.OnPlaybackStateChangeListener;
 import com.lq.receiver.MediaButtonReceiver;
 import com.lq.util.AudioFocusHelper;
 import com.lq.util.AudioFocusHelper.MusicFocusable;
-import com.lq.util.GlobalConstant;
+import com.lq.util.Constant;
 import com.lq.util.LyricDownloadManager;
 import com.lq.util.LyricLoadHelper;
 import com.lq.util.LyricLoadHelper.LyricListener;
@@ -184,13 +187,13 @@ public class MusicService extends Service implements OnCompletionListener,
 				item = mPlayingSong;
 				currentPlayPos = mMediaPlayer.getCurrentPosition();
 			}
-			bundle.putParcelable(GlobalConstant.PLAYING_MUSIC_ITEM, item);
-			bundle.putInt(GlobalConstant.CURRENT_PLAY_POSITION, currentPlayPos);
-			bundle.putInt(GlobalConstant.PLAYING_STATE, mState);
-			bundle.putInt(GlobalConstant.PLAY_MODE, mPlayMode);
-			bundle.putInt(GlobalConstant.PLAYING_SONG_POSITION_IN_LIST,
+			bundle.putParcelable(Constant.PLAYING_MUSIC_ITEM, item);
+			bundle.putInt(Constant.CURRENT_PLAY_POSITION, currentPlayPos);
+			bundle.putInt(Constant.PLAYING_STATE, mState);
+			bundle.putInt(Constant.PLAY_MODE, mPlayMode);
+			bundle.putInt(Constant.PLAYING_SONG_POSITION_IN_LIST,
 					mPlayingSongPos);
-			bundle.putParcelableArrayList(GlobalConstant.DATA_LIST, mPlayList);
+			bundle.putParcelableArrayList(Constant.DATA_LIST, mPlayList);
 
 			return bundle;
 		}
@@ -325,7 +328,7 @@ public class MusicService extends Service implements OnCompletionListener,
 	private Random mRandom = new Random();
 
 	private LyricLoadHelper mLyricLoadHelper = new LyricLoadHelper();
-	private LyricDownloadManager mLyricDownloadManager = new LyricDownloadManager();
+	private LyricDownloadManager mLyricDownloadManager = null;
 
 	/** Service的Handler,可以延迟指定时间发送消息，而messenger不可以延时发送消息 */
 	private ServiceIncomingHandler mServiceHandler = new ServiceIncomingHandler(
@@ -405,6 +408,8 @@ public class MusicService extends Service implements OnCompletionListener,
 		// 因为bindService启动过程稍慢，客户端的LyricListener来不及注册歌词就已经加载好了。
 		mLyricLoadHelper.setLyricListener(MusicService.this);
 
+		mLyricDownloadManager = new LyricDownloadManager(
+				getApplicationContext());
 		startWatchingExternalStorage();
 	}
 
@@ -419,11 +424,10 @@ public class MusicService extends Service implements OnCompletionListener,
 		if (action.equals(ACTION_PLAY)) {
 			if (mHasPlayList) {
 				// 如果是列表中点击的
-				if (intent.getBooleanExtra(GlobalConstant.CLICK_ITEM_IN_LIST,
-						false)) {
+				if (intent.getBooleanExtra(Constant.CLICK_ITEM_IN_LIST, false)) {
 					// 获取到点击的歌曲的ID
 					mRequsetPlayId = intent.getLongExtra(
-							GlobalConstant.REQUEST_PLAY_ID, 0);
+							Constant.REQUEST_PLAY_ID, 0);
 					mRequestPlayPos = seekPosInListById(mPlayList,
 							mRequsetPlayId);
 				} else {
@@ -908,19 +912,32 @@ public class MusicService extends Service implements OnCompletionListener,
 	 */
 	private void loadLyric(String path) {
 		// 取得歌曲同目录下的歌词文件绝对路径
-		String lyricFilePath = GlobalConstant.LYRIC_SAVE_FOLDER_PATH + "/"
+		String lyricFilePath = Constant.LYRIC_SAVE_FOLDER_PATH + "/"
 				+ mPlayingSong.getTitle() + "_" + mPlayingSong.getArtist()
 				+ ".lrc";
 		File lyricfile = new File(lyricFilePath);
+
 		if (lyricfile.exists()) {
 			// 本地有歌词，直接读取
-			Log.i(TAG, "本地有歌词，直接读取");
+			Log.i(TAG, "loadLyric()--->本地有歌词，直接读取");
 			mHasLyric = mLyricLoadHelper.loadLyric(lyricFilePath);
 		} else {
-			// 网络获取歌词
-			Log.i(TAG, "本地无歌词，尝试从网络获取");
-			new LyricDownloadAsyncTask().execute(mPlayingSong.getTitle(),
-					mPlayingSong.getArtist());
+			// 获取系统设置，是否自动下载歌词
+			SharedPreferences sp = PreferenceManager
+					.getDefaultSharedPreferences(getApplicationContext());
+			boolean downloadLyricAutomatically = sp.getBoolean(
+					SettingFragment.KEY_DOWNLOAD_LYRIC_AUTOMATICALLY, true);
+			Log.i(TAG, "loadLyric()--->获取系统设置->是否自动下载歌词:"
+					+ downloadLyricAutomatically);
+			if (downloadLyricAutomatically) {
+				// 尝试网络获取歌词
+				Log.i(TAG, "loadLyric()--->本地无歌词，尝试从网络获取");
+				new LyricDownloadAsyncTask().execute(mPlayingSong.getTitle(),
+						mPlayingSong.getArtist());
+			} else {
+				// 设置歌词为空
+				mHasLyric = mLyricLoadHelper.loadLyric(null);
+			}
 		}
 	}
 

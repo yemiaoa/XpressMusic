@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.lq.activity.R;
-import com.lq.util.GlobalConstant;
+import com.lq.util.Constant;
 
 public class FrameFolderFragment extends Fragment {
 	
@@ -24,7 +24,7 @@ public class FrameFolderFragment extends Fragment {
 		super.onActivityCreated(savedInstanceState);
 		
 		Bundle args=new Bundle();
-		args.putString(GlobalConstant.PARENT, this.getClass().getSimpleName());
+		args.putString(Constant.PARENT, this.getClass().getSimpleName());
 		
 		getChildFragmentManager()
 				.beginTransaction()

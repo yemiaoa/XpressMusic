@@ -5,11 +5,30 @@
     <string name="action_settings">设置</string>
     <string name="hello_world">Hello world!</string>
     <string name="my_music">我的音乐</string>
-    <string name="other_settings">其他功能</string>
+    <string name="other_functions">其他功能</string>
     <string name="there_is_no_song_yet">没有歌曲</string>
     <string name="local_music">本地音乐</string>
     <string name="unknown_artist">未知艺术家</string>
     <string name="are_you_sure_to_exit">您确定退出吗？</string>
+
+    <!-- 系统设置 -->
+    <string name="system_setting">系统设置</string>
+    <string name="lyric_setting">歌词设置</string>
+    <string name="file_filter">文件过滤</string>
+    <string name="other_settings">其他设置</string>
+    <string name="download_lyric_automatically">自动下载歌词</string>
+    <string name="download_lyric_automatically_summary">不会占用太多流量，建议开启</string>
+    <string name="lyric_save_path">歌词保存路径</string>
+    <string name="reset_to_default">恢复默认设置</string>
+    <string name="filter_by_size">按大小过滤</string>
+    <string name="filter_by_size_summary">可以过滤掉一些过小的音频文件</string>
+    <string name="filter_by_duration">按时长过滤</string>
+    <string name="filter_by_duration_summary">可以过滤掉一些时长过短的音频文件</string>
+    <string name="are_you_sure_to_reset_default">您确定要恢复默认设置吗</string>
+    <string name="choose_lyric_save_path">选择歌词保存路径</string>
+    <string name="create_new_folder">新建目录</string>
+    <string name="current">当前：</string>
+    <string name="there_is_a_duplicated_folder">已存在同名目录</string>
 
     <!-- 播放界面 -->
     <string name="playmode_repeat">循环播放</string>

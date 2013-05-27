@@ -1,0 +1,56 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:id="@+id/top_of_mutiple"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dip"
+            android:divider="@color/grey_dark_light"
+            android:dividerPadding="5dp"
+            android:orientation="horizontal"
+            android:showDividers="middle" >
+
+            <ImageView
+                android:id="@+id/close_setting"
+                android:layout_width="48dip"
+                android:layout_height="match_parent"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:clickable="true"
+                android:contentDescription="@string/app_name"
+                android:scaleType="centerInside"
+                android:src="@drawable/btn_title_back_close" />
+
+            <TextView
+                android:id="@+id/title_setting"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="left|center_vertical"
+                android:paddingLeft="10dp"
+                android:singleLine="true"
+                android:text="@string/system_setting"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textIsSelectable="false" />
+        </LinearLayout>
+
+        <View
+            android:id="@+id/section_line_horizental"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/holo_blue_dark_translucence" >
+        </View>
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/frame_preference"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+    </FrameLayout>
+
+</LinearLayout>

@@ -36,7 +36,7 @@ import com.lq.activity.R;
 import com.lq.adapter.ArtistAdapter;
 import com.lq.entity.ArtistInfo;
 import com.lq.loader.ArtistInfoRetrieveLoader;
-import com.lq.util.GlobalConstant;
+import com.lq.util.Constant;
 
 public class ArtistBrowserFragment extends Fragment implements
 		LoaderCallbacks<List<ArtistInfo>> {
@@ -157,8 +157,8 @@ public class ArtistBrowserFragment extends Fragment implements
 					Bundle data = new Bundle();
 					data.putParcelable(ArtistInfo.class.getSimpleName(),
 							mAdapter.getData().get(position));
-					data.putInt(GlobalConstant.PARENT,
-							GlobalConstant.START_FROM_ARTIST);
+					data.putInt(Constant.PARENT,
+							Constant.START_FROM_ARTIST);
 					getFragmentManager()
 							.beginTransaction()
 							.replace(

@@ -55,7 +55,7 @@ import com.lq.loader.MusicRetrieveLoader;
 import com.lq.loader.PlaylistInfoRetrieveLoader;
 import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
-import com.lq.util.GlobalConstant;
+import com.lq.util.Constant;
 import com.lq.util.StringHelper;
 
 public class PlaylistBrowserFragment extends Fragment implements
@@ -294,8 +294,8 @@ public class PlaylistBrowserFragment extends Fragment implements
 				// TODO列表点击，进入音乐列表
 				if (getParentFragment() instanceof FramePlaylistFragment) {
 					Bundle args = new Bundle();
-					args.putInt(GlobalConstant.PARENT,
-							GlobalConstant.START_FROM_PLAYLIST);
+					args.putInt(Constant.PARENT,
+							Constant.START_FROM_PLAYLIST);
 					args.putParcelable(PlaylistInfo.class.getSimpleName(),
 							mAdapter.getItem(position));
 					getFragmentManager()
@@ -409,7 +409,6 @@ public class PlaylistBrowserFragment extends Fragment implements
 			List<PlaylistInfo> data) {
 		Log.i(TAG, "onLoadFinished");
 
-		// TODO SD卡拔出时，没有处理
 
 		// 载入完成，更新列表数据
 		mAdapter.setData(data);
@@ -468,7 +467,7 @@ public class PlaylistBrowserFragment extends Fragment implements
 	private OnMyDialogInputListener mCreateNewPlaylistListener = new OnMyDialogInputListener() {
 
 		@Override
-		public void onPlaylistCreateCompleted(String newListName) {
+		public void onEditTextInputCompleted(String newListName) {
 			int newListId = PlaylistDAO.createPlaylist(getActivity()
 					.getContentResolver(), newListName);
 			if (newListId == -1) {
@@ -491,7 +490,7 @@ public class PlaylistBrowserFragment extends Fragment implements
 	private OnMyDialogInputListener mUpdatePlaylistListener = new OnMyDialogInputListener() {
 
 		@Override
-		public void onPlaylistCreateCompleted(String newListName) {
+		public void onEditTextInputCompleted(String newListName) {
 			// 尝试更新播放列表名称
 			boolean isRename = PlaylistDAO.updatePlaylistName(getActivity()
 					.getContentResolver(), newListName, mSelectedPlaylistId);

@@ -23,7 +23,7 @@ public class EditTextDialogFragment extends DialogFragment {
 		 * @param newListName
 		 *            輸入的文本框中的内容
 		 */
-		public abstract void onPlaylistCreateCompleted(String newListName);
+		public abstract void onEditTextInputCompleted(String newListName);
 	}
 
 	private static final String TAG = EditTextDialogFragment.class
@@ -67,6 +67,7 @@ public class EditTextDialogFragment extends DialogFragment {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		Log.i(TAG, "onCreate");
 		super.onCreate(savedInstanceState);
 		mView_et_PlaylistName = (EditText) LayoutInflater.from(getActivity())
 				.inflate(R.layout.edittext_dialog, null);
@@ -98,6 +99,7 @@ public class EditTextDialogFragment extends DialogFragment {
 
 	@Override
 	public void onDestroy() {
+		Log.i(TAG, "onDestroy");
 		super.onDestroy();
 		mListener = null;
 		mAlertDialog = null;
@@ -141,11 +143,11 @@ public class EditTextDialogFragment extends DialogFragment {
 						Toast.LENGTH_SHORT).show();
 				setWindowShownWhenClickedButton(true);
 			} else if (mListener != null) {
+				Log.i(TAG, "确定--->传递文本给监听器");
 				// 返回EditText中输入的内容
-				mListener.onPlaylistCreateCompleted(mView_et_PlaylistName
+				mListener.onEditTextInputCompleted(mView_et_PlaylistName
 						.getText().toString());
 			}
-
 		}
 	};
 	private DialogInterface.OnClickListener mNegativeClickListener = new DialogInterface.OnClickListener() {

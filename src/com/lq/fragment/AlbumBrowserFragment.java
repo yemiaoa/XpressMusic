@@ -7,8 +7,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Albums;
 import android.provider.MediaStore.Audio.Media;
@@ -38,7 +40,7 @@ import com.lq.activity.R;
 import com.lq.adapter.AlbumAdapter;
 import com.lq.entity.AlbumInfo;
 import com.lq.loader.AlbumInfoRetrieveLoader;
-import com.lq.util.GlobalConstant;
+import com.lq.util.Constant;
 
 public class AlbumBrowserFragment extends Fragment implements
 		LoaderCallbacks<List<AlbumInfo>> {
@@ -157,8 +159,7 @@ public class AlbumBrowserFragment extends Fragment implements
 					Bundle data = new Bundle();
 					data.putParcelable(AlbumInfo.class.getSimpleName(),
 							mAdapter.getData().get(position));
-					data.putInt(GlobalConstant.PARENT,
-							GlobalConstant.START_FROM_ALBUM);
+					data.putInt(Constant.PARENT, Constant.START_FROM_ALBUM);
 					getFragmentManager()
 							.beginTransaction()
 							.replace(
@@ -232,14 +233,34 @@ public class AlbumBrowserFragment extends Fragment implements
 	public Loader<List<AlbumInfo>> onCreateLoader(int id, Bundle args) {
 		Log.i(TAG, "onCreateLoader");
 
-		String where = Albums._ID + " in (select " + Media.ALBUM_ID
-				+ " from audio_meta where ((" + FileColumns.DATA
-				+ " like'%.mp3' or " + Media.DATA + " like'%.wma') and "
-				+ Media.DURATION + " > " + 1000 * 60 * 1 + " and "
-				+ FileColumns.SIZE + " > " + 1024 + " )) ";
+		StringBuilder where = new StringBuilder(Albums._ID + " in (select distinct "
+				+ Media.ALBUM_ID + " from audio_meta where (1=1 ");
+		// String where = Albums._ID + " in (select " + Media.ALBUM_ID
+		// + " from audio_meta where ((" + FileColumns.DATA
+		// + " like'%.mp3' or " + Media.DATA + " like'%.wma') and "
+		// + Media.DURATION + " > " + 1000 * 60 * 1 + " and "
+		// + FileColumns.SIZE + " > " + 1024 + " )) ";
+
+		SharedPreferences sp = PreferenceManager
+				.getDefaultSharedPreferences(getActivity());
+		boolean filterBySize = sp.getBoolean(
+				SettingFragment.KEY_FILTER_BY_SIZE, true);
+		boolean filterByDuration = sp.getBoolean(
+
+		SettingFragment.KEY_FILTER_BY_DURATION, true);
+		if (filterBySize) {
+			where.append(" and " + Media.SIZE + " > " + Constant.FILTER_SIZE);
+		}
+		if (filterByDuration) {
+			where.append(" and " + Media.DURATION + " > "
+					+ Constant.FILTER_DURATION);
+		}
+
+		where.append("))");
+
 		// 创建并返回一个Loader
-		return new AlbumInfoRetrieveLoader(getActivity(), where, null,
-				mSortOrder);
+		return new AlbumInfoRetrieveLoader(getActivity(), where.toString(),
+				null, mSortOrder);
 	}
 
 	@Override

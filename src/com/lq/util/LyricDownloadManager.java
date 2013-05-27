@@ -14,6 +14,10 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 
+import com.lq.fragment.SettingFragment;
+
+import android.content.Context;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class LyricDownloadManager {
@@ -25,6 +29,12 @@ public class LyricDownloadManager {
 	private LyricXMLParser mLyricXMLParser = new LyricXMLParser();
 	private URL mUrl = null;
 	private int mDownloadLyricId = -1;
+
+	private Context mContext = null;
+
+	public LyricDownloadManager(Context c) {
+		mContext = c;
+	}
 
 	/*
 	 * 根据歌曲名和歌手名取得该歌的XML信息文件 返回歌词保存路径
@@ -125,12 +135,17 @@ public class LyricDownloadManager {
 		}
 		if (content != null) {
 			// 检查保存的目录是否已经创建
-			File savefolder = new File(GlobalConstant.LYRIC_SAVE_FOLDER_PATH);
+
+			String folderPath = PreferenceManager.getDefaultSharedPreferences(
+					mContext).getString(SettingFragment.KEY_LYRIC_SAVE_PATH,
+					Constant.LYRIC_SAVE_FOLDER_PATH);
+
+			File savefolder = new File(folderPath);
 			if (!savefolder.exists()) {
 				savefolder.mkdirs();
 			}
-			String savePath = GlobalConstant.LYRIC_SAVE_FOLDER_PATH + "/"
-					+ musicName + "_" + singerName + ".lrc";
+			String savePath = folderPath + musicName + "_" + singerName
+					+ ".lrc";
 			Log.i(TAG, "歌词保存路径:" + savePath);
 
 			saveLyric(content.toString(), savePath);
