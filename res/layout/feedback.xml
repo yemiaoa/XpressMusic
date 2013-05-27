@@ -1,0 +1,73 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <LinearLayout
+        android:id="@+id/top_of_feedback"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dip"
+            android:divider="@color/grey_dark_light"
+            android:dividerPadding="5dp"
+            android:orientation="horizontal"
+            android:showDividers="middle" >
+
+            <ImageView
+                android:id="@+id/close_feedback"
+                android:layout_width="48dip"
+                android:layout_height="match_parent"
+                android:background="@drawable/button_grey_backgound_when_pressed"
+                android:clickable="true"
+                android:contentDescription="@string/app_name"
+                android:scaleType="centerInside"
+                android:src="@drawable/btn_title_back_close" />
+
+            <TextView
+                android:id="@+id/title_feedback"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="left|center_vertical"
+                android:paddingLeft="10dp"
+                android:singleLine="true"
+                android:text="@string/feedback"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textIsSelectable="false" />
+        </LinearLayout>
+
+        <View
+            android:id="@+id/section_line_horizental"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/holo_blue_dark_translucence" >
+        </View>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/submit_feedback"
+        android:layout_width="120dp"
+        android:layout_height="40dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/button_pressed_blue_backround"
+        android:text="@string/sumbit"
+        android:textColor="@color/white" />
+
+    <EditText
+        android:id="@+id/feedback_content"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_above="@id/submit_feedback"
+        android:layout_below="@id/top_of_feedback"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:gravity="top"
+        android:hint="@string/please_input_feedback" />
+
+</RelativeLayout>

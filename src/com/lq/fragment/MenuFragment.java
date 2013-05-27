@@ -17,6 +17,7 @@ import android.widget.ListView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
+import com.lq.activity.FeedbackActivity;
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.MyPreferenceActivity;
 import com.lq.activity.R;
@@ -54,11 +55,10 @@ public class MenuFragment extends ListFragment {
 			newContent = FramePlaylistFragment.class.getName();
 			break;
 		case 5:// TODO 系统设置
-			getActivity().startActivity(
-					new Intent(getActivity(), MyPreferenceActivity.class));
+			startActivity(new Intent(getActivity(), MyPreferenceActivity.class));
 			return;
 		case 6:// TODO 意见反馈
-			newContent = ColorFragment.class.getName();
+			startActivity(new Intent(getActivity(), FeedbackActivity.class));
 			break;
 		case 7:// TODO 退出
 			((MainContentActivity) getActivity()).exit();

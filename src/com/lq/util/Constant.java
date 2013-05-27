@@ -12,6 +12,7 @@ public final class Constant {
 			+ File.separator
 			+ "随心而乐"
 			+ File.separator + "lyric" + File.separator;
+	public static final String AUTHOR_EMAIL = "lq2625304@gmail.com";
 	public static final String PLAY_MODE = "play_mode";
 	public static final String PLAYING_STATE = "playing_state";
 	public static final String CURRENT_PLAY_POSITION = "current_play_position";

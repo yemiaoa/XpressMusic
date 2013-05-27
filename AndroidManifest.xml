@@ -62,6 +62,13 @@
             android:theme="@android:style/Theme.Holo.Light.NoActionBar" >
         </activity>
         <activity
+            android:name="com.lq.activity.FeedbackActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Holo.Light.NoActionBar" >
+        </activity>
+        <activity
             android:name="com.lq.activity.SplashActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
