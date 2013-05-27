@@ -2,6 +2,9 @@ package com.lq.util;
 
 import java.util.Locale;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class TimeHelper {
 	// private static final String TAG = TimeHelper.class.getSimpleName();
 

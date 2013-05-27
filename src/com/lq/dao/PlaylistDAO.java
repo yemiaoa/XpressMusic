@@ -13,7 +13,11 @@ import android.util.Log;
 
 import com.lq.entity.TrackInfo;
 
-/** 对“播放列表”相关的数据库访问进行的封装类 */
+/**
+ * 对“播放列表”相关的数据库访问进行的封装类
+ * 
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class PlaylistDAO {
 	public static final String TAG = PlaylistDAO.class.getSimpleName();
 

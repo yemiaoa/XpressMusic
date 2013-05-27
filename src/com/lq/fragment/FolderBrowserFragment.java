@@ -39,6 +39,9 @@ import com.lq.loader.FolderInfoRetreiveLoader;
 import com.lq.util.StringHelper;
 import com.lq.util.Constant;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class FolderBrowserFragment extends Fragment implements
 		LoaderCallbacks<List<FolderInfo>> {
 	private static final String TAG = FolderBrowserFragment.class
@@ -158,8 +161,7 @@ public class FolderBrowserFragment extends Fragment implements
 					Bundle data = new Bundle();
 					data.putParcelable(FolderInfo.class.getSimpleName(),
 							mAdapter.getData().get(position));
-					data.putInt(Constant.PARENT,
-							Constant.START_FROM_FOLER);
+					data.putInt(Constant.PARENT, Constant.START_FROM_FOLER);
 					getFragmentManager()
 							.beginTransaction()
 							.replace(

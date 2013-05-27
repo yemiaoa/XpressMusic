@@ -16,6 +16,9 @@ import android.util.Log;
 
 import com.lq.entity.LyricSentence;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class LyricLoadHelper {
 	/** 用于向外通知歌词载入、变化的监听器 */
 	public interface LyricListener {

@@ -6,6 +6,9 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class TrackInfo implements Parcelable {
 
 	/** 在MedieStore存储的主键 */

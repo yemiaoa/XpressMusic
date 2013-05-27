@@ -11,6 +11,9 @@ import android.widget.RelativeLayout;
 
 import com.lq.activity.R;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class ColorFragment extends Fragment {
 
 	private int mColorRes = R.color.holo_blue_dark;

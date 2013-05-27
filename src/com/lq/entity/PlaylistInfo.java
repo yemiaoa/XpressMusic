@@ -4,6 +4,9 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class PlaylistInfo implements Parcelable {
 	private int id;
 	private String playlist_name;

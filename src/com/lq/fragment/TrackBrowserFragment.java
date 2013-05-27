@@ -84,7 +84,7 @@ import com.lq.util.StringHelper;
 /**
  * 读取并显示设备外存上的音乐文件
  * 
- * @author lq
+ * @author lq 2013-6-1 lq2625304@gmail.com
  * */
 public class TrackBrowserFragment extends Fragment implements
 		LoaderManager.LoaderCallbacks<List<TrackInfo>>, OnItemClickListener,
@@ -110,6 +110,9 @@ public class TrackBrowserFragment extends Fragment implements
 
 	/** 显示本地音乐的列表 */
 	private ListView mView_ListView = null;
+	private View mView_EmptyNoStorage = null;
+	private View mView_EmptyNoSong = null;
+	private View mView_EmptyLoading = null;
 
 	private ImageView mView_MenuNavigation = null;
 	private ImageView mView_GoToPlayer = null;
@@ -172,9 +175,15 @@ public class TrackBrowserFragment extends Fragment implements
 			if (key.equals(SettingFragment.KEY_FILTER_BY_SIZE)
 					|| key.equals(SettingFragment.KEY_FILTER_BY_DURATION)) {
 				// 歌曲过滤设置改变了
-				if (!isDetached()) {
+				if (!isDetached()
+						&& Environment.getExternalStorageState().equals(
+								Environment.MEDIA_MOUNTED)) {
 					// 并且本页面处于可见状态，重新更新数据显示
+					mView_Title.setText("");
+					mView_ListView.setEmptyView(mView_EmptyLoading);
 					mAdapter.setData(null);
+					mView_TrackOperations.setVisibility(View.GONE);
+					mView_MoreFunctions.setClickable(false);
 					getLoaderManager().restartLoader(MUSIC_RETRIEVE_LOADER,
 							null, TrackBrowserFragment.this);
 				}
@@ -208,9 +217,13 @@ public class TrackBrowserFragment extends Fragment implements
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		Log.i(TAG, "onCreateView");
-		View rootView = inflater.inflate(R.layout.list_track, container, false);
+		ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.list_track,
+				container, false);
 		mView_ListView = (ListView) rootView
 				.findViewById(R.id.listview_local_music);
+		mView_EmptyNoStorage = rootView.findViewById(R.id.empty_no_sdcard);
+		mView_EmptyNoSong = rootView.findViewById(R.id.empty_no_song);
+		mView_EmptyLoading = rootView.findViewById(R.id.empty_loading);
 		mView_MenuNavigation = (ImageView) rootView
 				.findViewById(R.id.menu_navigation);
 		mView_Title = (TextView) rootView.findViewById(R.id.title_of_top);
@@ -257,6 +270,8 @@ public class TrackBrowserFragment extends Fragment implements
 
 		handleArguments();
 
+		// 初始化一个装载器，根据第一个参数，要么连接一个已存在的装载器，要么以此ID创建一个新的装载器
+		getLoaderManager().initLoader(MUSIC_RETRIEVE_LOADER, null, this);
 	}
 
 	@Override
@@ -276,25 +291,6 @@ public class TrackBrowserFragment extends Fragment implements
 	public void onResume() {
 		Log.i(TAG, "onResume");
 		super.onResume();
-
-		if (Environment.getExternalStorageState().equals(
-				Environment.MEDIA_MOUNTED)) {
-			// sd card 可用
-			// 显示操作栏
-			mView_TrackOperations.setVisibility(View.VISIBLE);
-			mView_MoreFunctions.setClickable(true);
-			mView_Title.setText("");
-			// 初始化一个装载器，根据第一个参数，要么连接一个已存在的装载器，要么以此ID创建一个新的装载器
-			getLoaderManager().initLoader(MUSIC_RETRIEVE_LOADER, null, this);
-		} else {
-			// 当前不可用
-			// 隐藏操作栏
-			mView_TrackOperations.setVisibility(View.GONE);
-			mView_MoreFunctions.setClickable(false);
-			// 提示SD卡不可用
-			Toast.makeText(getActivity(), R.string.sdcard_cannot_use,
-					Toast.LENGTH_SHORT).show();
-		}
 
 		startWatchingExternalStorage();
 	}
@@ -390,7 +386,7 @@ public class TrackBrowserFragment extends Fragment implements
 		registerForContextMenu(mView_ListView);
 		// 为ListView的条目绑定一个点击事件监听
 		mView_ListView.setOnItemClickListener(this);
-
+		mView_ListView.setEmptyView(mView_EmptyLoading);
 		// 标题的设置-------------------------------------------------------------
 		mView_Title.setOnClickListener(new OnClickListener() {
 			@Override
@@ -728,6 +724,10 @@ public class TrackBrowserFragment extends Fragment implements
 				}
 			}
 		});
+
+		// 初始时不显示操作条，数据加载完再显示
+		mView_TrackOperations.setVisibility(View.GONE);
+		mView_MoreFunctions.setClickable(false);
 	}
 
 	/** T9键盘按键处理 */
@@ -923,6 +923,14 @@ public class TrackBrowserFragment extends Fragment implements
 			Collections.sort(data, mArtistNameComparator);
 		}
 
+		mView_ListView.setEmptyView(mView_EmptyNoSong);
+		if (data.size() == 0) {
+			mView_TrackOperations.setVisibility(View.GONE);
+			mView_MoreFunctions.setClickable(false);
+		} else {
+			mView_TrackOperations.setVisibility(View.VISIBLE);
+			mView_MoreFunctions.setClickable(true);
+		}
 		mAdapter.setData(data);
 
 		// 每次加载新的数据设置一下标题中的歌曲数目
@@ -964,6 +972,8 @@ public class TrackBrowserFragment extends Fragment implements
 	public void onLoaderReset(Loader<List<TrackInfo>> loader) {
 		Log.i(TAG, "onLoaderReset");
 		mAdapter.setData(null);
+		mView_TrackOperations.setVisibility(View.GONE);
+		mView_MoreFunctions.setClickable(false);
 	}
 
 	/** 初始化当前播放信息 */
@@ -1179,16 +1189,16 @@ public class TrackBrowserFragment extends Fragment implements
 				// SD卡移除，设置列表为空
 				mView_TrackOperations.setVisibility(View.GONE);
 				mView_MoreFunctions.setClickable(false);
-				mView_TrackOperations.setVisibility(View.GONE);
 				mView_Title.setText("");
+				mView_ListView.setEmptyView(mView_EmptyNoStorage);
 				mAdapter.setData(null);
+
 				// 提示SD卡不可用
 				Toast.makeText(getActivity(), R.string.sdcard_cannot_use,
 						Toast.LENGTH_SHORT).show();
 			} else if (intent.getAction().equals(Intent.ACTION_MEDIA_MOUNTED)) {
 				// SD卡正常挂载,重新加载数据
-				mView_TrackOperations.setVisibility(View.VISIBLE);
-				mView_MoreFunctions.setClickable(true);
+				mView_ListView.setEmptyView(mView_EmptyLoading);
 				TrackBrowserFragment.this.getLoaderManager().restartLoader(
 						MUSIC_RETRIEVE_LOADER, null, TrackBrowserFragment.this);
 			}
@@ -1227,8 +1237,6 @@ public class TrackBrowserFragment extends Fragment implements
 						mMusicServiceBinder
 								.removeSongFromCurrenPlaylist(mToDeleteTrack
 										.getId());
-						// getActivity().startService(
-						// new Intent(MusicService.ACTION_NEXT));
 					}
 				}
 

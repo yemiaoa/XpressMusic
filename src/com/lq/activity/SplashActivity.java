@@ -7,7 +7,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.FragmentActivity;
-
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class SplashActivity extends FragmentActivity {
 
 	private MyHandler mHandler = new MyHandler(this);

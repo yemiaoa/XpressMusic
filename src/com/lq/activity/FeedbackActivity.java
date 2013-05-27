@@ -11,6 +11,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class FeedbackActivity extends FragmentActivity implements
 		OnClickListener {
 

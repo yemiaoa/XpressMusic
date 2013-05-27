@@ -19,6 +19,9 @@ import com.lq.activity.MutipleEditActivity;
 import com.lq.activity.R;
 import com.lq.dao.PlaylistDAO;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class AddTrackToNewPlaylistDialogFragment extends DialogFragment {
 
 	private static final String TAG = AddTrackToNewPlaylistDialogFragment.class

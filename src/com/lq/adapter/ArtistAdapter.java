@@ -12,7 +12,9 @@ import android.widget.TextView;
 
 import com.lq.activity.R;
 import com.lq.entity.ArtistInfo;
-
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class ArtistAdapter extends BaseAdapter {
 	private List<ArtistInfo> mData = null;
 	private Context mContext = null;

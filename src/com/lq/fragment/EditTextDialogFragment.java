@@ -14,6 +14,9 @@ import android.widget.Toast;
 
 import com.lq.activity.R;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class EditTextDialogFragment extends DialogFragment {
 	/** 自定义的对话框里的文本输入监听器 */
 	public interface OnMyDialogInputListener {

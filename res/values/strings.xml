@@ -12,9 +12,11 @@
     <string name="are_you_sure_to_exit">您确定退出吗？</string>
     <string name="feedback">意见反馈</string>
     <string name="sumbit">提交</string>
-    <string name="please_input_feedback">请输入反馈信息</string>
+    <string name="please_input_feedback">请输入反馈信息，感谢您的支持</string>
     <string name="select_email_app">请选择邮件发送软件</string>
     <string name="email_title">随心而乐的意见反馈</string>
+    <string name="loading_hardly">正在努力加载...</string>
+    <string name="about">本播放器是作者利用业余时间开发的小应用，仅供学习交流使用，源码可访问https://github.com/lq910328/XpressMusic 获取。如有更好的建议或心得请发送反馈信息，非常感谢您的支持</string>
 
     <!-- 系统设置 -->
     <string name="system_setting">系统设置</string>

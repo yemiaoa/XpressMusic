@@ -4,6 +4,9 @@ import java.io.File;
 
 import android.os.Environment;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public final class Constant {
 	public static final String SDCARD_ROOT_PATH = Environment
 			.getExternalStorageDirectory() + "/";

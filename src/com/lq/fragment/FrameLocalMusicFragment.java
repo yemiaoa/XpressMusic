@@ -9,6 +9,9 @@ import android.view.ViewGroup;
 import com.lq.activity.R;
 import com.lq.util.Constant;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class FrameLocalMusicFragment extends Fragment {
 
 	@Override

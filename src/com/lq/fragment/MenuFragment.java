@@ -22,6 +22,9 @@ import com.lq.activity.MainContentActivity;
 import com.lq.activity.MyPreferenceActivity;
 import com.lq.activity.R;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class MenuFragment extends ListFragment {
 	private ListView mListView = null;
 

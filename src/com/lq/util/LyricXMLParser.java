@@ -12,6 +12,9 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import android.util.Log;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class LyricXMLParser {
 	private static final String TAG = "LyricXMLParser";
 

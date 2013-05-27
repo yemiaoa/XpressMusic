@@ -14,7 +14,9 @@ import android.widget.TextView;
 
 import com.lq.activity.R;
 import com.lq.entity.LyricSentence;
-
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class LyricAdapter extends BaseAdapter {
 	private static final String TAG = LyricAdapter.class.getSimpleName();
 

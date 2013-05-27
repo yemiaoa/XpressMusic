@@ -30,7 +30,9 @@ import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.service.MusicService.State;
 import com.lq.util.Constant;
-
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class PlayQueueActivity extends FragmentActivity implements
 		OnItemClickListener {
 	private static final String TAG = PlayQueueActivity.class.getSimpleName();

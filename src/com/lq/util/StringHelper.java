@@ -11,6 +11,9 @@ import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
 import net.sourceforge.pinyin4j.format.HanyuPinyinVCharType;
 import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class StringHelper {
 	public static enum CharType {
 		DELIMITER, // 非字母截止字符，例如，．）（　等等　（ 包含U0000-U0080）

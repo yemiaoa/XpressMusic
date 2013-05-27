@@ -38,6 +38,9 @@ import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.util.Constant;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class MutipleEditActivity extends FragmentActivity implements
 		View.OnClickListener {
 	public static String ACTION_FINISH = MutipleEditActivity.class.getName()
@@ -115,10 +118,8 @@ public class MutipleEditActivity extends FragmentActivity implements
 		// 获取Intent中传递过来的数据
 		Bundle args = getIntent().getExtras();
 		mDataList = args.getParcelableArrayList(Constant.DATA_LIST);
-		mTitle = args.getString(Constant.TITLE) + "(" + mDataList.size()
-				+ ")";
-		mFirstVisiblePosition = args.getInt(
-				Constant.FIRST_VISIBLE_POSITION, 0);
+		mTitle = args.getString(Constant.TITLE) + "(" + mDataList.size() + ")";
+		mFirstVisiblePosition = args.getInt(Constant.FIRST_VISIBLE_POSITION, 0);
 		mParent = args.getInt(Constant.PARENT, -1);
 		mPlaylistId = args.getInt(Constant.PLAYLIST_ID, -1);
 

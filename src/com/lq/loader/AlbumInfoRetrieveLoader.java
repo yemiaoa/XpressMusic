@@ -13,6 +13,9 @@ import android.util.Log;
 
 import com.lq.entity.AlbumInfo;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class AlbumInfoRetrieveLoader extends AsyncTaskLoader<List<AlbumInfo>> {
 	private final String TAG = AlbumInfoRetrieveLoader.class.getSimpleName();
 

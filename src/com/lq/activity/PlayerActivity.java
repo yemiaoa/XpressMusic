@@ -40,7 +40,9 @@ import com.lq.service.MusicService.State;
 import com.lq.util.Constant;
 import com.lq.util.LyricLoadHelper.LyricListener;
 import com.lq.util.TimeHelper;
-
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class PlayerActivity extends FragmentActivity {
 	public static final String TAG = PlayerActivity.class.getSimpleName();
 

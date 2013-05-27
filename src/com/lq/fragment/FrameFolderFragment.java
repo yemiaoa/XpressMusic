@@ -9,8 +9,11 @@ import android.view.ViewGroup;
 import com.lq.activity.R;
 import com.lq.util.Constant;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class FrameFolderFragment extends Fragment {
-	
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
@@ -22,10 +25,10 @@ public class FrameFolderFragment extends Fragment {
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		
-		Bundle args=new Bundle();
+
+		Bundle args = new Bundle();
 		args.putString(Constant.PARENT, this.getClass().getSimpleName());
-		
+
 		getChildFragmentManager()
 				.beginTransaction()
 				.replace(

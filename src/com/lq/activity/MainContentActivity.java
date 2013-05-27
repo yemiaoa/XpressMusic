@@ -23,6 +23,9 @@ import com.lq.fragment.PromptDialogFragment;
 import com.lq.service.MusicService;
 import com.slidingmenu.lib.SlidingMenu;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class MainContentActivity extends FragmentActivity implements
 		OnBackStackChangedListener {
 	public interface OnBackKeyPressedListener {

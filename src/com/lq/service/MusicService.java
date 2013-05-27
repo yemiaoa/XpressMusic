@@ -69,6 +69,8 @@ import com.lq.util.LyricLoadHelper.LyricListener;
 
 /**
  * 这是处理音乐回放的服务，在应用中对媒体的所有处理都交给这个服务。
+ * 
+ * @author lq 2013-6-1 lq2625304@gmail.com
  */
 public class MusicService extends Service implements OnCompletionListener,
 		OnPreparedListener, OnErrorListener, MusicFocusable, LyricListener {

@@ -6,7 +6,9 @@ import android.util.Log;
 import android.view.View;
 
 import com.lq.fragment.SettingFragment;
-
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class MyPreferenceActivity extends Activity {
 	private static final String TAG = MyPreferenceActivity.class
 			.getSimpleName();

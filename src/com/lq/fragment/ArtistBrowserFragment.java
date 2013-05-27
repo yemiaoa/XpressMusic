@@ -38,6 +38,9 @@ import com.lq.entity.ArtistInfo;
 import com.lq.loader.ArtistInfoRetrieveLoader;
 import com.lq.util.Constant;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class ArtistBrowserFragment extends Fragment implements
 		LoaderCallbacks<List<ArtistInfo>> {
 	private static final String TAG = ArtistBrowserFragment.class
@@ -157,8 +160,7 @@ public class ArtistBrowserFragment extends Fragment implements
 					Bundle data = new Bundle();
 					data.putParcelable(ArtistInfo.class.getSimpleName(),
 							mAdapter.getData().get(position));
-					data.putInt(Constant.PARENT,
-							Constant.START_FROM_ARTIST);
+					data.putInt(Constant.PARENT, Constant.START_FROM_ARTIST);
 					getFragmentManager()
 							.beginTransaction()
 							.replace(

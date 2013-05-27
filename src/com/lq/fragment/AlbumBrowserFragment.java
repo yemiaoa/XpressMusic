@@ -42,6 +42,9 @@ import com.lq.entity.AlbumInfo;
 import com.lq.loader.AlbumInfoRetrieveLoader;
 import com.lq.util.Constant;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class AlbumBrowserFragment extends Fragment implements
 		LoaderCallbacks<List<AlbumInfo>> {
 	private static final String TAG = AlbumBrowserFragment.class
@@ -233,8 +236,9 @@ public class AlbumBrowserFragment extends Fragment implements
 	public Loader<List<AlbumInfo>> onCreateLoader(int id, Bundle args) {
 		Log.i(TAG, "onCreateLoader");
 
-		StringBuilder where = new StringBuilder(Albums._ID + " in (select distinct "
-				+ Media.ALBUM_ID + " from audio_meta where (1=1 ");
+		StringBuilder where = new StringBuilder(Albums._ID
+				+ " in (select distinct " + Media.ALBUM_ID
+				+ " from audio_meta where (1=1 ");
 		// String where = Albums._ID + " in (select " + Media.ALBUM_ID
 		// + " from audio_meta where ((" + FileColumns.DATA
 		// + " like'%.mp3' or " + Media.DATA + " like'%.wma') and "
@@ -314,7 +318,7 @@ public class AlbumBrowserFragment extends Fragment implements
 					|| intent.getAction().equals(Intent.ACTION_MEDIA_REMOVED)
 					|| intent.getAction().equals(
 							Intent.ACTION_MEDIA_BAD_REMOVAL)) {
-				// TODO SD卡移除，设置列表为空
+				// SD卡移除，设置列表为空
 				mView_MoreFunctions.setClickable(false);
 				mView_Title.setText("");
 				mAdapter.setData(null);

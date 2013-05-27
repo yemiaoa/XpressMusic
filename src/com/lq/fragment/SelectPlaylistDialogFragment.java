@@ -32,6 +32,9 @@ import com.lq.dao.PlaylistDAO;
 import com.lq.entity.PlaylistInfo;
 import com.lq.loader.PlaylistInfoRetrieveLoader;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class SelectPlaylistDialogFragment extends DialogFragment implements
 		LoaderCallbacks<List<PlaylistInfo>> {
 	private static final String TAG = SelectPlaylistDialogFragment.class

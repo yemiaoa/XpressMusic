@@ -58,6 +58,9 @@ import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.util.Constant;
 import com.lq.util.StringHelper;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class PlaylistBrowserFragment extends Fragment implements
 		LoaderCallbacks<List<PlaylistInfo>> {
 	private final String TAG = this.getClass().getSimpleName();
@@ -294,8 +297,7 @@ public class PlaylistBrowserFragment extends Fragment implements
 				// TODO列表点击，进入音乐列表
 				if (getParentFragment() instanceof FramePlaylistFragment) {
 					Bundle args = new Bundle();
-					args.putInt(Constant.PARENT,
-							Constant.START_FROM_PLAYLIST);
+					args.putInt(Constant.PARENT, Constant.START_FROM_PLAYLIST);
 					args.putParcelable(PlaylistInfo.class.getSimpleName(),
 							mAdapter.getItem(position));
 					getFragmentManager()
@@ -408,7 +410,6 @@ public class PlaylistBrowserFragment extends Fragment implements
 	public void onLoadFinished(Loader<List<PlaylistInfo>> loader,
 			List<PlaylistInfo> data) {
 		Log.i(TAG, "onLoadFinished");
-
 
 		// 载入完成，更新列表数据
 		mAdapter.setData(data);

@@ -13,6 +13,9 @@ import android.util.Log;
 import com.lq.dao.PlaylistDAO;
 import com.lq.entity.PlaylistInfo;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class PlaylistInfoRetrieveLoader extends
 		AsyncTaskLoader<List<PlaylistInfo>> {
 	private final String TAG = PlaylistInfoRetrieveLoader.class.getSimpleName();

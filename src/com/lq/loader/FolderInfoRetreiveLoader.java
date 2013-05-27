@@ -20,6 +20,9 @@ import com.lq.entity.FolderInfo;
 import com.lq.fragment.SettingFragment;
 import com.lq.util.Constant;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class FolderInfoRetreiveLoader extends AsyncTaskLoader<List<FolderInfo>> {
 	private final String TAG = this.getClass().getSimpleName();
 	private ContentResolver mContentResolver = null;

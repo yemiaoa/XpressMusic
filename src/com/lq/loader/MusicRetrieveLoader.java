@@ -15,6 +15,9 @@ import android.util.Log;
 
 import com.lq.entity.TrackInfo;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class MusicRetrieveLoader extends AsyncTaskLoader<List<TrackInfo>> {
 	private final String TAG = MusicRetrieveLoader.class.getSimpleName();
 
@@ -57,10 +60,10 @@ public class MusicRetrieveLoader extends AsyncTaskLoader<List<TrackInfo>> {
 		Log.i(TAG, "loadInBackground");
 		List<TrackInfo> itemsList = new ArrayList<TrackInfo>();
 		TrackInfo item = null;
-		
+
 		Cursor cursor = mContentResolver.query(Media.EXTERNAL_CONTENT_URI,
 				mProjection, mSelection, mSelectionArgs, mSortOrder);
-		
+
 		// 将数据库查询结果保存到一个List集合中(存放在RAM)
 		if (cursor != null) {
 			index_id = cursor.getColumnIndex(Media._ID);

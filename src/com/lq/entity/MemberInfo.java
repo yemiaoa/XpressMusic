@@ -1,5 +1,8 @@
 package com.lq.entity;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class MemberInfo {
 	private int member_id;
 	private long audio_id;

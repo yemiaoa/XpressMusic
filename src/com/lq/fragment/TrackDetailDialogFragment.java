@@ -14,6 +14,9 @@ import com.lq.entity.TrackInfo;
 import com.lq.util.StringHelper;
 import com.lq.util.TimeHelper;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class TrackDetailDialogFragment extends DialogFragment {
 	private static final String TAG = TrackDetailDialogFragment.class
 			.getSimpleName();

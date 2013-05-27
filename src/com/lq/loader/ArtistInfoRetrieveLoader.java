@@ -12,6 +12,9 @@ import android.util.Log;
 
 import com.lq.entity.ArtistInfo;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class ArtistInfoRetrieveLoader extends AsyncTaskLoader<List<ArtistInfo>> {
 	private final String TAG = ArtistInfoRetrieveLoader.class.getSimpleName();
 

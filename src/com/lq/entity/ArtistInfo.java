@@ -4,6 +4,9 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class ArtistInfo implements Parcelable {
 	private String artist_name;
 	private int number_of_tracks;

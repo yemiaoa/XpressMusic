@@ -27,6 +27,9 @@ import com.lq.fragment.EditTextDialogFragment.OnMyDialogInputListener;
 import com.lq.fragment.SettingFragment;
 import com.lq.util.Constant;
 
+/**
+ * @author lq 2013-6-1 lq2625304@gmail.com
+ * */
 public class FolderChooseActivity extends FragmentActivity {
 	private final String TAG = FolderChooseActivity.class.getSimpleName();
 	private ImageView mView_Close = null;
@@ -172,10 +175,12 @@ public class FolderChooseActivity extends FragmentActivity {
 
 			@Override
 			public void onClick(View v) {
-				mCreateNewFolderDialogFragment = EditTextDialogFragment.newInstance(
-						getResources().getString(R.string.create_new_folder),
-						getResources().getString(R.string.app_name), null,
-						mCreateNewFolderListener);
+				mCreateNewFolderDialogFragment = EditTextDialogFragment
+						.newInstance(
+								getResources().getString(
+										R.string.create_new_folder),
+								getResources().getString(R.string.app_name),
+								null, mCreateNewFolderListener);
 				mCreateNewFolderDialogFragment.show(
 						getSupportFragmentManager(), null);
 			}
