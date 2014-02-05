@@ -5,7 +5,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import com.google.analytics.tracking.android.EasyTracker;
 import com.lq.fragment.SettingFragment;
+
 /**
  * @author lq 2013-6-1 lq2625304@gmail.com
  * */
@@ -31,5 +33,17 @@ public class MyPreferenceActivity extends Activity {
 				.beginTransaction()
 				.replace(R.id.frame_preference, new SettingFragment(),
 						SettingFragment.class.getSimpleName()).commit();
+	}
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		EasyTracker.getInstance(this).activityStart(this);
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+		EasyTracker.getInstance(this).activityStop(this);
 	}
 }

@@ -7,6 +7,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.FragmentActivity;
+
+import com.google.analytics.tracking.android.EasyTracker;
+
 /**
  * @author lq 2013-6-1 lq2625304@gmail.com
  * */
@@ -20,6 +23,19 @@ public class SplashActivity extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.welcome);
 		mHandler.sendEmptyMessageDelayed(0, mDelayMillis);
+
+	}
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		EasyTracker.getInstance(this).activityStart(this);
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+		EasyTracker.getInstance(this).activityStop(this);
 	}
 
 	@Override

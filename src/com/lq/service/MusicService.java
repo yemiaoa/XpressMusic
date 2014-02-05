@@ -347,6 +347,7 @@ public class MusicService extends Service implements OnCompletionListener,
 			mService = mServiceWeakReference.get();
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {

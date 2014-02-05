@@ -690,7 +690,6 @@ public class SlidingMenu extends RelativeLayout {
 	 * @param i
 	 *            The width the Sliding Menu will open to, in pixels
 	 */
-	@SuppressWarnings("deprecation")
 	public void setBehindWidth(int i) {
 		int width;
 		Display display = ((WindowManager) getContext().getSystemService(

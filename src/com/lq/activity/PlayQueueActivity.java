@@ -23,6 +23,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.analytics.tracking.android.EasyTracker;
 import com.lq.entity.TrackInfo;
 import com.lq.fragment.PromptDialogFragment;
 import com.lq.listener.OnPlaybackStateChangeListener;
@@ -30,6 +31,7 @@ import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.service.MusicService.State;
 import com.lq.util.Constant;
+
 /**
  * @author lq 2013-6-1 lq2625304@gmail.com
  * */
@@ -66,6 +68,8 @@ public class PlayQueueActivity extends FragmentActivity implements
 		// 本Activity界面显示时绑定服务，服务发送消息给本Activity以更新UI
 		bindService(new Intent(PlayQueueActivity.this, MusicService.class),
 				mServiceConnection, Context.BIND_AUTO_CREATE);
+
+		EasyTracker.getInstance(this).activityStart(this);
 	}
 
 	@Override
@@ -78,6 +82,8 @@ public class PlayQueueActivity extends FragmentActivity implements
 		unbindService(mServiceConnection);
 		mDataList = null;
 		mMusicServiceBinder = null;
+
+		EasyTracker.getInstance(this).activityStop(this);
 	}
 
 	@Override
@@ -122,11 +128,9 @@ public class PlayQueueActivity extends FragmentActivity implements
 	/** 获取传递过来的数据 */
 	private void handleArguments() {
 		Bundle args = mMusicServiceBinder.getCurrentPlayInfo();
-		mPlayingState = args
-				.getInt(Constant.PLAYING_STATE, State.Stopped);
+		mPlayingState = args.getInt(Constant.PLAYING_STATE, State.Stopped);
 
-		List<TrackInfo> list = args
-				.getParcelableArrayList(Constant.DATA_LIST);
+		List<TrackInfo> list = args.getParcelableArrayList(Constant.DATA_LIST);
 		if (list != null) {
 			mDataList.addAll(list);
 		}

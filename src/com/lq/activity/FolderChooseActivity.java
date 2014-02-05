@@ -1,7 +1,6 @@
 package com.lq.activity;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -22,6 +21,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.analytics.tracking.android.EasyTracker;
 import com.lq.fragment.EditTextDialogFragment;
 import com.lq.fragment.EditTextDialogFragment.OnMyDialogInputListener;
 import com.lq.fragment.SettingFragment;
@@ -60,6 +60,18 @@ public class FolderChooseActivity extends FragmentActivity {
 		findViews();
 		initViewsSetting();
 		updateFolderList();
+	}
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		EasyTracker.getInstance(this).activityStart(this);
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+		EasyTracker.getInstance(this).activityStop(this);
 	}
 
 	OnMyDialogInputListener mCreateNewFolderListener = new OnMyDialogInputListener() {

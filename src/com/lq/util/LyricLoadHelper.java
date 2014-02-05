@@ -291,7 +291,6 @@ public class LyricLoadHelper {
 
 	/** 去除指定字符串中包含[XXX]形式的字符串 */
 	private String trimBracket(String content) {
-		int index = 0, length = 0;
 		String s = null;
 		String result = content;
 		Matcher matcher = mBracketPattern.matcher(content);

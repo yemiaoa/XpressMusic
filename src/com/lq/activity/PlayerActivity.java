@@ -27,6 +27,7 @@ import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.google.analytics.tracking.android.EasyTracker;
 import com.lq.adapter.LyricAdapter;
 import com.lq.entity.LyricSentence;
 import com.lq.entity.TrackInfo;
@@ -40,6 +41,7 @@ import com.lq.service.MusicService.State;
 import com.lq.util.Constant;
 import com.lq.util.LyricLoadHelper.LyricListener;
 import com.lq.util.TimeHelper;
+
 /**
  * @author lq 2013-6-1 lq2625304@gmail.com
  * */
@@ -153,6 +155,8 @@ public class PlayerActivity extends FragmentActivity {
 		// 本Activity界面显示时绑定服务，服务发送消息给本Activity以更新UI
 		bindService(new Intent(PlayerActivity.this, MusicService.class),
 				mServiceConnection, Context.BIND_AUTO_CREATE);
+
+		EasyTracker.getInstance(this).activityStart(this);
 	}
 
 	@Override
@@ -168,6 +172,8 @@ public class PlayerActivity extends FragmentActivity {
 			mMusicServiceBinder.unRegisterLyricListener();
 			mMusicServiceBinder = null;
 		}
+
+		EasyTracker.getInstance(this).activityStop(this);
 	}
 
 	@Override
@@ -405,8 +411,8 @@ public class PlayerActivity extends FragmentActivity {
 	private void initCurrentPlayInfo(Bundle bundle) {
 		int playMode = bundle.getInt(Constant.PLAY_MODE);
 		int currentPlayerState = bundle.getInt(Constant.PLAYING_STATE);
-		int currenPlayPosition = bundle.getInt(
-				Constant.CURRENT_PLAY_POSITION, 0);
+		int currenPlayPosition = bundle.getInt(Constant.CURRENT_PLAY_POSITION,
+				0);
 		TrackInfo playingSong = bundle
 				.getParcelable(Constant.PLAYING_MUSIC_ITEM);
 

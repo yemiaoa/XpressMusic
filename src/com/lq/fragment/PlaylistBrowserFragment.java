@@ -74,7 +74,6 @@ public class PlaylistBrowserFragment extends Fragment implements
 	private final int CONTEXT_MENU_RENAME = 1;
 	private final int CONTEXT_MENU_DELETE = 2;
 	private final int CONTEXT_MENU_PLAYLATER = 3;
-	private final int CONTEXT_MENU_ADD_MEMBERS = 4;
 
 	/** 手势检测 */
 	private GestureDetector mDetector = null;
