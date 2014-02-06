@@ -12,7 +12,7 @@ import android.view.LayoutInflater;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 
 /**
  * @author lq 2013-6-1 lq2625304@gmail.com

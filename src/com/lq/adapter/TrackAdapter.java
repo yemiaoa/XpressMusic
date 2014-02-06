@@ -12,7 +12,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.entity.TrackInfo;
 /**
  * @author lq 2013-6-1 lq2625304@gmail.com

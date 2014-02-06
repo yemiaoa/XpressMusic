@@ -22,6 +22,7 @@ import com.lq.fragment.FrameLocalMusicFragment;
 import com.lq.fragment.MenuFragment;
 import com.lq.fragment.PromptDialogFragment;
 import com.lq.service.MusicService;
+import com.lq.xpressmusic.R;
 import com.slidingmenu.lib.SlidingMenu;
 import com.umeng.analytics.MobclickAgent;
 

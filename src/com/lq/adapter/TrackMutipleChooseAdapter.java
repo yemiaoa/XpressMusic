@@ -12,7 +12,7 @@ import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.entity.TrackInfo;
 
 /**

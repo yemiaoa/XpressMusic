@@ -26,7 +26,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.lq.activity.MutipleEditActivity;
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.adapter.PlaylistAdapter;
 import com.lq.dao.PlaylistDAO;
 import com.lq.entity.PlaylistInfo;

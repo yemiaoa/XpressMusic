@@ -16,7 +16,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.lq.activity.MutipleEditActivity;
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.dao.PlaylistDAO;
 
 /**

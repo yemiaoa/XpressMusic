@@ -66,7 +66,7 @@ import android.widget.Toast;
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.MainContentActivity.OnBackKeyPressedListener;
 import com.lq.activity.MutipleEditActivity;
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.adapter.TrackAdapter;
 import com.lq.dao.PlaylistDAO;
 import com.lq.entity.AlbumInfo;

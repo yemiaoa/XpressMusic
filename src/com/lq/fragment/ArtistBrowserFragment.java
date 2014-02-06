@@ -32,7 +32,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lq.activity.MainContentActivity;
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.adapter.ArtistAdapter;
 import com.lq.entity.ArtistInfo;
 import com.lq.loader.ArtistInfoRetrieveLoader;

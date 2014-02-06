@@ -32,7 +32,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lq.activity.MainContentActivity;
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.adapter.FolderAdapter;
 import com.lq.entity.FolderInfo;
 import com.lq.loader.FolderInfoRetreiveLoader;

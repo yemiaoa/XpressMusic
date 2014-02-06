@@ -12,7 +12,7 @@ import android.preference.PreferenceScreen;
 import android.util.Log;
 
 import com.lq.activity.FolderChooseActivity;
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.util.Constant;
 
 /**

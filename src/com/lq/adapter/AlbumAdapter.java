@@ -15,7 +15,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.entity.AlbumInfo;
 /**
  * @author lq 2013-6-1 lq2625304@gmail.com

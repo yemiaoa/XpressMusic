@@ -31,6 +31,7 @@ import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.service.MusicService.State;
 import com.lq.util.Constant;
+import com.lq.xpressmusic.R;
 import com.umeng.analytics.MobclickAgent;
 
 /**

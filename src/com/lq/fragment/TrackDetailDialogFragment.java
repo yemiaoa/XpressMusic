@@ -9,7 +9,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.entity.TrackInfo;
 import com.lq.util.StringHelper;
 import com.lq.util.TimeHelper;

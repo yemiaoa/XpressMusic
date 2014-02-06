@@ -7,6 +7,7 @@ import android.view.View;
 
 import com.google.analytics.tracking.android.EasyTracker;
 import com.lq.fragment.SettingFragment;
+import com.lq.xpressmusic.R;
 import com.umeng.analytics.MobclickAgent;
 
 /**

@@ -20,7 +20,7 @@ import android.widget.TextView;
 import com.lq.activity.FeedbackActivity;
 import com.lq.activity.MainContentActivity;
 import com.lq.activity.MyPreferenceActivity;
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 
 /**
  * @author lq 2013-6-1 lq2625304@gmail.com

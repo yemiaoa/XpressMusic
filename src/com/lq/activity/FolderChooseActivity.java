@@ -26,6 +26,7 @@ import com.lq.fragment.EditTextDialogFragment;
 import com.lq.fragment.EditTextDialogFragment.OnMyDialogInputListener;
 import com.lq.fragment.SettingFragment;
 import com.lq.util.Constant;
+import com.lq.xpressmusic.R;
 import com.umeng.analytics.MobclickAgent;
 
 /**

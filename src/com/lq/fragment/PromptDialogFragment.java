@@ -10,7 +10,7 @@ import android.util.Log;
 import android.view.ContextThemeWrapper;
 
 import com.lq.activity.MainContentActivity;
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 
 /**
  * @author lq 2013-6-1 lq2625304@gmail.com

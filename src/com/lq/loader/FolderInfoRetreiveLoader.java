@@ -15,7 +15,7 @@ import android.provider.MediaStore.Files.FileColumns;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.entity.FolderInfo;
 import com.lq.fragment.SettingFragment;
 import com.lq.util.Constant;

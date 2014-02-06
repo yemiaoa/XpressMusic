@@ -41,6 +41,7 @@ import com.lq.service.MusicService.State;
 import com.lq.util.Constant;
 import com.lq.util.LyricLoadHelper.LyricListener;
 import com.lq.util.TimeHelper;
+import com.lq.xpressmusic.R;
 import com.umeng.analytics.MobclickAgent;
 
 /**

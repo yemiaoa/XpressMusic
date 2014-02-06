@@ -54,7 +54,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.lq.activity.MainContentActivity;
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.entity.LyricSentence;
 import com.lq.entity.TrackInfo;
 import com.lq.fragment.SettingFragment;

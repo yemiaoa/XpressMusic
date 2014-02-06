@@ -35,7 +35,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.lq.activity.MainContentActivity;
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.adapter.AlbumAdapter;
 import com.lq.entity.AlbumInfo;
 import com.lq.loader.AlbumInfoRetrieveLoader;

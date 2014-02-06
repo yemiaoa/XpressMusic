@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.lq.activity.R;
+import com.lq.xpressmusic.R;
 import com.lq.util.Constant;
 
 /**

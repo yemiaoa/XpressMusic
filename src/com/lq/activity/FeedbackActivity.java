@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import com.google.analytics.tracking.android.EasyTracker;
 import com.lq.util.Constant;
+import com.lq.xpressmusic.R;
 import com.umeng.analytics.MobclickAgent;
 
 /**
