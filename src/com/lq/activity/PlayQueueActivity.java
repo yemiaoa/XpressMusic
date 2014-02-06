@@ -31,6 +31,7 @@ import com.lq.service.MusicService;
 import com.lq.service.MusicService.MusicPlaybackLocalBinder;
 import com.lq.service.MusicService.State;
 import com.lq.util.Constant;
+import com.umeng.analytics.MobclickAgent;
 
 /**
  * @author lq 2013-6-1 lq2625304@gmail.com
@@ -70,6 +71,18 @@ public class PlayQueueActivity extends FragmentActivity implements
 				mServiceConnection, Context.BIND_AUTO_CREATE);
 
 		EasyTracker.getInstance(this).activityStart(this);
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		MobclickAgent.onResume(this);
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		MobclickAgent.onPause(this);
 	}
 
 	@Override

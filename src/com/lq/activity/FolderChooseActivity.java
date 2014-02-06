@@ -26,6 +26,7 @@ import com.lq.fragment.EditTextDialogFragment;
 import com.lq.fragment.EditTextDialogFragment.OnMyDialogInputListener;
 import com.lq.fragment.SettingFragment;
 import com.lq.util.Constant;
+import com.umeng.analytics.MobclickAgent;
 
 /**
  * @author lq 2013-6-1 lq2625304@gmail.com
@@ -66,6 +67,18 @@ public class FolderChooseActivity extends FragmentActivity {
 	protected void onStart() {
 		super.onStart();
 		EasyTracker.getInstance(this).activityStart(this);
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		MobclickAgent.onResume(this);
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		MobclickAgent.onPause(this);
 	}
 
 	@Override

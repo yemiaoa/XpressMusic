@@ -9,6 +9,7 @@ import android.os.Message;
 import android.support.v4.app.FragmentActivity;
 
 import com.google.analytics.tracking.android.EasyTracker;
+import com.umeng.analytics.MobclickAgent;
 
 /**
  * @author lq 2013-6-1 lq2625304@gmail.com
@@ -24,12 +25,25 @@ public class SplashActivity extends FragmentActivity {
 		setContentView(R.layout.welcome);
 		mHandler.sendEmptyMessageDelayed(0, mDelayMillis);
 
+		initUmengSDK();
 	}
 
 	@Override
 	protected void onStart() {
 		super.onStart();
 		EasyTracker.getInstance(this).activityStart(this);
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		MobclickAgent.onResume(this);
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		MobclickAgent.onPause(this);
 	}
 
 	@Override
@@ -41,6 +55,12 @@ public class SplashActivity extends FragmentActivity {
 	@Override
 	public void onBackPressed() {
 		// 什么也不做，在欢迎界面禁止用户回退
+	}
+
+	private void initUmengSDK() {
+		MobclickAgent.openActivityDurationTrack(true);
+		MobclickAgent.updateOnlineConfig(this);
+		MobclickAgent.onError(this);
 	}
 
 	private static class MyHandler extends Handler {
