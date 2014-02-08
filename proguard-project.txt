@@ -18,3 +18,13 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+-ignorewarnings
+-keepattributes Signature
+-keepclassmembers class * {
+   public <init>(org.json.JSONObject);
+}
+
+-libraryjars libs/android-support-v4.jar
+-libraryjars libs/umeng_sdk.jar
+-libraryjars libs/libGoogleAnalyticsServices.jar
+-libraryjars libs/pinyin4j-2.5.0.jar
