@@ -478,20 +478,19 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
     }
     public static final class string {
         public static final int a_piece_of_song=0x7f06005a;
-        public static final int about=0x7f060010;
-        public static final int action_settings=0x7f060002;
+        public static final int about=0x7f06000f;
         public static final int add_songs=0x7f06005d;
         public static final int add_success=0x7f060039;
         public static final int add_to=0x7f060038;
         public static final int add_to_playlist=0x7f06003a;
-        public static final int app_name=0x7f060001;
+        public static final int app_name=0x7f060002;
         public static final int are_you_sure_to_delete=0x7f060045;
-        public static final int are_you_sure_to_exit=0x7f060009;
-        public static final int are_you_sure_to_reset_default=0x7f06001d;
+        public static final int are_you_sure_to_exit=0x7f060008;
+        public static final int are_you_sure_to_reset_default=0x7f06001c;
         public static final int artist=0x7f06004e;
         public static final int cancel=0x7f060035;
         public static final int check_detail=0x7f06004d;
-        public static final int choose_lyric_save_path=0x7f06001e;
+        public static final int choose_lyric_save_path=0x7f06001d;
         public static final int classify_by_album=0x7f06002d;
         public static final int classify_by_artist=0x7f06002c;
         public static final int classify_by_folder=0x7f06002e;
@@ -504,46 +503,46 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int confirm_clear_playqueue=0x7f06003d;
         public static final int confirm_delete_song_file=0x7f06003c;
         public static final int confirm_remove_song_from_playlist=0x7f060048;
-        public static final int create_new_folder=0x7f06001f;
+        public static final int create_new_folder=0x7f06001e;
         public static final int create_playlist=0x7f060042;
-        public static final int current=0x7f060020;
+        public static final int current=0x7f06001f;
         public static final int delete=0x7f06003b;
         public static final int delete_failed=0x7f06003f;
         public static final int delete_success=0x7f06003e;
-        public static final int download_lyric_automatically=0x7f060015;
-        public static final int download_lyric_automatically_summary=0x7f060016;
-        public static final int email_title=0x7f06000e;
-        public static final int feedback=0x7f06000a;
-        public static final int file_filter=0x7f060013;
+        public static final int download_lyric_automatically=0x7f060014;
+        public static final int download_lyric_automatically_summary=0x7f060015;
+        public static final int email_title=0x7f06000d;
+        public static final int feedback=0x7f060009;
+        public static final int file_filter=0x7f060012;
         public static final int file_format=0x7f06004f;
         public static final int file_path=0x7f060051;
         public static final int file_size=0x7f060050;
-        public static final int filter_by_duration=0x7f06001b;
-        public static final int filter_by_duration_summary=0x7f06001c;
-        public static final int filter_by_size=0x7f060019;
-        public static final int filter_by_size_summary=0x7f06001a;
+        public static final int filter_by_duration=0x7f06001a;
+        public static final int filter_by_duration_summary=0x7f06001b;
+        public static final int filter_by_size=0x7f060018;
+        public static final int filter_by_size_summary=0x7f060019;
         /**  Replace placeholder ID with your tracking ID 
          */
         public static final int ga_trackingId=0x7f060000;
         /**  多选界面界面 
          */
         public static final int has_selected=0x7f060059;
-        public static final int hello_world=0x7f060003;
         public static final int input_playlist_name=0x7f060041;
-        public static final int loading_hardly=0x7f06000f;
-        public static final int local_music=0x7f060007;
+        public static final int loading_hardly=0x7f06000e;
+        public static final int local_music=0x7f060006;
         /**  播放列表操作 
          */
         public static final int local_playlist=0x7f060040;
         public static final int lyric_Loading=0x7f060027;
-        public static final int lyric_save_path=0x7f060017;
-        public static final int lyric_setting=0x7f060012;
+        public static final int lyric_save_path=0x7f060016;
+        public static final int lyric_setting=0x7f060011;
         /**  歌曲列表的操作 
          */
         public static final int mutiple_choose=0x7f060054;
-        public static final int my_music=0x7f060004;
-        public static final int other_functions=0x7f060005;
-        public static final int other_settings=0x7f060014;
+        public static final int my_alipay=0x7f060001;
+        public static final int my_music=0x7f060003;
+        public static final int other_functions=0x7f060004;
+        public static final int other_settings=0x7f060013;
         public static final int play_all=0x7f060055;
         public static final int play_later=0x7f06005c;
         public static final int playlist_has_already_existed=0x7f060044;
@@ -556,7 +555,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         /**  播放队列界面 
          */
         public static final int playqueue=0x7f060061;
-        public static final int please_input_feedback=0x7f06000c;
+        public static final int please_input_feedback=0x7f06000b;
         public static final int please_input_jianpin_or_quanpin=0x7f060057;
         public static final int please_input_song_or_artist_name=0x7f060058;
         public static final int please_select_add_song_first=0x7f060060;
@@ -566,13 +565,13 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int remove=0x7f060049;
         public static final int remove_success=0x7f06004a;
         public static final int rename=0x7f060047;
-        public static final int reset_to_default=0x7f060018;
+        public static final int reset_to_default=0x7f060017;
         public static final int sdcard_cannot_use=0x7f060037;
         /**  歌曲列表的搜索框 
          */
         public static final int search=0x7f060056;
         public static final int select_all=0x7f06005b;
-        public static final int select_email_app=0x7f06000d;
+        public static final int select_email_app=0x7f06000c;
         public static final int song_duration=0x7f060052;
         public static final int song_has_already_existed=0x7f060043;
         /**  歌曲详细信息 
@@ -590,14 +589,15 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         public static final int sort_by_playlist_created_time=0x7f060030;
         public static final int sort_by_playlist_modified_time=0x7f060031;
         public static final int sort_by_playlist_name=0x7f06002f;
-        public static final int sumbit=0x7f06000b;
+        public static final int sumbit=0x7f06000a;
+        public static final int support_developer=0x7f060021;
         /**  系统设置 
          */
-        public static final int system_setting=0x7f060011;
-        public static final int there_is_a_duplicated_folder=0x7f060021;
+        public static final int system_setting=0x7f060010;
+        public static final int there_is_a_duplicated_folder=0x7f060020;
         public static final int there_is_no_lyric_yet=0x7f060026;
-        public static final int there_is_no_song_yet=0x7f060006;
-        public static final int unknown_artist=0x7f060008;
+        public static final int there_is_no_song_yet=0x7f060005;
+        public static final int unknown_artist=0x7f060007;
     }
     public static final class style {
         /** 

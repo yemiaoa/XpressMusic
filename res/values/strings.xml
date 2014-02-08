@@ -2,8 +2,6 @@
 <resources>
 
     <string name="app_name">随心而乐</string>
-    <string name="action_settings">设置</string>
-    <string name="hello_world">Hello world!</string>
     <string name="my_music">我的音乐</string>
     <string name="other_functions">其他功能</string>
     <string name="there_is_no_song_yet">没有歌曲</string>
@@ -36,6 +34,7 @@
     <string name="create_new_folder">新建目录</string>
     <string name="current">当前：</string>
     <string name="there_is_a_duplicated_folder">已存在同名目录</string>
+    <string name="support_developer">如果您觉得本作品对您有所帮助，不妨请作者喝一杯咖啡，再小的力量也是一种支持！</string>
 
     <!-- 播放界面 -->
     <string name="playmode_repeat">循环播放</string>

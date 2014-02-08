@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.util.Pair;
@@ -63,12 +66,43 @@ public class MenuFragment extends ListFragment {
 		case 6:// TODO 意见反馈
 			startActivity(new Intent(getActivity(), FeedbackActivity.class));
 			break;
-		case 7:// TODO 退出
+		case 7:// TODO 支持作者
+			supportMe();
+			break;
+		case 8:// TODO 退出
 			((MainContentActivity) getActivity()).exit();
 			break;
 		}
-		if (newContent != null)
+		if (newContent != null) {
 			switchFragment(newContent);
+		}
+	}
+
+	private void supportMe() {
+		new AlertDialog.Builder(getActivity())
+				.setMessage(R.string.support_developer)
+				.setPositiveButton(android.R.string.ok,
+						new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog,
+									int which) {
+								Uri uri = Uri
+										.parse(getString(R.string.my_alipay));
+								Intent intent = new Intent(Intent.ACTION_VIEW,
+										uri);
+								intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+								startActivity(intent);
+							}
+						})
+				.setNegativeButton(android.R.string.cancel,
+						new DialogInterface.OnClickListener() {
+
+							@Override
+							public void onClick(DialogInterface dialog,
+									int which) {
+								dialog.dismiss();
+							}
+						}).create().show();
 	}
 
 	// the meat of switching the above fragment

@@ -11,6 +11,7 @@
     <string-array name="menu_othersettings">
         <item>系统设置</item>
         <item>意见反馈</item>
+        <item>支持作者</item>
         <item>退出</item>
     </string-array>
 
